@@ -17,6 +17,7 @@ const RANK_COLORS = {
 }
 
 @onready var HealthBarGUI = get_tree().get_first_node_in_group("HealthBarContainer")
+@onready var grid_controller: Node2D = get_node("/root/GridController")
 
 var items: Dictionary = {
 	"tower1": {
@@ -141,18 +142,20 @@ func _draw_slot(slot: Panel) -> void:
 	var border_color = RANK_COLORS.get(rank, Color(1, 1, 1))
 	var base_color = border_color * 0.3
 	base_color.a = 1.0
+	
 	var hovered = slot.get_meta("hovered", false)
-	var brighten = 1.3 if hovered else 1.0
+	var dragged_data = get_current_dragged_data()
+	var is_matching = !dragged_data.is_empty() && item.id == dragged_data.id && item.rank == dragged_data.rank
+	
+	var brighten = 1.3 if (hovered or is_matching) else 1.0
 	var bg_color = base_color * brighten
 	
-	# Rank border
-	slot.draw_rect(Rect2(0.5, 0.5, 7, 7), border_color, false, 1.0 + (0.5 if hovered else 0.0))
-	# Background (darker rank color)
+	slot.draw_rect(Rect2(0.5, 0.5, 7, 7), border_color, false, 1.0 + (0.5 if (hovered or is_matching) else 0.0))
 	slot.draw_rect(Rect2(1, 1, 6, 6), bg_color, true)
-	# Brightened icon
+	
 	var tex = items[item.id].texture
 	if tex:
-		slot.draw_texture(tex, Vector2(0, 0), Color(brighten, brighten, brighten))
+		slot.draw_texture(tex, Vector2(1, 1), Color(brighten, brighten, brighten))
 
 func _setup_slot_style(slot: Panel) -> void:
 	var style = StyleBoxFlat.new()
@@ -171,7 +174,7 @@ func _update_slot(slot: Panel) -> void:
 
 func _on_slot_input(event: InputEvent, slot: Panel) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and slot.has_meta("item"):
-		HealthBarGUI.show_cost_preview(0.0)  # Clear any spawner preview when drag starts
+		HealthBarGUI.show_cost_preview(0.0)
 		var item = slot.get_meta("item")
 		dragged_item = item.duplicate()
 		drag_preview_item = dragged_item.duplicate()
@@ -179,6 +182,13 @@ func _on_slot_input(event: InputEvent, slot: Panel) -> void:
 		slot.set_meta("item", {})
 		_update_slot(slot)
 		queue_redraw()
+		refresh_inventory_highlights()
+		if grid_controller:
+			grid_controller.refresh_grid_highlights()
+
+func refresh_inventory_highlights() -> void:
+	for slot in slots:
+		slot.queue_redraw()
 
 func _on_slot_hover(slot: Panel, entered: bool) -> void:
 	slot.set_meta("hovered", entered)
@@ -192,7 +202,14 @@ func _update_hover(slot: Panel) -> void:
 	var item = slot.get_meta("item", {})
 	var hovered = slot.get_meta("hovered", false)
 	
-	if hovered and original_slot != null and !item.is_empty() and item.id == dragged_item.id and item.rank == dragged_item.rank:
+	var is_potential_merge = !item.is_empty() and (
+		(original_slot != null and !dragged_item.is_empty() and item.id == dragged_item.id and item.rank == dragged_item.rank) or
+		(grid_controller != null and grid_controller.dragged_tower != null and 
+		 item.id == grid_controller.dragged_tower.get_meta("item_data").id and 
+		 item.rank == grid_controller.dragged_tower.get_meta("item_data").rank)
+	)
+	
+	if hovered and is_potential_merge:
 		style.bg_color = merge
 	elif hovered:
 		style.bg_color = hover
@@ -237,15 +254,20 @@ func _process(_delta: float) -> void:
 		HealthBarGUI.show_cost_preview(0.0)  # Clear preview after drop
 		
 
+func get_current_dragged_data(exclude_tower: Node = null) -> Dictionary:
+	if !dragged_item.is_empty():
+		return dragged_item
+	if grid_controller and grid_controller.dragged_tower != null and grid_controller.dragged_tower != exclude_tower:
+		return grid_controller.dragged_tower.get_meta("item_data")
+	return {}
+
 func _perform_drop() -> void:
 	var mouse_pos = get_global_mouse_position()
 	var target = get_closest_slot(mouse_pos, 8.0, false)
 	var return_to_original = true
-
 	if target and target != original_slot:
 		var target_item = target.get_meta("item", {})
 		if !target_item.is_empty() and target_item.id == dragged_item.id and target_item.rank == dragged_item.rank:
-			# Calculate merge cost: 1/3 of the new tier's base spawn cost
 			var new_rank = target_item.rank + 1
 			var cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
 			if StatsManager.spend_health(cost):
@@ -253,7 +275,6 @@ func _perform_drop() -> void:
 				target.set_meta("item", target_item)
 				_update_slot(target)
 				return_to_original = false
-			# else: cannot afford, drop will revert below
 		else:
 			target.set_meta("item", dragged_item)
 			if !target_item.is_empty():
@@ -261,21 +282,27 @@ func _perform_drop() -> void:
 				_update_slot(original_slot)
 			_update_slot(target)
 			return_to_original = false
-
 	if return_to_original and potential_cell != Vector2i(-1, -1):
 		if GridController.place_item(dragged_item, potential_cell):
 			return_to_original = false
-
 	if return_to_original:
 		original_slot.set_meta("item", dragged_item)
 		_update_slot(original_slot)
-
 	dragged_item = {}
 	original_slot = null
 	drag_preview.visible = false
 	potential_cell = Vector2i(-1, -1)
 	for slot in slots:
 		_update_hover(slot)
+	refresh_inventory_highlights()
+	if grid_controller:
+		grid_controller.refresh_grid_highlights()
+
+func refresh_all_highlights() -> void:
+	for slot in slots:
+		slot.queue_redraw()
+	if grid_controller:
+		grid_controller.refresh_grid_highlights()
 
 func _get_slot_under_mouse() -> Panel:
 	var pos = get_global_mouse_position()

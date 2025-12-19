@@ -15,7 +15,6 @@ var original_cell: Vector2i = Vector2i(-1, -1)
 var potential_cell: Vector2i = Vector2i(-1, -1)
 
 @onready var HealthBarGUI = get_tree().get_first_node_in_group("HealthBarContainer")
-
 @onready var inventory = get_node("/root/InventoryManager")
 var original_slot: Panel = null
 
@@ -67,6 +66,13 @@ func get_grid_item_at_cell(cell: Vector2i) -> Node:
 	else:
 		return null
 
+func refresh_grid_highlights() -> void:
+	for y in range(HEIGHT):
+		for x in range(WIDTH):
+			var tower = grid[y][x]
+			if tower != null:
+				tower.queue_redraw()
+
 func place_item(item_data: Dictionary, cell: Vector2i) -> bool:
 	var existing = get_grid_item_at_cell(cell)
 	if existing != null:
@@ -103,7 +109,7 @@ func _on_tower_input_event(viewport: Viewport, event: InputEvent, shape_idx: int
 
 func start_tower_drag(tower: Node, offset: Vector2) -> void:
 	if dragged_tower != null: return
-	HealthBarGUI.show_cost_preview(0.0)  # Clear any spawner preview when drag starts
+	HealthBarGUI.show_cost_preview(0.0)
 	dragged_tower = tower
 	dragged_offset = offset
 	original_cell = get_cell_from_pos(tower.global_position)
@@ -114,17 +120,16 @@ func start_tower_drag(tower: Node, offset: Vector2) -> void:
 	tower.z_index = 1000
 	tower.modulate.a = 0.7
 	queue_redraw()
+	inventory.refresh_inventory_highlights()
+	refresh_grid_highlights()
 
 func _process(_delta: float) -> void:
 	if dragged_tower != null:
 		var mouse_pos = get_global_mouse_position()
 		dragged_tower.global_position = mouse_pos + dragged_offset
 		potential_cell = get_cell_from_pos(mouse_pos)
-		
 		var preview_cost: float = 0.0
 		var dragged_data = dragged_tower.get_meta("item_data")
-		
-		# Grid merge preview
 		if potential_cell != Vector2i(-1, -1):
 			var existing = get_grid_item_at_cell(potential_cell)
 			if existing:
@@ -132,8 +137,6 @@ func _process(_delta: float) -> void:
 				if target_data.id == dragged_data.id and target_data.rank == dragged_data.rank:
 					var new_rank = target_data.rank + 1
 					preview_cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
-		
-		# Inventory merge preview (only if no grid merge)
 		if preview_cost == 0.0:
 			var inv_slot = InventoryManager.get_closest_slot(mouse_pos, 8.0)
 			if inv_slot:
@@ -141,24 +144,19 @@ func _process(_delta: float) -> void:
 				if !slot_item.is_empty() and slot_item.id == dragged_data.id and slot_item.rank == dragged_data.rank:
 					var new_rank = slot_item.rank + 1
 					preview_cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
-		
 		HealthBarGUI.show_cost_preview(preview_cost)
-		
-		# Existing hover clear/highlight code...
 		for slot in InventoryManager.slots:
 			if slot.get_meta("hovered", false):
 				slot.set_meta("hovered", false)
 				InventoryManager._update_hover(slot)
-		var pot_inv_slot = InventoryManager.get_closest_slot(mouse_pos, 8.0, true)
+		var pot_inv_slot = InventoryManager.get_closest_slot(mouse_pos, 8.0)
 		if pot_inv_slot:
 			pot_inv_slot.set_meta("hovered", true)
 			InventoryManager._update_hover(pot_inv_slot)
-		
 		queue_redraw()
-		
 		if !Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			_perform_tower_drop()
-			HealthBarGUI.show_cost_preview(0.0)  # Clear preview after drop
+			HealthBarGUI.show_cost_preview(0.0)
 
 func _perform_tower_drop() -> void:
 	var mouse_pos = get_global_mouse_position()
@@ -207,6 +205,7 @@ func _perform_tower_drop() -> void:
 			var target_cell = potential_cell
 			dragged_tower.position = grid_offset + Vector2(target_cell.x * CELL_SIZE + CELL_SIZE / 2, target_cell.y * CELL_SIZE + CELL_SIZE / 2)
 			grid[target_cell.y][target_cell.x] = dragged_tower
+	InventoryManager.refresh_all_highlights()
 
 	if dragged_tower:
 		dragged_tower.z_index = 0

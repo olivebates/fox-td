@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://bp8y13cyubdho"]
 
 [ext_resource type="Script" uid="uid://uy1ki4lla8jl" path="res://Battlefield/Game/tower.gd" id="1_w06uo"]
-[ext_resource type="Texture2D" uid="uid://df84sa0j1jetg" path="res://Battlefield/Sprites/Towers/fireba3ll.webp" id="2_w06uo"]
+[ext_resource type="Texture2D" uid="uid://cqgl3igwvfat8" path="res://Battlefield/Sprites/Towers/Tower2.png" id="2_w06uo"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_t3ens"]
 
@@ -13,4 +13,5 @@ script = ExtResource("1_w06uo")
 shape = SubResource("RectangleShape2D_t3ens")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+visible = false
 texture = ExtResource("2_w06uo")

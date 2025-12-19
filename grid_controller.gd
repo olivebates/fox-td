@@ -14,6 +14,8 @@ var dragged_offset: Vector2 = Vector2.ZERO
 var original_cell: Vector2i = Vector2i(-1, -1)
 var potential_cell: Vector2i = Vector2i(-1, -1)
 
+@onready var HealthBarGUI = get_tree().get_first_node_in_group("HealthBarContainer")
+
 @onready var inventory = get_node("/root/InventoryManager")
 var original_slot: Panel = null
 
@@ -60,32 +62,37 @@ func is_valid_placement(cell: Vector2i, dragged_data: Dictionary = {}) -> bool:
 
 func get_grid_item_at_cell(cell: Vector2i) -> Node:
 	if cell == Vector2i(-1, -1): return null
-	return grid[cell.y][cell.x]
+	if grid != null:
+		return grid[cell.y][cell.x]
+	else:
+		return null
 
 func place_item(item_data: Dictionary, cell: Vector2i) -> bool:
 	var existing = get_grid_item_at_cell(cell)
 	if existing != null:
 		var existing_data = existing.get_meta("item_data")
 		if existing_data.id == item_data.id and existing_data.rank == item_data.rank:
-			existing_data.rank += 1
-			existing.set_meta("item_data", existing_data)
-			existing.queue_redraw()  # If tower has _draw for rank border
-			return true
+			var new_rank = existing_data.rank + 1
+			var cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
+			if StatsManager.spend_health(cost):
+				existing_data.rank += 1
+				existing.set_meta("item_data", existing_data)
+				existing.queue_redraw()
+				return true
+			return false
 		return false
-	
+
 	if not buildable_grid[cell.y][cell.x]:
 		return false
-	
+
 	var prefab = InventoryManager.items[item_data.id].prefab
 	var instance = prefab.instantiate()
 	instance.position = grid_offset + Vector2(cell.x * CELL_SIZE + CELL_SIZE / 2, cell.y * CELL_SIZE + CELL_SIZE / 2)
 	instance.set_meta("item_data", item_data.duplicate())
 	add_child(instance)
 	grid[cell.y][cell.x] = instance
-	
 	instance.input_pickable = true
 	instance.connect("input_event", _on_tower_input_event.bind(instance))
-	
 	return true
 
 func _on_tower_input_event(viewport: Viewport, event: InputEvent, shape_idx: int, tower: Node) -> void:
@@ -96,6 +103,7 @@ func _on_tower_input_event(viewport: Viewport, event: InputEvent, shape_idx: int
 
 func start_tower_drag(tower: Node, offset: Vector2) -> void:
 	if dragged_tower != null: return
+	HealthBarGUI.show_cost_preview(0.0)  # Clear any spawner preview when drag starts
 	dragged_tower = tower
 	dragged_offset = offset
 	original_cell = get_cell_from_pos(tower.global_position)
@@ -112,24 +120,50 @@ func _process(_delta: float) -> void:
 		var mouse_pos = get_global_mouse_position()
 		dragged_tower.global_position = mouse_pos + dragged_offset
 		potential_cell = get_cell_from_pos(mouse_pos)
-		# Clear inventory hover
+		
+		var preview_cost: float = 0.0
+		var dragged_data = dragged_tower.get_meta("item_data")
+		
+		# Grid merge preview
+		if potential_cell != Vector2i(-1, -1):
+			var existing = get_grid_item_at_cell(potential_cell)
+			if existing:
+				var target_data = existing.get_meta("item_data")
+				if target_data.id == dragged_data.id and target_data.rank == dragged_data.rank:
+					var new_rank = target_data.rank + 1
+					preview_cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
+		
+		# Inventory merge preview (only if no grid merge)
+		if preview_cost == 0.0:
+			var inv_slot = InventoryManager.get_closest_slot(mouse_pos, 8.0)
+			if inv_slot:
+				var slot_item = inv_slot.get_meta("item", {})
+				if !slot_item.is_empty() and slot_item.id == dragged_data.id and slot_item.rank == dragged_data.rank:
+					var new_rank = slot_item.rank + 1
+					preview_cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
+		
+		HealthBarGUI.show_cost_preview(preview_cost)
+		
+		# Existing hover clear/highlight code...
 		for slot in InventoryManager.slots:
 			if slot.get_meta("hovered", false):
 				slot.set_meta("hovered", false)
 				InventoryManager._update_hover(slot)
-		# Highlight closest empty inventory slot
 		var pot_inv_slot = InventoryManager.get_closest_slot(mouse_pos, 8.0, true)
 		if pot_inv_slot:
 			pot_inv_slot.set_meta("hovered", true)
 			InventoryManager._update_hover(pot_inv_slot)
+		
 		queue_redraw()
+		
 		if !Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			_perform_tower_drop()
+			HealthBarGUI.show_cost_preview(0.0)  # Clear preview after drop
 
 func _perform_tower_drop() -> void:
 	var mouse_pos = get_global_mouse_position()
 	var dragged_data = dragged_tower.get_meta("item_data")
-	
+
 	# Inventory drop: empty or merge
 	var inv_slot = InventoryManager.get_closest_slot(mouse_pos, 8.0)
 	if inv_slot:
@@ -139,28 +173,41 @@ func _perform_tower_drop() -> void:
 			InventoryManager._update_slot(inv_slot)
 			dragged_tower.queue_free()
 		elif slot_item.id == dragged_data.id and slot_item.rank == dragged_data.rank:
-			slot_item.rank += 1
-			inv_slot.set_meta("item", slot_item)
-			InventoryManager._update_slot(inv_slot)
-			dragged_tower.queue_free()
-		else:
-			# Invalid: return to grid (fall through)
-			pass
+			var new_rank = slot_item.rank + 1
+			var cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
+			if StatsManager.spend_health(cost):
+				slot_item.rank += 1
+				inv_slot.set_meta("item", slot_item)
+				InventoryManager._update_slot(inv_slot)
+				dragged_tower.queue_free()
+		# Invalid inventory drop falls through to grid handling
+
 	else:
-		# Grid merge/placement (unchanged)
+		# Grid merge/placement
 		var valid = potential_cell != Vector2i(-1, -1) and is_valid_placement(potential_cell, dragged_data)
 		if valid and grid[potential_cell.y][potential_cell.x] != null:
 			var target = grid[potential_cell.y][potential_cell.x]
 			var target_data = target.get_meta("item_data")
-			target_data.rank += 1
-			target.set_meta("item_data", target_data)
-			target.queue_redraw()
-			dragged_tower.queue_free()
-		else:
-			var target_cell = potential_cell if valid else original_cell
+			var new_rank = target_data.rank + 1
+			var cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
+			if StatsManager.spend_health(cost):
+				target_data.rank += 1
+				target.set_meta("item_data", target_data)
+				target.queue_redraw()
+				dragged_tower.queue_free()
+			else:
+				valid = false  # revert if cannot afford
+		if not valid:
+			# Return to original cell
+			var target_cell = original_cell
 			dragged_tower.position = grid_offset + Vector2(target_cell.x * CELL_SIZE + CELL_SIZE / 2, target_cell.y * CELL_SIZE + CELL_SIZE / 2)
 			grid[target_cell.y][target_cell.x] = dragged_tower
-	
+		else:
+			# Valid new placement (non-merge)
+			var target_cell = potential_cell
+			dragged_tower.position = grid_offset + Vector2(target_cell.x * CELL_SIZE + CELL_SIZE / 2, target_cell.y * CELL_SIZE + CELL_SIZE / 2)
+			grid[target_cell.y][target_cell.x] = dragged_tower
+
 	if dragged_tower:
 		dragged_tower.z_index = 0
 		dragged_tower.modulate.a = 1.0
@@ -171,14 +218,14 @@ func _perform_tower_drop() -> void:
 
 # Optional: faint grid lines + drag highlight
 func _draw() -> void:
-	var line_color = Color(0.3, 0.3, 0.3, 0.4)
-	for x in WIDTH + 1:
-		draw_line(grid_offset + Vector2(x * CELL_SIZE, 0), grid_offset + Vector2(x * CELL_SIZE, HEIGHT * CELL_SIZE), line_color, 1.0)
-	for y in HEIGHT + 1:
-		draw_line(grid_offset + Vector2(0, y * CELL_SIZE), grid_offset + Vector2(WIDTH * CELL_SIZE, y * CELL_SIZE), line_color, 1.0)
+	#var line_color = Color(0.3, 0.3, 0.3, 0.4)
+	#for x in WIDTH + 1:
+		#draw_line(grid_offset + Vector2(x * CELL_SIZE, 0), grid_offset + Vector2(x * CELL_SIZE, HEIGHT * CELL_SIZE), line_color, 1.0)
+	#for y in HEIGHT + 1:
+		#draw_line(grid_offset + Vector2(0, y * CELL_SIZE), grid_offset + Vector2(WIDTH * CELL_SIZE, y * CELL_SIZE), line_color, 1.0)
 	
 	if dragged_tower != null and potential_cell != Vector2i(-1, -1):
 		var cell_pos = grid_offset + Vector2(potential_cell.x * CELL_SIZE, potential_cell.y * CELL_SIZE)
-		var valid = is_valid_placement(potential_cell)
+		var valid = is_valid_placement(potential_cell, dragged_tower.get_meta("item_data"))
 		var fill_color = Color(0, 1, 0, 0.3) if valid else Color(1, 0, 0, 0.3)
 		draw_rect(Rect2(cell_pos, Vector2(CELL_SIZE, CELL_SIZE)), fill_color, true)

@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://823ref1rao2h"]
 
-[ext_resource type="Texture2D" uid="uid://ii2kjstlok26" path="res://Battlefield/Sprites/Scenery/buildable_tile.webp" id="1_71xhc"]
+[ext_resource type="Texture2D" uid="uid://60jj3sr7rbnf" path="res://Battlefield/Sprites/Scenery/buildable_tile.png" id="1_71xhc"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_polt5"]
 size = Vector2(8, 8)

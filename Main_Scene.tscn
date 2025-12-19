@@ -1,0 +1,20 @@
+[gd_scene load_steps=5 format=3 uid="uid://ctnmhorqxut1t"]
+
+[ext_resource type="Script" uid="uid://c58ore2lex6h5" path="res://main_scene.gd" id="1_7fr83"]
+[ext_resource type="Script" uid="uid://dtxradeejcej0" path="res://path_manager.gd" id="3_tkmsp"]
+[ext_resource type="PackedScene" uid="uid://baklm1pqc3pmt" path="res://Battlefield/GUI/GUI.tscn" id="4_5yw3w"]
+
+[sub_resource type="Curve2D" id="Curve2D_tkmsp"]
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource("1_7fr83")
+
+[node name="PathManager" type="Path2D" parent="."]
+curve = SubResource("Curve2D_tkmsp")
+script = ExtResource("3_tkmsp")
+
+[node name="GUI" parent="." instance=ExtResource("4_5yw3w")]
+offset_left = 203.0
+offset_top = 20.0
+offset_right = 243.0
+offset_bottom = 60.0

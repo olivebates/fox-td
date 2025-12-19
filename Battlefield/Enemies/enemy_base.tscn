@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://csawtka1gfo5o"]
+
+[ext_resource type="Script" uid="uid://b30gha30hbgn0" path="res://Battlefield/Enemies/enemy_base.gd" id="1_bcekf"]
+[ext_resource type="Texture2D" uid="uid://dyan40sgre5b1" path="res://Battlefield/Sprites/Towers/fireba2ll.webp" id="2_1b755"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_j2ch1"]
+size = Vector2(8, 8)
+
+[node name="EnemyBase" type="CharacterBody2D"]
+z_index = 45
+script = ExtResource("1_bcekf")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_j2ch1")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_1b755")

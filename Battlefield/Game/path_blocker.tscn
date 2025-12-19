@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://2wlflfus0jih"]
+
+[ext_resource type="Texture2D" uid="uid://cvpvso7c6ijmm" path="res://Battlefield/Sprites/Scenery/nonbuildable_tile.webp" id="1_j763q"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_u61fv"]
+size = Vector2(16, 16)
+
+[node name="PathBlocker" type="StaticBody2D" groups=["grid_occupiers"]]
+z_index = -600
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_u61fv")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+z_index = -1
+scale = Vector2(2, 2)
+texture = ExtResource("1_j763q")

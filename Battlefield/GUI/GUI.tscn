@@ -1,0 +1,50 @@
+[gd_scene load_steps=5 format=3 uid="uid://baklm1pqc3pmt"]
+
+[ext_resource type="Script" uid="uid://xi1db20durn0" path="res://Battlefield/GUI/GUI.gd" id="1_q7530"]
+[ext_resource type="Script" uid="uid://cidutxx7swaph" path="res://Battlefield/GUI/drag_preview.gd" id="2_3yf0u"]
+[ext_resource type="PackedScene" uid="uid://cqha2gy70dtyi" path="res://Battlefield/GUI/next_wave.tscn" id="2_7bcsv"]
+[ext_resource type="Script" uid="uid://ganpq4sv7xrr" path="res://Battlefield/GUI/placement_root_node_2d.gd" id="4_37vil"]
+
+[node name="GUI" type="Control"]
+z_index = -100
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_q7530")
+metadata/_edit_use_anchors_ = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/separation = 2
+
+[node name="NextWave" parent="VBoxContainer" instance=ExtResource("2_7bcsv")]
+layout_mode = 2
+
+[node name="SpawnButtons" type="GridContainer" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 2
+theme_override_constants/v_separation = 2
+columns = 3
+
+[node name="Inventory" type="GridContainer" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 2
+theme_override_constants/v_separation = 2
+columns = 3
+metadata/_edit_use_anchors_ = true
+
+[node name="DragPreview" type="Control" parent="."]
+unique_name_in_owner = true
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("2_3yf0u")
+
+[node name="TowerGrid" type="Node2D" parent="."]
+unique_name_in_owner = true
+script = ExtResource("4_37vil")

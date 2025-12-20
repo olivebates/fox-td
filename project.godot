@@ -22,6 +22,7 @@ WaveSpawner="*res://wave_spawner.gd"
 InventoryManager="*res://inventory_manager.gd"
 GridController="*res://grid_controller.gd"
 StatsManager="*res://stats_manager.gd"
+Utilities="*res://utilities.gd"
 
 [display]
 
@@ -36,7 +37,10 @@ window/stretch/scale_mode="integer"
 grid_occupiers=""
 grid_buildable=""
 HealthBarContainer=""
+enemy=""
 
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
+2d/snap/snap_2d_transforms_to_pixel=true
+2d/snap/snap_2d_vertices_to_pixel=true

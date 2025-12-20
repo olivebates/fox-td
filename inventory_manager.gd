@@ -155,7 +155,7 @@ func _draw_slot(slot: Panel) -> void:
 	
 	var tex = items[item.id].texture
 	if tex:
-		slot.draw_texture(tex, Vector2(1, 1), Color(brighten, brighten, brighten))
+		slot.draw_texture(tex, Vector2(0, 0), Color(brighten, brighten, brighten))
 
 func _setup_slot_style(slot: Panel) -> void:
 	var style = StyleBoxFlat.new()

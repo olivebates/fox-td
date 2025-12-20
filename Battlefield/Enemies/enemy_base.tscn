@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://dyan40sgre5b1" path="res://Battlefield/Sprites/Towers/fireba2ll.webp" id="2_1b755"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_j2ch1"]
-size = Vector2(8, 8)
+size = Vector2(6, 6)
 
 [node name="EnemyBase" type="CharacterBody2D" groups=["enemy"]]
 z_index = 45

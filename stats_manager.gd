@@ -29,3 +29,8 @@ func gain_health_from_kill(base_reward: float) -> void:
 	var reward = base_reward * kill_multiplier
 	health = min(health + reward, max_health)
 	health_changed.emit(health, max_health)
+func take_damage(amount: float) -> void:
+	health -= amount
+	if health < 0:
+		health = 0
+	health_changed.emit(health, max_health)

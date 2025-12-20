@@ -1,20 +1,68 @@
-# Modified Enemy script
 extends CharacterBody2D
 class_name Enemy
 
 @export var max_speed: float = 800.0
+@export var speed: float = 60.0
 @export var health: int = 50
+@export var target_position: Vector2
 
 var current_health: int = 50
+var path: PackedVector2Array = []
+var path_index: int = 0
+
 var health_bg: ColorRect
 var health_fg: ColorRect
-var sprite: Node  # Assuming your visual is a Sprite2D or AnimatedSprite2D
+var sprite: Node
+var start_position
+var current_damage = 10
 
-func _ready():
+func _ready() -> void:
 	current_health = health
+	start_position = position
 	add_to_group("enemies")
-	sprite = $Sprite2D  # Change to your sprite node name/path
+	sprite = $Sprite2D
 	create_healthbar()
+	update_healthbar()
+	request_path()
+
+func request_path() -> void:
+	var astar = AStarManager.astar
+	var local_pos: Vector2 = global_position - astar.offset
+	var start_cell := Vector2i(
+		floor(local_pos.x / astar.cell_size.x),
+		floor(local_pos.y / astar.cell_size.y)
+	)
+	var target_local: Vector2 = target_position - astar.offset
+	var target_cell := Vector2i(
+		floor(target_local.x / astar.cell_size.x),
+		floor(target_local.y / astar.cell_size.y)
+	)
+	if not astar.is_in_boundsv(start_cell) or not astar.is_in_boundsv(target_cell):
+		return
+	path = astar.get_point_path(start_cell, target_cell)
+	path_index = 0
+
+func _process(delta: float) -> void:
+	if global_position.distance_to(target_position) < 8.0:
+		position = start_position
+		StatsManager.take_damage(current_damage)
+		current_damage *= 2
+		request_path()
+		
+	if path.is_empty() or path_index >= path.size():
+		return
+	
+	var target_pos: Vector2 = path[path_index]
+	var dir := target_pos - global_position
+	var dist := dir.length()
+	
+	if dist < 2.0:
+		path_index += 1
+	else:
+		global_position += dir.normalized() * speed * delta
+	
+	
+	
 	update_healthbar()
 
 func create_healthbar():
@@ -37,26 +85,15 @@ func update_healthbar():
 	health_fg.global_position = pos - Vector2(4, 2)
 	health_fg.size.x = 8.0 * (float(current_health) / health)
 
-func _physics_process(delta: float):
-	var follow: PathFollow2D = get_parent()
-	if follow:
-		follow.progress += (max_speed / 4.0) * delta
-		if follow.progress_ratio >= 0.999:
-			die()
-	update_healthbar()
-
 func take_damage(amount: int):
 	current_health -= amount
 	update_healthbar()
-	
-	# Flash red
 	var tw = create_tween()
 	tw.tween_property(sprite, "modulate", Color.RED, 0.1)
 	tw.tween_property(sprite, "modulate", Color.WHITE, 0.3)
-	
 	if current_health <= 0:
 		die()
 
 func die():
 	get_tree().call_group("health_manager", "gain_health_from_kill", 2.0)
-	get_parent().queue_free()
+	queue_free()

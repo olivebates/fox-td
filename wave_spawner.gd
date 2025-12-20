@@ -62,14 +62,12 @@ func _process(delta: float):
 			wave_completed.emit()
 
 func spawn_enemy():
-	var follow = PathFollow2D.new()
-	follow.loop = false
-	follow.rotates = true
-	path_node.add_child(follow)
 	var enemy = enemy_scene.instantiate()
-	follow.add_child(enemy)
-	enemy.max_speed = base_speed + current_wave * speed_inc
-	enemy.health = base_health + current_wave * health_inc
+	enemy.position = start_pos+Vector2(0,4)
+	enemy.target_position = end_pos  # Add this variable in Enemy script: var target_position: Vector2
+	add_child(enemy)
+	#enemy.max_speed = base_speed + current_wave * speed_inc
+	#enemy.health = base_health + current_wave * health_inc
 
 func generate_path():
 	for child in path_tiles_container.get_children():
@@ -190,13 +188,12 @@ func generate_path():
 	if tile_scene:
 		for cell in full_path_cells:
 			var pos := Vector2(cell) * grid_size + Vector2(grid_size / 2.0, grid_size / 2.0)
-			if pos.y > 0 && pos.y < 135+8:
-				var tile := tile_scene.instantiate()
-				tile.position = pos
-				path_tiles_container.add_child(tile)
+			var tile := tile_scene.instantiate()
+			tile.position = pos
+			path_tiles_container.add_child(tile)
 	else:
 		push_error("Invalid path_tile_uid")
-		
+	
 		# Place buildable tiles on all 8x8 grid positions not occupied by path
 	var buildable_scene := ResourceLoader.load(path_buildable_uid) as PackedScene
 	if buildable_scene:

@@ -23,6 +23,7 @@ InventoryManager="*res://inventory_manager.gd"
 GridController="*res://grid_controller.gd"
 StatsManager="*res://stats_manager.gd"
 Utilities="*res://utilities.gd"
+AStarManager="*res://a_star_manager.gd"
 
 [display]
 

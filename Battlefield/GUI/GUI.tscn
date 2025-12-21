@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://baklm1pqc3pmt"]
+[gd_scene load_steps=7 format=3 uid="uid://baklm1pqc3pmt"]
 
 [ext_resource type="Script" uid="uid://xi1db20durn0" path="res://Battlefield/GUI/GUI.gd" id="1_q7530"]
 [ext_resource type="Script" uid="uid://cidutxx7swaph" path="res://Battlefield/GUI/drag_preview.gd" id="2_3yf0u"]
 [ext_resource type="PackedScene" uid="uid://cqha2gy70dtyi" path="res://Battlefield/GUI/next_wave.tscn" id="2_7bcsv"]
 [ext_resource type="Script" uid="uid://ganpq4sv7xrr" path="res://Battlefield/GUI/placement_root_node_2d.gd" id="4_37vil"]
 [ext_resource type="Script" uid="uid://dhoxx0mmu4v3k" path="res://Battlefield/GUI/healthbar_container.gd" id="5_jar5u"]
+[ext_resource type="PackedScene" uid="uid://5qvnas3uklpm" path="res://Battlefield/GUI/NextWaveShower/NextWaveShower.tscn" id="6_pdy1f"]
 
 [node name="GUI" type="Control"]
 z_index = -100
@@ -17,8 +18,9 @@ metadata/_edit_use_anchors_ = true
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_top = 8.0
+offset_right = 92.0
+offset_bottom = 48.0
 theme_override_constants/separation = 2
 
 [node name="NextWave" parent="VBoxContainer" instance=ExtResource("2_7bcsv")]
@@ -53,20 +55,25 @@ unique_name_in_owner = true
 script = ExtResource("4_37vil")
 
 [node name="HealthbarContainer" type="Control" parent="." groups=["HealthBarContainer"]]
+z_index = 10
 anchors_preset = 0
+offset_top = 11.0
+offset_bottom = 11.0
 script = ExtResource("5_jar5u")
 
 [node name="Bar" type="ProgressBar" parent="HealthbarContainer"]
+z_index = -1
 layout_mode = 0
 offset_top = -17.0
 offset_right = 28.0
 offset_bottom = -8.0
 show_percentage = false
 
-[node name="RedOverlay" type="ColorRect" parent="HealthbarContainer"]
+[node name="RedOverlay" type="ColorRect" parent="HealthbarContainer/Bar"]
 layout_mode = 0
+offset_top = 17.0
 offset_right = 40.0
-offset_bottom = 29.0
+offset_bottom = 46.0
 
 [node name="Text" type="Label" parent="HealthbarContainer"]
 layout_mode = 0
@@ -76,3 +83,10 @@ offset_right = 134.0
 offset_bottom = -1.0
 text = "sd"
 horizontal_alignment = 2
+
+[node name="NextWaveShower" parent="." instance=ExtResource("6_pdy1f")]
+layout_mode = 0
+offset_left = -199.0
+offset_top = -19.0
+offset_right = -189.0
+offset_bottom = 4.0

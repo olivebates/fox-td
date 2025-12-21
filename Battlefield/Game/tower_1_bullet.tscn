@@ -6,7 +6,7 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_x7kjf"]
 size = Vector2(2, 2)
 
-[node name="Tower1Bullet" type="Area2D"]
+[node name="Tower1Bullet" type="Area2D" groups=["bullet"]]
 script = ExtResource("1_qmwlv")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

@@ -59,12 +59,13 @@ func is_valid_placement(cell: Vector2i, dragged_data: Dictionary = {}) -> bool:
 	var existing_data = existing.get_meta("item_data")
 	return existing_data.id == dragged_data.id and existing_data.rank == dragged_data.rank
 
-func get_grid_item_at_cell(cell: Vector2i) -> Node:
-	if cell == Vector2i(-1, -1): return null
-	if grid != null:
-		return grid[cell.y][cell.x]
-	else:
+func get_grid_item_at_cell(cell: Vector2i):
+	if cell == Vector2i(-1, -1):
 		return null
+	if cell.x < 0 or cell.x >= WIDTH or cell.y < 0 or cell.y >= HEIGHT:
+		return null
+	var item = grid[cell.y][cell.x]
+	return item if item != null else null  # optional, already null-safe
 
 func refresh_grid_highlights() -> void:
 	for y in range(HEIGHT):
@@ -79,7 +80,7 @@ func place_item(item_data: Dictionary, cell: Vector2i) -> bool:
 		var existing_data = existing.get_meta("item_data")
 		if existing_data.id == item_data.id and existing_data.rank == item_data.rank:
 			var new_rank = existing_data.rank + 1
-			var cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
+			var cost = InventoryManager.base_spawn_cost * pow(3.0, float(new_rank - 1)) / 3.0
 			if StatsManager.spend_health(cost):
 				existing_data.rank += 1
 				existing.set_meta("item_data", existing_data)
@@ -136,14 +137,14 @@ func _process(_delta: float) -> void:
 				var target_data = existing.get_meta("item_data")
 				if target_data.id == dragged_data.id and target_data.rank == dragged_data.rank:
 					var new_rank = target_data.rank + 1
-					preview_cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
+					preview_cost = InventoryManager.base_spawn_cost * pow(3.0, float(new_rank - 1)) / 3.0
 		if preview_cost == 0.0:
 			var inv_slot = InventoryManager.get_closest_slot(mouse_pos, 8.0)
 			if inv_slot:
 				var slot_item = inv_slot.get_meta("item", {})
 				if !slot_item.is_empty() and slot_item.id == dragged_data.id and slot_item.rank == dragged_data.rank:
 					var new_rank = slot_item.rank + 1
-					preview_cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
+					preview_cost = InventoryManager.base_spawn_cost * pow(3.0, float(new_rank - 1)) / 3.0
 		HealthBarGUI.show_cost_preview(preview_cost)
 		for slot in InventoryManager.slots:
 			if slot.get_meta("hovered", false):
@@ -161,8 +162,9 @@ func _process(_delta: float) -> void:
 func _perform_tower_drop() -> void:
 	var mouse_pos = get_global_mouse_position()
 	var dragged_data = dragged_tower.get_meta("item_data")
-
-	# Inventory drop: empty or merge
+	var success = false
+	
+	# Inventory drop
 	var inv_slot = InventoryManager.get_closest_slot(mouse_pos, 8.0)
 	if inv_slot:
 		var slot_item = inv_slot.get_meta("item", {})
@@ -170,49 +172,50 @@ func _perform_tower_drop() -> void:
 			inv_slot.set_meta("item", dragged_data.duplicate())
 			InventoryManager._update_slot(inv_slot)
 			dragged_tower.queue_free()
+			success = true
 		elif slot_item.id == dragged_data.id and slot_item.rank == dragged_data.rank:
 			var new_rank = slot_item.rank + 1
-			var cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
+			var cost = InventoryManager.base_spawn_cost * pow(3.0, float(new_rank - 1)) / 3.0
 			if StatsManager.spend_health(cost):
 				slot_item.rank += 1
 				inv_slot.set_meta("item", slot_item)
 				InventoryManager._update_slot(inv_slot)
 				dragged_tower.queue_free()
-		# Invalid inventory drop falls through to grid handling
-
-	else:
-		# Grid merge/placement
-		var valid = potential_cell != Vector2i(-1, -1) and is_valid_placement(potential_cell, dragged_data)
-		if valid and grid[potential_cell.y][potential_cell.x] != null:
+				success = true
+	
+	# Grid drop
+	if not success and potential_cell != Vector2i(-1, -1):
+		var valid = is_valid_placement(potential_cell, dragged_data)
+		if valid and grid[potential_cell.y][potential_cell.x] == null:
+			# Simple move/placement
+			dragged_tower.position = grid_offset + Vector2(potential_cell.x * CELL_SIZE + CELL_SIZE / 2, potential_cell.y * CELL_SIZE + CELL_SIZE / 2)
+			grid[potential_cell.y][potential_cell.x] = dragged_tower
+			success = true
+		elif valid and grid[potential_cell.y][potential_cell.x] != null:
+			# Merge attempt
 			var target = grid[potential_cell.y][potential_cell.x]
 			var target_data = target.get_meta("item_data")
-			var new_rank = target_data.rank + 1
-			var cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
-			if StatsManager.spend_health(cost):
-				target_data.rank += 1
-				target.set_meta("item_data", target_data)
-				target.queue_redraw()
-				dragged_tower.queue_free()
-			else:
-				valid = false  # revert if cannot afford
-		if not valid:
-			# Return to original cell
-			var target_cell = original_cell
-			dragged_tower.position = grid_offset + Vector2(target_cell.x * CELL_SIZE + CELL_SIZE / 2, target_cell.y * CELL_SIZE + CELL_SIZE / 2)
-			grid[target_cell.y][target_cell.x] = dragged_tower
-		else:
-			# Valid new placement (non-merge)
-			var target_cell = potential_cell
-			dragged_tower.position = grid_offset + Vector2(target_cell.x * CELL_SIZE + CELL_SIZE / 2, target_cell.y * CELL_SIZE + CELL_SIZE / 2)
-			grid[target_cell.y][target_cell.x] = dragged_tower
-	InventoryManager.refresh_all_highlights()
-
-	if dragged_tower:
-		dragged_tower.z_index = 0
-		dragged_tower.modulate.a = 1.0
+			if target_data.id == dragged_data.id and target_data.rank == dragged_data.rank:
+				var new_rank = target_data.rank + 1
+				var cost = InventoryManager.base_spawn_cost * pow(3.0, float(new_rank - 1)) / 3.0
+				if StatsManager.spend_health(cost):
+					target_data.rank += 1
+					target.set_meta("item_data", target_data)
+					target.queue_redraw()
+					dragged_tower.queue_free()
+					success = true
+	
+	# Revert if no success
+	if not success:
+		dragged_tower.position = grid_offset + Vector2(original_cell.x * CELL_SIZE + CELL_SIZE / 2, original_cell.y * CELL_SIZE + CELL_SIZE / 2)
+		grid[original_cell.y][original_cell.x] = dragged_tower
+	
+	dragged_tower.z_index = 0
+	dragged_tower.modulate.a = 1.0
 	dragged_tower = null
 	original_cell = Vector2i(-1, -1)
 	potential_cell = Vector2i(-1, -1)
+	InventoryManager.refresh_all_highlights()
 	queue_redraw()
 
 # Optional: faint grid lines + drag highlight

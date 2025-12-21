@@ -6,7 +6,7 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mx82x"]
 size = Vector2(8, 8)
 
-[node name="Tower1" type="StaticBody2D" groups=["grid_occupiers"]]
+[node name="Tower1" type="StaticBody2D" groups=["grid_occupiers", "tower"]]
 z_index = 50
 script = ExtResource("1_o00p6")
 

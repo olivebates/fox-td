@@ -39,6 +39,9 @@ grid_occupiers=""
 grid_buildable=""
 HealthBarContainer=""
 enemy=""
+tower=""
+bullet=""
+start_wave_button=""
 
 [rendering]
 

@@ -5,7 +5,7 @@ extends Node2D
 @export var enemy_scene: PackedScene = preload("uid://csawtka1gfo5o")
 @export var base_speed: float = 80.0
 @export var speed_inc: float = 10.0
-@export var base_health: int = 50
+@export var base_health: int = 1
 @export var health_inc: int = 10
 
 @export var start_pos: Vector2 = Vector2(88, -8)
@@ -22,11 +22,12 @@ const MAX_Y: int = 7
 const BORDER_Y_MIN: int = 0
 const BORDER_Y_MAX: int = 8
 
-var current_wave: int = 0
+var current_wave: int = 1
 var enemies_to_spawn: int = 0
 var spawn_delay: float = 1.0
 var spawn_timer: float = 0.0
 var is_spawning: bool = false
+var next_wave_health = 1
 
 signal wave_completed
 signal wave_started
@@ -34,6 +35,9 @@ signal wave_started
 var path_node: Path2D
 var path_tiles_container: Node2D
 var buildable_tiles_container: Node2D
+
+var enemies_alive = 0
+var wave_ongoing = false
 
 func _ready():
 	path_node = Path2D.new()
@@ -44,13 +48,24 @@ func _ready():
 
 func start_next_wave():
 	if is_spawning: return
-	current_wave += 1
-	enemies_to_spawn = 5 + current_wave * 2
+	enemies_to_spawn = 7
 	is_spawning = true
 	spawn_timer = 0.0
 	wave_started.emit()
 
 func _process(delta: float):
+	enemies_alive = get_tree().get_nodes_in_group("enemy").size()
+	if enemies_alive == 0:
+		if enemies_to_spawn == 0:
+			if wave_ongoing:
+				wave_ongoing = false
+				current_wave += 1
+	else:
+		wave_ongoing = true
+	
+	var x = current_wave
+	next_wave_health = floor(base_health + x-2 + base_health*pow(1.1, x-1))
+	
 	if not is_spawning: return
 	spawn_timer += delta
 	if spawn_timer >= spawn_delay and enemies_to_spawn > 0:
@@ -66,8 +81,9 @@ func spawn_enemy():
 	enemy.position = start_pos+Vector2(0,4)
 	enemy.target_position = end_pos  # Add this variable in Enemy script: var target_position: Vector2
 	add_child(enemy)
-	#enemy.max_speed = base_speed + current_wave * speed_inc
-	#enemy.health = base_health + current_wave * health_inc
+	enemy.max_speed = base_speed + current_wave * speed_inc
+	enemy.health = next_wave_health
+	enemy.current_health = enemy.health
 
 func generate_path():
 	for child in path_tiles_container.get_children():

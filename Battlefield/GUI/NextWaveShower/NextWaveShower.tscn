@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://5qvnas3uklpm"]
+
+[ext_resource type="Script" uid="uid://du4pjoyj8ehit" path="res://Battlefield/GUI/NextWaveShower/next_wave_shower.gd" id="1_mvmsu"]
+
+[node name="NextWaveShower" type="Label"]
+script = ExtResource("1_mvmsu")

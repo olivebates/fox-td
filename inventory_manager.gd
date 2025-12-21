@@ -15,9 +15,11 @@ const RANK_COLORS = {
 	10: Color(1.0, 0.531, 0.986),
 	11: Color(0.565, 0.0, 0.18),
 }
-
+var base_spawn_cost = 50.0
 @onready var HealthBarGUI = get_tree().get_first_node_in_group("HealthBarContainer")
 @onready var grid_controller: Node2D = get_node("/root/GridController")
+var _merge_blink_timer: float = 0.0
+var _merge_blink_state: bool = false
 
 var items: Dictionary = {
 	"tower1": {
@@ -40,7 +42,7 @@ var potential_cell: Vector2i = Vector2i(-1, -1)
 
 func register_inventory(grid: GridContainer, spawner_grid: GridContainer, preview: Control) -> void:
 	slots.clear()
-	for i in 21:
+	for i in 18:
 		var slot = Panel.new()
 		slot.custom_minimum_size = Vector2(8, 8)
 		#slot.clip_contents = true
@@ -54,8 +56,8 @@ func register_inventory(grid: GridContainer, spawner_grid: GridContainer, previe
 	
 	# Example items
 	slots[0].set_meta("item", {"id": "tower1", "rank": 1})
-	slots[1].set_meta("item", {"id": "tower1", "rank": 1})
-	slots[5].set_meta("item", {"id": "tower2", "rank": 5})
+	#slots[1].set_meta("item", {"id": "tower1", "rank": 1})
+	#slots[5].set_meta("item", {"id": "tower2", "rank": 5})
 	
 	for slot in slots:
 		_update_slot(slot)
@@ -72,7 +74,7 @@ func register_inventory(grid: GridContainer, spawner_grid: GridContainer, previe
 		preload("uid://dyan40sgre5b1"), 
 	]
 
-	for rank in range(9):
+	for rank in range(1):
 		var btn = TextureRect.new()
 		btn.texture = spawner_textures[rank]
 		btn.expand_mode = TextureRect.EXPAND_KEEP_SIZE
@@ -80,7 +82,7 @@ func register_inventory(grid: GridContainer, spawner_grid: GridContainer, previe
 		btn.custom_minimum_size = Vector2(8, 8)
 		btn.mouse_filter = Control.MOUSE_FILTER_STOP
 		
-		var cost = 40.0 * pow(3.0, float(rank))
+		var cost = base_spawn_cost * pow(3.0, float(rank))
 		
 		btn.mouse_entered.connect(func():
 			btn.modulate = Color(1.3, 1.3, 1.3)
@@ -146,8 +148,8 @@ func _draw_slot(slot: Panel) -> void:
 	var hovered = slot.get_meta("hovered", false)
 	var dragged_data = get_current_dragged_data()
 	var is_matching = !dragged_data.is_empty() && item.id == dragged_data.id && item.rank == dragged_data.rank
-	
-	var brighten = 1.3 if (hovered or is_matching) else 1.0
+	var blink_on = _merge_blink_state if is_matching else true
+	var brighten = (1.2 if hovered else 1.2) if is_matching and blink_on else (1.3 if hovered else 1.0)
 	var bg_color = base_color * brighten
 	
 	slot.draw_rect(Rect2(0.5, 0.5, 7, 7), border_color, false, 1.0 + (0.5 if (hovered or is_matching) else 0.0))
@@ -229,7 +231,7 @@ func _process(_delta: float) -> void:
 			var target_item = inv_target.get_meta("item", {})
 			if !target_item.is_empty() and target_item.id == dragged_item.id and target_item.rank == dragged_item.rank:
 				var new_rank = dragged_item.rank + 1
-				preview_cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
+				preview_cost = (base_spawn_cost * pow(3.0, float(new_rank - 1))) / 3.0
 		
 		# Grid merge preview (only if no inventory merge detected)
 		if preview_cost == 0.0 and potential_cell != Vector2i(-1, -1):
@@ -238,7 +240,7 @@ func _process(_delta: float) -> void:
 				var existing_data = existing.get_meta("item_data", {})
 				if existing_data.id == dragged_item.id and existing_data.rank == dragged_item.rank:
 					var new_rank = existing_data.rank + 1
-					preview_cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
+					preview_cost = (base_spawn_cost * pow(3.0, float(new_rank - 1))) / 3.0
 		
 		HealthBarGUI.show_cost_preview(preview_cost)
 	else:
@@ -253,6 +255,21 @@ func _process(_delta: float) -> void:
 		_perform_drop()
 		HealthBarGUI.show_cost_preview(0.0)  # Clear preview after drop
 		
+	if !dragged_item.is_empty() or (grid_controller and grid_controller.dragged_tower != null):
+		_merge_blink_timer += _delta
+		if _merge_blink_timer >= 0.5:
+			_merge_blink_timer -= 0.5
+			_merge_blink_state = !_merge_blink_state
+			refresh_inventory_highlights()
+			if grid_controller:
+				grid_controller.refresh_grid_highlights()
+	else:
+		_merge_blink_timer = 0.0
+		if _merge_blink_state:
+			_merge_blink_state = false
+			refresh_inventory_highlights()
+			if grid_controller:
+				grid_controller.refresh_grid_highlights()
 
 func get_current_dragged_data(exclude_tower: Node = null) -> Dictionary:
 	if !dragged_item.is_empty():
@@ -265,29 +282,30 @@ func _perform_drop() -> void:
 	var mouse_pos = get_global_mouse_position()
 	var target = get_closest_slot(mouse_pos, 8.0, false)
 	var return_to_original = true
+	
 	if target and target != original_slot:
 		var target_item = target.get_meta("item", {})
-		if !target_item.is_empty() and target_item.id == dragged_item.id and target_item.rank == dragged_item.rank:
+		if target_item.is_empty():
+			target.set_meta("item", dragged_item)
+			_update_slot(target)
+			return_to_original = false
+		elif !target_item.is_empty() and target_item.id == dragged_item.id and target_item.rank == dragged_item.rank:
 			var new_rank = target_item.rank + 1
-			var cost = (40.0 * pow(3.0, float(new_rank - 1))) / 3.0
+			var cost = (base_spawn_cost * pow(3.0, float(new_rank - 1))) / 3.0
 			if StatsManager.spend_health(cost):
 				target_item.rank += 1
 				target.set_meta("item", target_item)
 				_update_slot(target)
 				return_to_original = false
-		else:
-			target.set_meta("item", dragged_item)
-			if !target_item.is_empty():
-				original_slot.set_meta("item", target_item)
-				_update_slot(original_slot)
-			_update_slot(target)
-			return_to_original = false
+	
 	if return_to_original and potential_cell != Vector2i(-1, -1):
 		if GridController.place_item(dragged_item, potential_cell):
 			return_to_original = false
+	
 	if return_to_original:
 		original_slot.set_meta("item", dragged_item)
 		_update_slot(original_slot)
+	
 	dragged_item = {}
 	original_slot = null
 	drag_preview.visible = false
@@ -332,10 +350,17 @@ func _spawn_item(rank: int) -> void:
 	if keys.is_empty(): return
 	var id = keys[randi() % keys.size()]
 	var new_item = {"id": id, "rank": rank + 1}
-	var cost = 40.0 * pow(3.0, float(rank))
+	var cost = base_spawn_cost * pow(3.0, float(rank))
 	if not StatsManager.spend_health(cost): return
 	for slot in slots:
 		if slot.get_meta("item", {}).is_empty():
 			slot.set_meta("item", new_item)
 			_update_slot(slot)
 			return
+
+
+func clear_inventory() -> void:
+	for slot in slots:
+		slot.set_meta("item", {})
+		_update_slot(slot)
+	refresh_inventory_highlights()

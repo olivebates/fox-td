@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://b30gha30hbgn0" path="res://Battlefield/Enemies/enemy_base.gd" id="1_bcekf"]
 [ext_resource type="Texture2D" uid="uid://dyan40sgre5b1" path="res://Battlefield/Sprites/Towers/fireba2ll.webp" id="2_1b755"]
-[ext_resource type="Texture2D" uid="uid://bfdlhgirdy05q" path="res://Battlefield/Sprites/Enemies/shield.png" id="3_1b755"]
+[ext_resource type="Texture2D" uid="uid://clpsv07l8w6gb" path="res://Battlefield/Sprites/Enemies/shield2.png" id="3_1b755"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_j2ch1"]
 size = Vector2(6, 6)

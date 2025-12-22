@@ -1,4 +1,3 @@
-# BulletBase.gd (Script, not attached to scene)
 class_name BulletBase
 extends Area2D
 
@@ -15,19 +14,40 @@ func _ready() -> void:
 	monitoring = true
 	body_entered.connect(_on_body_entered)
 
+func find_closest_enemy() -> Node2D:
+	var enemies = get_tree().get_nodes_in_group("enemies")
+	if enemies.is_empty():
+		return null
+	var closest = enemies[0]
+	var closest_dist = global_position.distance_squared_to(closest.global_position)
+	for enemy in enemies:
+		if not is_instance_valid(enemy):
+			continue
+		var dist = global_position.distance_squared_to(enemy.global_position)
+		if dist < closest_dist:
+			closest = enemy
+			closest_dist = dist
+	return closest
+
 func _physics_process(delta: float) -> void:
 	lifetime -= delta
 	if lifetime <= 0:
 		queue_free()
 		return
-	
+
 	if target and is_instance_valid(target):
-		var dir = (target.global_position - global_position).normalized()
-		velocity = velocity.lerp(dir * speed, homing_strength * delta)
+		pass  # keep current target
 	else:
-		velocity = velocity.normalized() * speed
+		target = find_closest_enemy()
+		if target == null:
+			queue_free()
+			return
+
+	var dir = (target.global_position - global_position).normalized()
+	velocity = velocity.lerp(dir * speed, homing_strength * delta)
 	
 	global_position += velocity * delta
+	
 	if velocity.length() > 0:
 		rotation = velocity.angle()
 
@@ -38,9 +58,10 @@ func _on_body_entered(body: Node2D) -> void:
 
 func apply_damage(enemy: Node2D) -> void:
 	enemy.take_damage(damage)
+	#Utilities.shake(2.0, 0.2)
 
 func on_hit() -> void:
-	queue_free()  # default: single hit then die
+	queue_free()
 
 func explode_effect() -> void:
-	pass  # override in subclasses
+	pass

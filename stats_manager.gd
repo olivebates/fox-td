@@ -49,9 +49,11 @@ func take_damage(amount: float) -> void:
 		max_health = 100
 		production_speed = 1.0
 		kill_multiplier = 1.0
-		WaveSpawner.current_wave = 0
-		WaveSpawner.is_spawning = false
-		WaveSpawner.enemies_to_spawn = 0
+		WaveSpawner.cancel_current_waves()
+		WaveShower.reset_preview()
+		
+		#WaveSpawner.is_spawning = false
+		#WaveSpawner.enemies_to_spawn = 0
 		get_tree().call_group("start_wave_button", "set_disabled", false)
 		var enemies = get_tree().get_nodes_in_group("enemy")
 		for node in enemies:

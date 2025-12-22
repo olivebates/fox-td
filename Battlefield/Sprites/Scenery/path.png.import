@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cvpvso7c6ijmm"
-path="res://.godot/imported/nonbuildable_tile.webp-c7935ff68a8bde4edc5ce01eaa711930.ctex"
+uid="uid://gub3413ctqax"
+path="res://.godot/imported/path.png-248d8553849d4cabf36308c46f239ce7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Battlefield/Sprites/Scenery/nonbuildable_tile.webp"
-dest_files=["res://.godot/imported/nonbuildable_tile.webp-c7935ff68a8bde4edc5ce01eaa711930.ctex"]
+source_file="res://Battlefield/Sprites/Scenery/path.png"
+dest_files=["res://.godot/imported/path.png-248d8553849d4cabf36308c46f239ce7.ctex"]
 
 [params]
 

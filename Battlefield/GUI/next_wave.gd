@@ -2,7 +2,6 @@ extends Button
 
 func _ready() -> void:
 	pressed.connect(_on_pressed)
-	WaveSpawner.wave_completed.connect(func(): disabled = false)
 	disabled = false
 	
 	add_theme_font_size_override("font_size", 4)
@@ -42,7 +41,11 @@ func _ready() -> void:
 	offset_top = 0
 	offset_bottom = 0
 
+#func _process(delta: float) -> void:
+	#if get_tree().get_nodes_in_group("enemy").size() > 0 or WaveSpawner.enemies_to_spawn > 0:
+		#disabled = true
+	#else:
+		#disabled = false
 
 func _on_pressed():
 	WaveSpawner.start_next_wave()
-	disabled = true

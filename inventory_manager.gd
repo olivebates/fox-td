@@ -293,10 +293,13 @@ func _perform_drop() -> void:
 			var new_rank = target_item.rank + 1
 			var cost = (base_spawn_cost * pow(3.0, float(new_rank - 1))) / 3.0
 			if StatsManager.spend_health(cost):
+				Utilities.spawn_floating_text("Rank up!", get_global_mouse_position(), null, true)
 				target_item.rank += 1
 				target.set_meta("item", target_item)
 				_update_slot(target)
 				return_to_original = false
+			else:
+				Utilities.spawn_floating_text("Not enough health...", get_global_mouse_position(), null, false)
 	
 	if return_to_original and potential_cell != Vector2i(-1, -1):
 		if GridController.place_item(dragged_item, potential_cell):

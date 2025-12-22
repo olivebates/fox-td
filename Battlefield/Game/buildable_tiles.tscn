@@ -1,12 +1,14 @@
-[gd_scene load_steps=3 format=3 uid="uid://823ref1rao2h"]
+[gd_scene load_steps=4 format=3 uid="uid://823ref1rao2h"]
 
 [ext_resource type="Texture2D" uid="uid://60jj3sr7rbnf" path="res://Battlefield/Sprites/Scenery/buildable_tile.png" id="1_71xhc"]
+[ext_resource type="Script" uid="uid://8mcwd7m4vl3e" path="res://Battlefield/Game/buildable_tiles.gd" id="1_polt5"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_polt5"]
 size = Vector2(8, 8)
 
 [node name="BuildableTiles" type="CharacterBody2D" groups=["grid_buildable"]]
 z_index = -500
+script = ExtResource("1_polt5")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_polt5")

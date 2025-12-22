@@ -21,6 +21,7 @@ func _ready() -> void:
 	$Label.add_theme_font_size_override("font_size", 3.5)
 	$Label.add_theme_color_override("font_color", Color.BLACK)
 	$Label.position = Vector2(-3.7, 0.5)
+	$Sprite2D2.modulate = Color(1.0, 0.2, 0.2)
 	start_position = position
 	add_to_group("enemies")
 	sprite = $Sprite2D
@@ -69,38 +70,46 @@ func _process(delta: float) -> void:
 	
 	update_healthbar()
 
-func create_healthbar():pass
-	#health_bg = ColorRect.new()
-	#health_bg.color = Color(0.3, 0.3, 0.3, 0.9)
-	#health_bg.size = Vector2(10, 6)
-	#health_bg.top_level = true
-	#add_child(health_bg)
-	#
-	#health_fg = ColorRect.new()
-	#health_fg.color = Color(0.2, 0.8, 0.2)
-	#health_fg.size = Vector2(8, 4)
-	#health_fg.top_level = true
-	#add_child(health_fg)
+func create_healthbar():
+	health_bg = ColorRect.new()
+	health_bg.color = Color(0.3, 0.3, 0.3, 0.9)
+	health_bg.size = Vector2(4, 1)
+	health_bg.top_level = true
+	add_child(health_bg)
+	
+	health_fg = ColorRect.new()
+	health_fg.color = Color(0.2, 0.8, 0.2)
+	health_fg.size = Vector2(4, 1)
+	health_fg.top_level = true
+	add_child(health_fg)
 
-func update_healthbar():pass
-	#var offset = Vector2(0, 8)
-	#var pos = (global_position + offset).round()
-	#health_bg.global_position = pos - Vector2(5, 3)
-	#health_fg.global_position = pos - Vector2(4, 2)
-	#health_fg.size.x = 8.0 * (float(current_health) / health)
+func update_healthbar():
+	var offset = Vector2(0, 8)
+	var pos = (global_position + offset).round()
+	health_bg.global_position = pos - Vector2(0, 4)
+	health_fg.global_position = pos - Vector2(0, 3)
+	health_fg.size.x = 4.0 * (float(current_health) / health)
 
 func take_damage(amount: int):
 	current_health -= amount
 	update_healthbar()
+	
 	var tw = create_tween()
 	tw.tween_property(sprite, "modulate", Color.RED, 0.1)
 	tw.tween_property(sprite, "modulate", Color.WHITE, 0.3)
+	
+	var health_ratio = float(current_health) / health
+	var green_blue = 0.2 + (0.8 - 0.2) * (1.0 - health_ratio)
+	var target_color = Color(1.0, green_blue, green_blue)
+	
 	var tw3 = create_tween()
 	tw3.tween_property($Sprite2D2, "modulate", Color.RED, 0.1)
-	tw3.tween_property($Sprite2D2, "modulate", Color.WHITE, 0.3)
+	tw3.tween_property($Sprite2D2, "modulate", target_color, 0.3)
+	
 	$Label.add_theme_color_override("font_color", Color.WHITE)
 	var tw2 = create_tween()
 	tw2.tween_property($Label, "theme_override_colors/font_color", Color.BLACK, 0.3)
+	
 	if current_health <= 0:
 		die()
 

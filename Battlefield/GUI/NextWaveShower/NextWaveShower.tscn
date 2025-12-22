@@ -2,5 +2,9 @@
 
 [ext_resource type="Script" uid="uid://du4pjoyj8ehit" path="res://Battlefield/GUI/NextWaveShower/next_wave_shower.gd" id="1_mvmsu"]
 
-[node name="NextWaveShower" type="Label"]
+[node name="NextWaveShower" type="Control" groups=["next_wave_shower"]]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 23.0
 script = ExtResource("1_mvmsu")

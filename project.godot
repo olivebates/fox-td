@@ -24,6 +24,7 @@ GridController="*res://grid_controller.gd"
 StatsManager="*res://stats_manager.gd"
 Utilities="*res://utilities.gd"
 AStarManager="*res://a_star_manager.gd"
+WaveShower="*res://wave_shower.gd"
 
 [display]
 
@@ -42,6 +43,7 @@ enemy=""
 tower=""
 bullet=""
 start_wave_button=""
+next_wave_shower=""
 
 [rendering]
 

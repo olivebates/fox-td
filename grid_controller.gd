@@ -82,10 +82,13 @@ func place_item(item_data: Dictionary, cell: Vector2i) -> bool:
 			var new_rank = existing_data.rank + 1
 			var cost = InventoryManager.base_spawn_cost * pow(3.0, float(new_rank - 1)) / 3.0
 			if StatsManager.spend_health(cost):
+				Utilities.spawn_floating_text("Rank up!", get_global_mouse_position(), null, true)
 				existing_data.rank += 1
 				existing.set_meta("item_data", existing_data)
 				existing.queue_redraw()
 				return true
+			else:
+				Utilities.spawn_floating_text("Not enough meat...", get_global_mouse_position(), null, false)
 			return false
 		return false
 
@@ -99,7 +102,7 @@ func place_item(item_data: Dictionary, cell: Vector2i) -> bool:
 	add_child(instance)
 	grid[cell.y][cell.x] = instance
 	instance.input_pickable = true
-	instance.connect("input_event", _on_tower_input_event.bind(instance))
+	
 	return true
 
 func _on_tower_input_event(viewport: Viewport, event: InputEvent, shape_idx: int, tower: Node) -> void:
@@ -177,11 +180,14 @@ func _perform_tower_drop() -> void:
 			var new_rank = slot_item.rank + 1
 			var cost = InventoryManager.base_spawn_cost * pow(3.0, float(new_rank - 1)) / 3.0
 			if StatsManager.spend_health(cost):
+				Utilities.spawn_floating_text("Rank up!", get_global_mouse_position(), null, true)
 				slot_item.rank += 1
 				inv_slot.set_meta("item", slot_item)
 				InventoryManager._update_slot(inv_slot)
 				dragged_tower.queue_free()
 				success = true
+			else:
+				Utilities.spawn_floating_text("Not enough meat...", get_global_mouse_position(), null, false)
 	
 	# Grid drop
 	if not success and potential_cell != Vector2i(-1, -1):
@@ -199,11 +205,14 @@ func _perform_tower_drop() -> void:
 				var new_rank = target_data.rank + 1
 				var cost = InventoryManager.base_spawn_cost * pow(3.0, float(new_rank - 1)) / 3.0
 				if StatsManager.spend_health(cost):
+					Utilities.spawn_floating_text("Rank up!", get_global_mouse_position(), null, true)
 					target_data.rank += 1
 					target.set_meta("item_data", target_data)
 					target.queue_redraw()
 					dragged_tower.queue_free()
 					success = true
+				else:
+					Utilities.spawn_floating_text("Not enough meat...", get_global_mouse_position(), null, false)
 	
 	# Revert if no success
 	if not success:

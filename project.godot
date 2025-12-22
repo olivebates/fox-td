@@ -44,6 +44,7 @@ tower=""
 bullet=""
 start_wave_button=""
 next_wave_shower=""
+start_first_wave_button=""
 
 [rendering]
 

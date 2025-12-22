@@ -11,20 +11,21 @@ signal max_health_changed(new_max: float)
 
 func _ready():
 	add_to_group("health_manager")
-
+var is_paused: bool = false
 func _process(delta: float) -> void:
+	if is_paused:
+		return
 	if get_tree().get_nodes_in_group("enemy").size() > 0:
 		if health < max_health:
 			health += production_speed * delta
 			health = min(health, max_health)
 			health_changed.emit(health, max_health)
-	
-	if health >= max_health:
-		max_health *= 2
-		production_speed += 0.5
-		kill_multiplier *= 1.25
-		max_health_changed.emit(max_health)
-		health_changed.emit(health, max_health)
+		if health >= max_health:
+			max_health *= 2
+			production_speed += 0.5
+			kill_multiplier *= 1.25
+			max_health_changed.emit(max_health)
+			health_changed.emit(health, max_health)
 
 func spend_health(amount: float) -> bool:
 	if health > amount:
@@ -44,13 +45,9 @@ func take_damage(amount: float) -> void:
 	health -= amount
 	health_changed.emit(health, max_health)
 	if health <= 0:
-		level = 1
-		health = 50
-		max_health = 100
-		production_speed = 1.0
-		kill_multiplier = 1.0
 		WaveSpawner.cancel_current_waves()
 		WaveShower.reset_preview()
+		get_tree().get_first_node_in_group("start_first_wave_button").on_death()
 		
 		#WaveSpawner.is_spawning = false
 		#WaveSpawner.enemies_to_spawn = 0
@@ -69,5 +66,12 @@ func take_damage(amount: float) -> void:
 			
 		InventoryManager.clear_inventory()
 		
+		level = 1
+		health = 50
+		max_health = 100
+		production_speed = 1.0
+		kill_multiplier = 1.0
+		health_changed.emit(health, max_health)
+		max_health_changed.emit(max_health)
 		
 		#WaveSpawner.generate_path()  # Regenerates path and clears tiles

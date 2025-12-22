@@ -54,7 +54,8 @@ func _on_health_changed(current: float, max_val: float) -> void:
 	_update_red_overlay()
 
 func _on_max_changed(new_max: float) -> void:
-	Utilities.spawn_floating_text("Level Up!", get_parent().position, get_tree().current_scene, true)
+	if new_max != 100:
+		Utilities.spawn_floating_text("Level Up!", get_parent().position, get_tree().current_scene, true)
 	StatsManager.level += 1
 	bar.max_value = new_max
 	_update_text()

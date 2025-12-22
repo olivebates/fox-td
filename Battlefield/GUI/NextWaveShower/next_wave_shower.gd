@@ -1,6 +1,6 @@
 extends Control
 @export var rectangle_count: int = 10
-@export var speed: float = 3.0
+@export var speed: float = 2.5
 @export var speed_multiplier: float = 12.0  # Speed boost when clicking
 @export var bar_width: float = 8.0
 @export var bar_height: float = 600.0
@@ -29,7 +29,7 @@ func _ready():
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	current_speed = speed
 	for i in rectangle_count:
-		var y = rect_height + i * rect_height
+		var y = 5 + i * rect_height
 		var wave_num = i + 1
 		var enemy_type = WaveSpawner.get_enemy_type_for_wave(wave_num)
 		var rect_data = {
@@ -45,7 +45,7 @@ func reset_rectangles() -> void:
 	
 	# Recreate the initial rectangles with enemy types
 	for i in rectangle_count:
-		var y = rect_height + i * rect_height
+		var y = 5 + i * rect_height
 		var wave_num = i + 1
 		var enemy_type = WaveSpawner.get_enemy_type_for_wave(wave_num)
 		var rect_data = {

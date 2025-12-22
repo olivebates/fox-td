@@ -11,7 +11,7 @@ extends Node2D
 @export var path_tile_uid: String = "uid://2wlflfus0jih"
 @export var buildable_grid_size = 8
 @export var path_buildable_uid: String = "uid://823ref1rao2h"
-
+var game_paused: bool = false
 
 const ENEMY_TYPES = {
 	"normal": {
@@ -64,11 +64,23 @@ var path_node: Path2D
 var path_tiles_container: Node2D
 
 func _ready():
+	add_to_group("wave_spawner")
 	path_node = Path2D.new()
 	add_child(path_node)
 	path_tiles_container = Node2D.new()
 	add_child(path_tiles_container)
 	generate_path()
+	
+
+func set_game_paused(p: bool) -> void:
+	game_paused = p
+
+func await_delay(delay: float) -> void:
+	var elapsed: float = 0.0
+	while elapsed < delay:
+		await get_tree().process_frame
+		if not game_paused:
+			elapsed += get_process_delta_time()
 
 func get_enemy_type_for_wave(wave: int) -> String:
 	var keys := ENEMY_TYPES.keys()
@@ -105,13 +117,12 @@ func _spawn_wave_async(wave: int, enemy_type: String, health: int, count: int) -
 	while _remaining_enemies > 0 and _is_spawning:
 		spawn_enemy(wave, enemy_type, health)
 		_remaining_enemies -= 1
-		await get_tree().create_timer(spawn_delay).timeout
+		await await_delay(spawn_delay)
 	_is_spawning = false
 
 func spawn_enemy(wave: int, enemy_type: String, health: int):
 	var enemy = enemy_scene.instantiate()
 	var type_data = ENEMY_TYPES[enemy_type]
-
 	enemy.position = start_pos + Vector2(0, 4)
 	enemy.target_position = end_pos
 	add_child(enemy)

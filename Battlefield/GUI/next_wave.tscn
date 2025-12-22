@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://cqha2gy70dtyi"]
-
-[ext_resource type="Script" uid="uid://dx0i2vj56rrmv" path="res://Battlefield/GUI/next_wave.gd" id="1_mwpho"]
-
-[node name="NextWave" type="Button" groups=["start_wave_button"]]
-script = ExtResource("1_mwpho")

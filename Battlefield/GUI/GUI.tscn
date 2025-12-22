@@ -1,11 +1,12 @@
-[gd_scene load_steps=7 format=3 uid="uid://baklm1pqc3pmt"]
+[gd_scene load_steps=8 format=3 uid="uid://baklm1pqc3pmt"]
 
 [ext_resource type="Script" uid="uid://xi1db20durn0" path="res://Battlefield/GUI/GUI.gd" id="1_q7530"]
 [ext_resource type="Script" uid="uid://cidutxx7swaph" path="res://Battlefield/GUI/drag_preview.gd" id="2_3yf0u"]
-[ext_resource type="PackedScene" uid="uid://cqha2gy70dtyi" path="res://Battlefield/GUI/next_wave.tscn" id="2_7bcsv"]
+[ext_resource type="PackedScene" uid="uid://cqha2gy70dtyi" path="res://Battlefield/GUI/pause.tscn" id="2_7bcsv"]
 [ext_resource type="Script" uid="uid://ganpq4sv7xrr" path="res://Battlefield/GUI/placement_root_node_2d.gd" id="4_37vil"]
 [ext_resource type="Script" uid="uid://dhoxx0mmu4v3k" path="res://Battlefield/GUI/healthbar_container.gd" id="5_jar5u"]
 [ext_resource type="PackedScene" uid="uid://5qvnas3uklpm" path="res://Battlefield/GUI/NextWaveShower/NextWaveShower.tscn" id="6_pdy1f"]
+[ext_resource type="Script" uid="uid://f1v8kkxu8ic1" path="res://Battlefield/GUI/start_first_wave_button.gd" id="7_1n0ix"]
 
 [node name="GUI" type="Control"]
 z_index = -100
@@ -17,17 +18,16 @@ script = ExtResource("1_q7530")
 metadata/_edit_use_anchors_ = true
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
+clip_contents = true
 layout_mode = 0
 offset_top = 8.0
-offset_right = 92.0
-offset_bottom = 48.0
+offset_right = 22.0
+offset_bottom = 43.0
 theme_override_constants/separation = 2
 
-[node name="NextWave" parent="VBoxContainer" instance=ExtResource("2_7bcsv")]
-visible = false
+[node name="Pause" parent="VBoxContainer" instance=ExtResource("2_7bcsv")]
 z_index = 10
 layout_mode = 2
-text = "Next Wave"
 
 [node name="SpawnButtons" type="GridContainer" parent="VBoxContainer"]
 unique_name_in_owner = true
@@ -91,3 +91,11 @@ offset_left = -199.0
 offset_top = -19.0
 offset_right = -189.0
 offset_bottom = 4.0
+
+[node name="StartFirstWaveButton" type="Button" parent="." groups=["start_first_wave_button"]]
+layout_mode = 0
+offset_left = -113.0
+offset_top = 92.0
+offset_right = -77.0
+offset_bottom = 105.0
+script = ExtResource("7_1n0ix")

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cqha2gy70dtyi"]
+
+[ext_resource type="Script" uid="uid://dx0i2vj56rrmv" path="res://Battlefield/GUI/pause.gd" id="1_7m1k4"]
+
+[node name="Pause" type="Button" groups=["start_wave_button"]]
+script = ExtResource("1_7m1k4")

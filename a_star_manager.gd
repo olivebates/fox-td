@@ -2,12 +2,15 @@ extends Node2D
 
 var astar: AStarGrid2D = AStarGrid2D.new()
 const CELL_SIZE: Vector2 = Vector2(8, 8)
+signal astar_updated
 
 func _ready() -> void:
 	astar.cell_size = CELL_SIZE
 	astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER  # or adjust as needed
 	astar.jumping_enabled = true
 	_update_grid()
+	
+	
 func _update_grid() -> void:
 	var viewport: Rect2 = get_viewport_rect()
 	var extra_cells: int = 4
@@ -31,17 +34,28 @@ func _update_grid() -> void:
 		Vector2i(-1, -1)
 	]
 
+	# Allow grid_occupiers (walkable areas)
 	for node in get_tree().get_nodes_in_group("grid_occupiers"):
 		var world_pos: Vector2 = node.global_position - offset
 		var base_cell := Vector2i(
 			floor(world_pos.x / CELL_SIZE.x),
 			floor(world_pos.y / CELL_SIZE.y)
 		)
-
 		for dir in directions:
 			var cell = base_cell + dir
 			if astar.is_in_boundsv(cell):
 				allowed_cells[cell] = true
+
+	# Block walls (override any previous allowance)
+	for node in get_tree().get_nodes_in_group("walls"):
+		var world_pos: Vector2 = node.global_position - offset
+		var base_cell := Vector2i(
+			floor(world_pos.x / CELL_SIZE.x),
+			floor(world_pos.y / CELL_SIZE.y)
+		)
+		var cell = base_cell
+		if astar.is_in_boundsv(cell):
+			allowed_cells.erase(cell)  # explicitly block
 
 	# --- STEP 2: mark everything else solid ---
 	for x in astar.region.size.x:
@@ -49,6 +63,35 @@ func _update_grid() -> void:
 			var cell := Vector2i(x, y)
 			var is_valid := allowed_cells.has(cell)
 			astar.set_point_solid(cell, not is_valid)
+			
+	astar.update()
+	emit_signal("astar_updated")  # add this line at the end
+
+func update_grid_and_check_path(start_world: Vector2, end_world: Vector2) -> bool:
+	_update_grid()
+	
+	var start_local := start_world - astar.offset
+	var start_cell := Vector2i(
+		floor(start_local.x / astar.cell_size.x),
+		ceil(start_local.y / astar.cell_size.y)
+	)
+	
+	var end_local := end_world - astar.offset
+	var end_cell := Vector2i(
+		floor(end_local.x / astar.cell_size.x),
+		floor(end_local.y / astar.cell_size.y)
+	)
+	
+	if !astar.is_in_boundsv(start_cell) or !astar.is_in_boundsv(end_cell):
+		return false
+	
+	# 🔑 Force these cells to be walkable
+	astar.set_point_solid(start_cell, false)
+	astar.set_point_solid(end_cell, false)
+	
+	var path = astar.get_point_path(start_cell, end_cell)
+	return path.size() > 0
+
 
 
 #func _draw() -> void:

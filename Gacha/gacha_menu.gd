@@ -1,0 +1,12 @@
+extends Control
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	$GameOverText.add_theme_font_size_override("font_size", 8)
+	visible = false
+	mouse_filter = Control.MOUSE_FILTER_STOP  # Ensure it captures input
+
+func _process(delta: float) -> void:
+	$GameOverText.text = "You have run out of meat.
+Your critters have gone on strike.
+You made it to wave: "+str(int(WaveSpawner.current_wave+1))

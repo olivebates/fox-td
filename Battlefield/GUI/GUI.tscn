@@ -1,12 +1,18 @@
-[gd_scene load_steps=8 format=3 uid="uid://baklm1pqc3pmt"]
+[gd_scene load_steps=14 format=3 uid="uid://baklm1pqc3pmt"]
 
 [ext_resource type="Script" uid="uid://xi1db20durn0" path="res://Battlefield/GUI/GUI.gd" id="1_q7530"]
 [ext_resource type="Script" uid="uid://cidutxx7swaph" path="res://Battlefield/GUI/drag_preview.gd" id="2_3yf0u"]
 [ext_resource type="PackedScene" uid="uid://cqha2gy70dtyi" path="res://Battlefield/GUI/pause.tscn" id="2_7bcsv"]
+[ext_resource type="Script" uid="uid://duq08sumqlin5" path="res://Battlefield/GUI/next_wave_button.gd" id="2_dyjck"]
+[ext_resource type="Script" uid="uid://dtv1a1tqussd1" path="res://Battlefield/GUI/upgrade_button.gd" id="3_111fc"]
+[ext_resource type="Script" uid="uid://bj8lwo7q73o8" path="res://Battlefield/GUI/spawn_button.gd" id="3_nnufs"]
 [ext_resource type="Script" uid="uid://ganpq4sv7xrr" path="res://Battlefield/GUI/placement_root_node_2d.gd" id="4_37vil"]
 [ext_resource type="Script" uid="uid://dhoxx0mmu4v3k" path="res://Battlefield/GUI/healthbar_container.gd" id="5_jar5u"]
+[ext_resource type="Script" uid="uid://bcwrm8sthgh1t" path="res://Battlefield/GUI/wall_button.gd" id="5_r4j1y"]
 [ext_resource type="PackedScene" uid="uid://5qvnas3uklpm" path="res://Battlefield/GUI/NextWaveShower/NextWaveShower.tscn" id="6_pdy1f"]
 [ext_resource type="Script" uid="uid://f1v8kkxu8ic1" path="res://Battlefield/GUI/start_first_wave_button.gd" id="7_1n0ix"]
+[ext_resource type="Script" uid="uid://c50y6s2eoks15" path="res://Battlefield/GUI/money_counter.gd" id="8_devaa"]
+[ext_resource type="Script" uid="uid://dg880b5rf876m" path="res://Battlefield/GUI/health_counter.gd" id="9_f86ex"]
 
 [node name="GUI" type="Control"]
 z_index = -100
@@ -20,14 +26,14 @@ metadata/_edit_use_anchors_ = true
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 clip_contents = true
 layout_mode = 0
-offset_top = 8.0
+offset_top = 11.0
 offset_right = 22.0
-offset_bottom = 43.0
+offset_bottom = 46.0
 theme_override_constants/separation = 2
 
-[node name="Pause" parent="VBoxContainer" instance=ExtResource("2_7bcsv")]
-z_index = 10
+[node name="NextWaveButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
+script = ExtResource("2_dyjck")
 
 [node name="SpawnButtons" type="GridContainer" parent="VBoxContainer"]
 unique_name_in_owner = true
@@ -36,6 +42,22 @@ theme_override_constants/h_separation = 2
 theme_override_constants/v_separation = 2
 columns = 3
 
+[node name="SpawnButton" type="Button" parent="VBoxContainer/SpawnButtons"]
+layout_mode = 2
+text = "+"
+script = ExtResource("3_nnufs")
+
+[node name="UpgradeButton" type="Button" parent="VBoxContainer/SpawnButtons" groups=["upgrade_button"]]
+layout_mode = 2
+text = "↑"
+script = ExtResource("3_111fc")
+
+[node name="WallButton" type="Button" parent="VBoxContainer/SpawnButtons" groups=["occupier_highlight_button"]]
+z_index = 400
+layout_mode = 2
+text = "□"
+script = ExtResource("5_r4j1y")
+
 [node name="Inventory" type="GridContainer" parent="VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -43,6 +65,11 @@ theme_override_constants/h_separation = 2
 theme_override_constants/v_separation = 2
 columns = 3
 metadata/_edit_use_anchors_ = true
+
+[node name="Pause" parent="VBoxContainer" instance=ExtResource("2_7bcsv")]
+visible = false
+z_index = 10
+layout_mode = 2
 
 [node name="DragPreview" type="Control" parent="."]
 unique_name_in_owner = true
@@ -56,18 +83,27 @@ unique_name_in_owner = true
 script = ExtResource("4_37vil")
 
 [node name="HealthbarContainer" type="Control" parent="." groups=["HealthBarContainer"]]
-z_index = 10
+z_index = 200
 anchors_preset = 0
 offset_top = 11.0
 offset_bottom = 11.0
 script = ExtResource("5_jar5u")
 
+[node name="HealthCounter" type="Label" parent="HealthbarContainer"]
+z_index = 10
+layout_mode = 0
+offset_left = 1.0
+offset_top = -17.0
+offset_right = 23.0
+offset_bottom = 6.0
+script = ExtResource("9_f86ex")
+
 [node name="Bar" type="ProgressBar" parent="HealthbarContainer"]
 z_index = -1
 layout_mode = 0
-offset_top = -17.0
+offset_top = -16.0
 offset_right = 28.0
-offset_bottom = -8.0
+offset_bottom = -7.0
 show_percentage = false
 
 [node name="RedOverlay" type="ColorRect" parent="HealthbarContainer/Bar"]
@@ -78,24 +114,43 @@ offset_bottom = 46.0
 
 [node name="Text" type="Label" parent="HealthbarContainer"]
 layout_mode = 0
-offset_left = -103.0
-offset_top = -24.0
-offset_right = 134.0
-offset_bottom = -1.0
+offset_left = -100.0
+offset_top = -22.0
+offset_right = 137.0
+offset_bottom = 1.0
 text = "sd"
 horizontal_alignment = 2
 
-[node name="NextWaveShower" parent="." instance=ExtResource("6_pdy1f")]
+[node name="ProdictionSpeed" type="Label" parent="HealthbarContainer"]
+visible = false
 layout_mode = 0
-offset_left = -199.0
+offset_left = -9.0
+offset_top = -17.0
+offset_right = 31.0
+offset_bottom = 6.0
+
+[node name="NextWaveShower" parent="." instance=ExtResource("6_pdy1f")]
+visible = false
+layout_mode = 0
+offset_left = -202.0
 offset_top = -19.0
-offset_right = -189.0
+offset_right = -192.0
 offset_bottom = 4.0
 
 [node name="StartFirstWaveButton" type="Button" parent="." groups=["start_first_wave_button"]]
+visible = false
 layout_mode = 0
 offset_left = -113.0
 offset_top = 92.0
 offset_right = -77.0
 offset_bottom = 105.0
 script = ExtResource("7_1n0ix")
+
+[node name="MoneyCounter" type="Label" parent="."]
+layout_mode = 0
+offset_left = -200.0
+offset_top = 110.0
+offset_right = -175.0
+offset_bottom = 133.0
+text = "3c"
+script = ExtResource("8_devaa")

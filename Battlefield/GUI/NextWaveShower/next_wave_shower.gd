@@ -1,6 +1,6 @@
 extends Control
 @export var rectangle_count: int = 10
-@export var speed: float = 2.5
+@export var speed: float = 2.9
 @export var speed_multiplier: float = 12.0  # Speed boost when clicking
 @export var bar_width: float = 8.0
 @export var bar_height: float = 600.0
@@ -70,7 +70,7 @@ func _process(delta):
 				boosted_rect_index -= 1  # Adjust index after removal
 			
 			rectangles.remove_at(i)
-			WaveSpawner.start_next_wave()
+			#WaveSpawner.start_next_wave()
 		else:
 			i += 1
 	queue_redraw()
@@ -93,13 +93,13 @@ func _draw():
 
 
 
-func _gui_input(event):
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var mouse_pos = event.position
-		
-		# Check if click is within any rectangle
-		for i in range(rectangles.size()):
-			if rectangles[i].rect.has_point(mouse_pos):
-				boosted_rect_index = i
-				current_speed = speed * speed_multiplier
-				break
+func _gui_input(event):pass
+	#if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		#var mouse_pos = event.position
+		#
+		## Check if click is within any rectangle
+		#for i in range(rectangles.size()):
+			#if rectangles[i].rect.has_point(mouse_pos):
+				#boosted_rect_index = i
+				#current_speed = speed * speed_multiplier
+				#break

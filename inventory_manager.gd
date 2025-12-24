@@ -20,15 +20,28 @@ var base_spawn_cost = 50.0
 @onready var grid_controller: Node2D = get_node("/root/GridController")
 var _merge_blink_timer: float = 0.0
 var _merge_blink_state: bool = false
+var cost_to_spawn = 50
 
 var items: Dictionary = {
 	"tower1": {
 		"texture": preload("uid://cs2ic8oeq6fc0"),
 		"prefab": preload("uid://dfx5piisk4epn"),
+		"bullet": preload("uid://ciuly8asijcg5"),
+		"unlocked": true,
+		"tower_level": 1,
+		"attack_speed": 1,
+		"radius": 32,
+		"rarity": 1
 	},
 	"tower2": {
 		"texture": preload("uid://cqgl3igwvfat8"),
-		"prefab": preload("uid://bp8y13cyubdho"),
+		"prefab": preload("uid://dfx5piisk4epn"),
+		"bullet": preload("uid://32xbub5ovblc"),
+		"unlocked": true,
+		"tower_level": 1,
+		"attack_speed": 1,
+		"radius": 32,
+		"rarity": 2
 	},
 }
 
@@ -40,9 +53,18 @@ var drag_preview: Control = null
 var drag_preview_item: Dictionary = {}
 var potential_cell: Vector2i = Vector2i(-1, -1)
 
+func get_spawn_cost(rank: int) -> float:
+	return base_spawn_cost * pow(2.0, float(rank))
+
+func get_merge_cost(current_rank: int) -> float:
+	var new_rank = current_rank + 1
+	return base_spawn_cost #* pow(3.0, float(new_rank - 1)) / 3.0
+
 func register_inventory(grid: GridContainer, spawner_grid: GridContainer, preview: Control) -> void:
+	print("tower1 prefab:", items["tower1"].prefab.resource_path)
+	print("tower2 prefab:", items["tower2"].prefab.resource_path)
 	slots.clear()
-	for i in 18:
+	for i in 21:
 		var slot = Panel.new()
 		slot.custom_minimum_size = Vector2(8, 8)
 		#slot.clip_contents = true
@@ -62,41 +84,42 @@ func register_inventory(grid: GridContainer, spawner_grid: GridContainer, previe
 	for slot in slots:
 		_update_slot(slot)
 	
-	var spawner_textures: Array[Texture2D] = [
-		preload("uid://dyan40sgre5b1"), 
-		preload("uid://dyan40sgre5b1"), 
-		preload("uid://dyan40sgre5b1"), 
-		preload("uid://dyan40sgre5b1"), 
-		preload("uid://dyan40sgre5b1"), 
-		preload("uid://dyan40sgre5b1"), 
-		preload("uid://dyan40sgre5b1"), 
-		preload("uid://dyan40sgre5b1"), 
-		preload("uid://dyan40sgre5b1"), 
-	]
+	#var spawner_textures: Array[Texture2D] = [
+		#preload("uid://dyan40sgre5b1"), 
+		#preload("uid://dyan40sgre5b1"), 
+		#preload("uid://dyan40sgre5b1"), 
+		#preload("uid://dyan40sgre5b1"), 
+		#preload("uid://dyan40sgre5b1"), 
+		#preload("uid://dyan40sgre5b1"), 
+		#preload("uid://dyan40sgre5b1"), 
+		#preload("uid://dyan40sgre5b1"), 
+		#preload("uid://dyan40sgre5b1"), 
+	#]
 
-	for rank in range(1):
-		var btn = TextureRect.new()
-		btn.texture = spawner_textures[rank]
-		btn.expand_mode = TextureRect.EXPAND_KEEP_SIZE
-		btn.stretch_mode = TextureRect.STRETCH_KEEP
-		btn.custom_minimum_size = Vector2(8, 8)
-		btn.mouse_filter = Control.MOUSE_FILTER_STOP
-		
-		var cost = base_spawn_cost * pow(3.0, float(rank))
-		
-		btn.mouse_entered.connect(func():
-			btn.modulate = Color(1.3, 1.3, 1.3)
-			HealthBarGUI.show_cost_preview(cost))
-		
-		btn.mouse_exited.connect(func():
-			btn.modulate = Color(1, 1, 1)
-			HealthBarGUI.hide_cost_preview())
-		
-		btn.gui_input.connect(func(event):
-			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-				_spawn_item(rank))
-		
-		spawner_grid.add_child(btn)
+	#for rank in range(1):
+		#var btn = TextureRect.new()
+		#btn.texture = spawner_textures[rank]
+		#btn.expand_mode = TextureRect.EXPAND_KEEP_SIZE
+		#btn.stretch_mode = TextureRect.STRETCH_KEEP
+		#btn.custom_minimum_size = Vector2(8, 8)
+		#btn.mouse_filter = Control.MOUSE_FILTER_STOP
+		#
+		#var cost = get_spawn_cost(rank)
+		#
+		#btn.mouse_entered.connect(func():
+			#btn.modulate = Color(1.3, 1.3, 1.3)
+			#HealthBarGUI.show_cost_preview(cost))
+		#
+		#btn.mouse_exited.connect(func():
+			#btn.modulate = Color(1, 1, 1)
+			#HealthBarGUI.hide_cost_preview())
+		#
+		#btn.gui_input.connect(func(event):
+			#if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+				#if !_spawn_item(rank):
+					#Utilities.spawn_floating_text("Not enough meat...", Vector2.ZERO, null))
+		#
+		#spawner_grid.add_child(btn)
 		
 	
 	drag_preview = preview
@@ -140,6 +163,7 @@ func _draw_slot(slot: Panel) -> void:
 	var item = slot.get_meta("item", {})
 	if item.is_empty():
 		return
+	
 	var rank = item.get("rank", 0)
 	var border_color = RANK_COLORS.get(rank, Color(1, 1, 1))
 	var base_color = border_color * 0.3
@@ -148,16 +172,46 @@ func _draw_slot(slot: Panel) -> void:
 	var hovered = slot.get_meta("hovered", false)
 	var dragged_data = get_current_dragged_data()
 	var is_matching = !dragged_data.is_empty() && item.id == dragged_data.id && item.rank == dragged_data.rank
-	var blink_on = _merge_blink_state if is_matching else true
-	var brighten = (1.2 if hovered else 1.2) if is_matching and blink_on else (1.3 if hovered else 1.0)
+	
+	# Only blink if matching AND player can afford merge
+	var merge_cost = get_merge_cost(rank) if is_matching else 0.0
+	var can_afford = StatsManager.health >= merge_cost
+	var blink_on = _merge_blink_state if (is_matching and can_afford) else true
+	
+	var brighten = 1.0
+	if is_matching and can_afford:
+		brighten = 1.5 if blink_on else 1.2
+	elif hovered:
+		brighten = 1.3
+	
 	var bg_color = base_color * brighten
 	
-	slot.draw_rect(Rect2(0.5, 0.5, 7, 7), border_color, false, 1.0 + (0.5 if (hovered or is_matching) else 0.0))
+	slot.draw_rect(Rect2(0.5, 0.5, 7, 7), border_color, false, 1.0 + (0.5 if (hovered or (is_matching and can_afford)) else 0.0))
 	slot.draw_rect(Rect2(1, 1, 6, 6), bg_color, true)
 	
 	var tex = items[item.id].texture
 	if tex:
 		slot.draw_texture(tex, Vector2(0, 0), Color(brighten, brighten, brighten))
+	
+	var rarity = items[item.id].rarity
+	for i in range(rarity):
+		var offset = Vector2(0.8 + i * 1.5, 8.2)
+		slot.draw_colored_polygon(
+			PackedVector2Array([
+				offset + Vector2(0, -2.0),
+				offset + Vector2(1.4, 0.2),
+				offset + Vector2(-0.9, 0.2)
+			]),
+			Color(0.0, 0.0, 0.0, 1.0)
+		)
+		slot.draw_colored_polygon(
+			PackedVector2Array([
+				offset + Vector2(0, -1.5),
+				offset + Vector2(1, 0),
+				offset + Vector2(-0.5, 0)
+			]),
+			Color(0.98, 0.98, 0.0, 1.0)
+		)
 
 func _setup_slot_style(slot: Panel) -> void:
 	var style = StyleBoxFlat.new()
@@ -230,8 +284,8 @@ func _process(_delta: float) -> void:
 		if inv_target and inv_target != original_slot:
 			var target_item = inv_target.get_meta("item", {})
 			if !target_item.is_empty() and target_item.id == dragged_item.id and target_item.rank == dragged_item.rank:
-				var new_rank = dragged_item.rank + 1
-				preview_cost = (base_spawn_cost * pow(3.0, float(new_rank - 1))) / 3.0
+				#var new_rank = dragged_item.rank + 1
+				preview_cost = get_merge_cost(dragged_item.rank)#(base_spawn_cost * pow(3.0, float(new_rank - 1))) / 3.0
 		
 		# Grid merge preview (only if no inventory merge detected)
 		if preview_cost == 0.0 and potential_cell != Vector2i(-1, -1):
@@ -239,8 +293,8 @@ func _process(_delta: float) -> void:
 			if existing:
 				var existing_data = existing.get_meta("item_data", {})
 				if existing_data.id == dragged_item.id and existing_data.rank == dragged_item.rank:
-					var new_rank = existing_data.rank + 1
-					preview_cost = (base_spawn_cost * pow(3.0, float(new_rank - 1))) / 3.0
+					#var new_rank = existing_data.rank + 1
+					preview_cost = get_merge_cost(dragged_item.rank)
 		
 		HealthBarGUI.show_cost_preview(preview_cost)
 	else:
@@ -290,8 +344,8 @@ func _perform_drop() -> void:
 			_update_slot(target)
 			return_to_original = false
 		elif !target_item.is_empty() and target_item.id == dragged_item.id and target_item.rank == dragged_item.rank:
-			var new_rank = target_item.rank + 1
-			var cost = (base_spawn_cost * pow(3.0, float(new_rank - 1))) / 3.0
+			#var new_rank = target_item.rank + 1
+			var cost = get_merge_cost(target_item.rank)
 			if StatsManager.spend_health(cost):
 				Utilities.spawn_floating_text("Rank up!", get_global_mouse_position(), null, true)
 				target_item.rank += 1
@@ -348,18 +402,19 @@ func get_closest_slot(global_pos: Vector2, max_dist: float = 8.0, empty_only: bo
 		return closest
 	return null
 
-func _spawn_item(rank: int) -> void:
+func _spawn_item(rank: int) -> bool:
 	var keys = items.keys()
-	if keys.is_empty(): return
+	if keys.is_empty(): return false
 	var id = keys[randi() % keys.size()]
 	var new_item = {"id": id, "rank": rank + 1}
-	var cost = base_spawn_cost * pow(3.0, float(rank))
-	if not StatsManager.spend_health(cost): return
+	var cost = get_spawn_cost(rank)
+	if not StatsManager.spend_health(cost): return false
 	for slot in slots:
 		if slot.get_meta("item", {}).is_empty():
 			slot.set_meta("item", new_item)
 			_update_slot(slot)
-			return
+			return true
+	return false
 
 
 func clear_inventory() -> void:

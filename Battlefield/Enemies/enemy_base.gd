@@ -17,7 +17,11 @@ var start_position
 var current_damage = 10
 signal enemy_died
 
+func _on_astar_updated() -> void:
+	request_path()
+
 func _ready() -> void:
+	AStarManager.astar_updated.connect(_on_astar_updated)
 	$Label.add_theme_font_size_override("font_size", 3.5)
 	$Label.add_theme_color_override("font_color", Color.BLACK)
 	$Label.position = Vector2(-3.7, 0.5)
@@ -49,8 +53,10 @@ func request_path() -> void:
 func _process(delta: float) -> void:
 	$Label.text = str(current_health)
 	if global_position.distance_to(target_position) < 8.0:
+		var damage = current_damage + 2*WaveSpawner.current_wave
+		Utilities.spawn_floating_text("-"+str(int(damage))+" Meat", position-Vector2(0,4)+Vector2(randf_range(-4, 4), randf_range(-4, 4)), get_tree().current_scene)
 		position = start_position
-		StatsManager.take_damage(current_damage)
+		StatsManager.take_damage(damage)
 		current_damage *= 2
 		request_path()
 		
@@ -114,5 +120,8 @@ func take_damage(amount: int):
 		die()
 
 func die():
+	var money_gain = WaveSpawner.current_wave
+	StatsManager.money += money_gain
+	Utilities.spawn_floating_text("+€"+str(money_gain), global_position + Vector2(0, 8), get_tree().current_scene, false, Color.YELLOW)
 	get_tree().call_group("health_manager", "gain_health_from_kill", 5.0)
 	queue_free()

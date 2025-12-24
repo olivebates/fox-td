@@ -32,11 +32,11 @@ func _ready() -> void:
 	
 	pressed.connect(my_function)
 	get_tree().get_first_node_in_group("start_wave_button")._on_pressed()
-	visible = true
+	#visible = true
 
 func on_death():
-	visible = true
 	get_tree().get_first_node_in_group("start_wave_button")._on_pressed()
+	visible = true
 	
 func my_function():
 	get_tree().get_first_node_in_group("start_wave_button")._on_pressed()

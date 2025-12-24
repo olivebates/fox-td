@@ -25,6 +25,7 @@ StatsManager="*res://stats_manager.gd"
 Utilities="*res://utilities.gd"
 AStarManager="*res://a_star_manager.gd"
 WaveShower="*res://wave_shower.gd"
+Gacha="*res://gacha.gd"
 
 [display]
 
@@ -45,6 +46,10 @@ bullet=""
 start_wave_button=""
 next_wave_shower=""
 start_first_wave_button=""
+game_over_screen=""
+upgrade_button=""
+occupier_highlight_button=""
+walls=""
 
 [rendering]
 

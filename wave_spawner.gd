@@ -11,6 +11,8 @@ extends Node2D
 @export var path_tile_uid: String = "uid://2wlflfus0jih"
 @export var buildable_grid_size = 8
 @export var path_buildable_uid: String = "uid://823ref1rao2h"
+var special_scene: PackedScene = ResourceLoader.load("uid://71114a1asxv") # Wall tiles
+@export var max_wave_spawn_time: float = 8.0
 var game_paused: bool = false
 
 const ENEMY_TYPES = {
@@ -26,17 +28,17 @@ const ENEMY_TYPES = {
 		"speed": 15.0,
 		"damage": 5,
 		"base_reward": 3.0,
-		"count_mult": 3.0
+		"count_mult": 2.0
 	},
 	"fast": {
 		"health": 1,
 		"speed": 25.0,
-		"damage": 15,
+		"damage": 10,
 		"base_reward": 5.0,
 		"count_mult": 1.5
 	},
 	"boss": {
-		"health": 1,
+		"health": 15,
 		"speed": 5.0,
 		"damage": 50,
 		"base_reward": 50.0,
@@ -94,9 +96,7 @@ func start_next_wave():
 	var type_data = ENEMY_TYPES[enemy_type]
 
 	var wave_health := 1
-	for x in range(wave):
-		wave_health += floor(base_health + x - 2 + base_health * pow(1.1, x - 1))
-	wave_health += 1
+	wave_health += floor((current_wave-2) + base_health * pow(1.1, current_wave - 1))
 
 	# Apply type health multiplier
 	wave_health *= type_data.health
@@ -109,17 +109,19 @@ func start_next_wave():
 
 	_spawn_wave_async(wave, enemy_type, wave_health, enemies_in_wave)
 
-
-
 func _spawn_wave_async(wave: int, enemy_type: String, health: int, count: int) -> void:
 	_is_spawning = true
 	_remaining_enemies = count
+
+	var delay: float = max_wave_spawn_time / max(count - 1, 1)
+
 	while _remaining_enemies > 0 and _is_spawning:
 		spawn_enemy(wave, enemy_type, health)
 		_remaining_enemies -= 1
-		await await_delay(spawn_delay)
-	_is_spawning = false
+		if _remaining_enemies > 0:
+			await await_delay(delay)
 
+	_is_spawning = false
 func spawn_enemy(wave: int, enemy_type: String, health: int):
 	var enemy = enemy_scene.instantiate()
 	var type_data = ENEMY_TYPES[enemy_type]
@@ -148,6 +150,10 @@ func spawn_enemy(wave: int, enemy_type: String, health: int):
 
 
 func generate_path():
+	
+	for child in get_children():
+		if child != path_node and child != path_tiles_container:
+			child.queue_free()
 	for child in path_tiles_container.get_children():
 		child.queue_free()
 	
@@ -273,6 +279,47 @@ func generate_path():
 					add_child(buildable)
 	else:
 		push_error("Invalid path_buildable_uid")
+	
+	await get_tree().process_frame
+	if special_scene:
+		var buildables := get_tree().get_nodes_in_group("grid_buildable")
+		var positions := buildables.map(func(b): return Vector2(b.position.x / buildable_grid_size, b.position.y / buildable_grid_size).round())
+		
+		var clusters: int = randi_range(8, 14)
+		var special_grid: Dictionary = {}
+		
+		for i in clusters:
+			var size: int = randi_range(5, 15)
+			if buildables.is_empty(): break
+			var start_idx: int = randi() % buildables.size()
+			var queue: Array[Vector2] = [positions[start_idx]]
+			special_grid[positions[start_idx]] = true
+			var placed: int = 1
+			
+			while placed < size and not queue.is_empty():
+				var cur: Vector2 = queue.pop_back()
+				var dirs: Array[Vector2i] = [Vector2i(1,0), Vector2i(-1,0), Vector2i(0,1), Vector2i(0,-1), Vector2i(1,1), Vector2i(1,-1), Vector2i(-1,1), Vector2i(-1,-1)]
+				dirs.shuffle()
+				for d in dirs:
+					var nxt: Vector2 = Vector2(cur) + Vector2(d)
+					var idx: int = positions.find(nxt)
+					if idx != -1 and not special_grid.has(nxt):
+						special_grid[nxt] = true
+						queue.append(nxt)
+						placed += 1
+						break
+		
+		for i in buildables.size():
+			if special_grid.has(positions[i]):
+				var old = buildables[i]
+				var special = special_scene.instantiate()
+				special.position = old.position
+				add_child(special)
+				old.queue_free()
+	
+	GridController.update_buildables()
+	AStarManager._update_grid()	
+
 
 var _is_spawning: bool = false
 var _remaining_enemies: int = 0

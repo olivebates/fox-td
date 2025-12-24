@@ -10,3 +10,7 @@ func _draw() -> void:
 		var tex := sprite.texture
 		draw_texture(tex, shadow_offset, shadow_color)
 		#draw_texture(tex, shadow_offset-Vector2(1,1), shadow_color)
+
+func _ready() -> void:
+	var gray := randf_range(0.75, 1.0)
+	sprite.modulate = Color(gray, gray, 1, 1)

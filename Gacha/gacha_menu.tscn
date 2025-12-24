@@ -1,0 +1,58 @@
+[gd_scene load_steps=4 format=3 uid="uid://cgtxb5iesuex6"]
+
+[ext_resource type="Script" uid="uid://cah34g0n0nmxe" path="res://Gacha/pull_button.gd" id="1_5awja"]
+[ext_resource type="Script" uid="uid://cxg8a8biioxgc" path="res://Gacha/gacha_menu.gd" id="1_ftmkf"]
+[ext_resource type="Script" uid="uid://c06okvbis2lr4" path="res://Gacha/gacha_background.gd" id="2_xtqx2"]
+
+[node name="GachaMenu" type="Control" groups=["game_over_screen"]]
+z_index = 200
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_ftmkf")
+
+[node name="GachaBackground" type="ColorRect" parent="."]
+z_index = 110
+layout_mode = 0
+offset_right = 240.0
+offset_bottom = 135.0
+color = Color(0, 0, 0, 1)
+script = ExtResource("2_xtqx2")
+
+[node name="PullButton" type="Button" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 82.0
+offset_top = 89.0
+offset_right = 119.0
+offset_bottom = 120.0
+text = "Pull"
+script = ExtResource("1_5awja")
+
+[node name="GachaOverlay" type="ColorRect" parent="PullButton"]
+visible = false
+layout_mode = 0
+offset_left = -82.0
+offset_top = -89.0
+offset_right = 158.0
+offset_bottom = 46.0
+color = Color(0, 0, 0, 0.79607844)
+
+[node name="TowerSprite" type="TextureRect" parent="PullButton/GachaOverlay"]
+layout_mode = 0
+offset_left = 115.0
+offset_top = 56.0
+offset_right = 125.0
+offset_bottom = 66.0
+
+[node name="GameOverText" type="Label" parent="."]
+z_index = 120
+layout_mode = 0
+offset_left = -7.0
+offset_top = 30.0
+offset_right = 245.0
+offset_bottom = 105.0
+text = "You have run out of meat.
+Your critters have gone on strike.
+Game Over."
+horizontal_alignment = 1
+vertical_alignment = 1

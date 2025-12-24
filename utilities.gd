@@ -1,7 +1,13 @@
 # Utility.gd (Autoload singleton)
 extends Node
 
-func spawn_floating_text(text: String, position: Vector2 = Vector2.ZERO, parent: Node = null, celebrate: bool = false) -> void:
+func spawn_floating_text(
+	text: String, 
+	position: Vector2 = Vector2.ZERO, 
+	parent: Node = null, 
+	celebrate: bool = false,
+	text_color: Color = Color.RED
+) -> void:
 	var use_position := position + Vector2(4,-4)
 	var use_parent := parent
 	
@@ -17,7 +23,8 @@ func spawn_floating_text(text: String, position: Vector2 = Vector2.ZERO, parent:
 	label.add_theme_color_override("font_color", Color.WHITE)
 	label.add_theme_color_override("font_outline_color", Color.BLACK)
 	label.add_theme_constant_override("outline_size", 1)
-	label.modulate = Color(1, 0, 0)  # red text
+	label.modulate = text_color  # red text
+	label.position = Vector2(-500, -500)
 	label.z_index = 4000
 	#use_parent = get_viewport()
 	

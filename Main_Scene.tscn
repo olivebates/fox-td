@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://ctnmhorqxut1t"]
+[gd_scene load_steps=8 format=3 uid="uid://ctnmhorqxut1t"]
 
 [ext_resource type="Script" uid="uid://c58ore2lex6h5" path="res://main_scene.gd" id="1_7fr83"]
 [ext_resource type="Shader" uid="uid://dncm5bmmcgldt" path="res://Vignette.gdshader" id="2_5yw3w"]
+[ext_resource type="PackedScene" uid="uid://cgtxb5iesuex6" path="res://Gacha/gacha_menu.tscn" id="2_qtktj"]
 [ext_resource type="Script" uid="uid://dtxradeejcej0" path="res://path_manager.gd" id="3_tkmsp"]
 [ext_resource type="PackedScene" uid="uid://baklm1pqc3pmt" path="res://Battlefield/GUI/GUI.tscn" id="4_5yw3w"]
 
@@ -18,6 +19,8 @@ script = ExtResource("1_7fr83")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 anchor_mode = 0
+
+[node name="GachaMenu" parent="." instance=ExtResource("2_qtktj")]
 
 [node name="Vignette" type="CanvasLayer" parent="."]
 visible = false

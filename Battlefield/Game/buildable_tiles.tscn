@@ -6,7 +6,7 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_polt5"]
 size = Vector2(8, 8)
 
-[node name="BuildableTiles" type="CharacterBody2D" groups=["grid_buildable"]]
+[node name="BuildableTiles" type="CharacterBody2D" groups=["grid_buildable", "walls"]]
 z_index = -500
 script = ExtResource("1_polt5")
 

@@ -1,0 +1,112 @@
+[gd_scene load_steps=8 format=3 uid="uid://c6pj2nc73reyx"]
+
+[ext_resource type="Script" uid="uid://cdkxgccj2umkb" path="res://Gacha/backpack_inventory.gd" id="1_ef5b0"]
+[ext_resource type="Script" uid="uid://cgi8lrep6btat" path="res://Gacha/gacha_button.gd" id="2_6ydk1"]
+[ext_resource type="Script" uid="uid://wp8d1hcb7bk2" path="res://Gacha/backpack_title.gd" id="2_lhcbs"]
+[ext_resource type="Script" uid="uid://mub3l2ptecvq" path="res://Gacha/backpack_sort.gd" id="3_n4df0"]
+[ext_resource type="Script" uid="uid://d2bwchj5f5dfd" path="res://Gacha/empty_squad.gd" id="4_111ie"]
+[ext_resource type="Script" uid="uid://kio18icqctb2" path="res://Gacha/auto_fill.gd" id="5_4h4ep"]
+[ext_resource type="Script" uid="uid://dq37xbj2a5vr0" path="res://Gacha/unmerge_towers.gd" id="5_j6qdx"]
+
+[node name="Backpack" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+
+[node name="Preview" type="Control" parent="."]
+z_index = 20
+anchors_preset = 0
+
+[node name="GachaButton" type="Button" parent="."]
+layout_mode = 0
+offset_top = 100.0
+offset_right = 20.0
+offset_bottom = 108.0
+script = ExtResource("2_6ydk1")
+
+[node name="BackpackContainer" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="BackpackTitle" type="Label" parent="BackpackContainer"]
+layout_mode = 2
+text = "Camp"
+script = ExtResource("2_lhcbs")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="BackpackContainer"]
+layout_mode = 2
+
+[node name="BackpackSort" type="Button" parent="BackpackContainer/HBoxContainer"]
+layout_mode = 2
+script = ExtResource("3_n4df0")
+
+[node name="EmptySquad" type="Button" parent="BackpackContainer/HBoxContainer"]
+layout_mode = 2
+script = ExtResource("4_111ie")
+
+[node name="UnmergeTowers" type="Button" parent="BackpackContainer/HBoxContainer" groups=["unmerge_towers"]]
+layout_mode = 2
+script = ExtResource("5_j6qdx")
+
+[node name="BackpackInventory" type="GridContainer" parent="BackpackContainer" groups=["backpack_inventory"]]
+layout_mode = 2
+columns = 7
+script = ExtResource("1_ef5b0")
+
+[node name="SquadContainer" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 90.0
+offset_right = 130.0
+offset_bottom = 40.0
+
+[node name="SquadTitle" type="Label" parent="SquadContainer"]
+layout_mode = 2
+text = "Squad"
+script = ExtResource("2_lhcbs")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="SquadContainer"]
+layout_mode = 2
+
+[node name="SquadSort" type="Button" parent="SquadContainer/HBoxContainer"]
+layout_mode = 2
+script = ExtResource("3_n4df0")
+is_squad_inventory = true
+
+[node name="AutoFill" type="Button" parent="SquadContainer/HBoxContainer"]
+layout_mode = 2
+script = ExtResource("5_4h4ep")
+
+[node name="SquadInventory" type="GridContainer" parent="SquadContainer" groups=["squad_inventory"]]
+layout_mode = 2
+columns = 3
+script = ExtResource("1_ef5b0")
+is_squad_inventory = true
+
+[node name="GachaBackground" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = -56.0
+offset_top = -20.0
+offset_right = 184.0
+offset_bottom = 124.0
+mouse_filter = 2
+color = Color(0.13333334, 0.14509805, 0.21960784, 1)
+
+[node name="GachaBackground3" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = -19.0
+offset_right = 148.0
+offset_bottom = 113.0
+mouse_filter = 2
+color = Color(0.105882354, 0.11372549, 0.17254902, 1)
+
+[node name="GachaBackground2" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = -21.0
+offset_top = -2.0
+offset_right = 146.0
+offset_bottom = 111.0
+mouse_filter = 2
+color = Color(0.21176471, 0.24705882, 0.3764706, 1)

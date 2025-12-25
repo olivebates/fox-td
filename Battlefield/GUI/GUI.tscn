@@ -43,6 +43,7 @@ theme_override_constants/v_separation = 2
 columns = 3
 
 [node name="SpawnButton" type="Button" parent="VBoxContainer/SpawnButtons"]
+visible = false
 layout_mode = 2
 text = "+"
 script = ExtResource("3_nnufs")
@@ -82,7 +83,7 @@ script = ExtResource("2_3yf0u")
 unique_name_in_owner = true
 script = ExtResource("4_37vil")
 
-[node name="HealthbarContainer" type="Control" parent="." groups=["HealthBarContainer"]]
+[node name="HealthbarContainer" type="Control" parent="." groups=["HealthBarContainer", "bullet"]]
 z_index = 200
 anchors_preset = 0
 offset_top = 11.0
@@ -147,6 +148,7 @@ offset_bottom = 105.0
 script = ExtResource("7_1n0ix")
 
 [node name="MoneyCounter" type="Label" parent="."]
+visible = false
 layout_mode = 0
 offset_left = -200.0
 offset_top = 110.0

@@ -39,6 +39,18 @@ func _ready() -> void:
 	add_theme_stylebox_override("hover", style_hover)
 	add_theme_stylebox_override("pressed", style_pressed)
 	add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
+
+func _on_mouse_entered() -> void:
+	TooltipManager.show_tooltip(
+		"Upgrade Critters",
+        "Click a critter to upgrade it!"
+	)
+
+func _on_mouse_exited() -> void:
+	TooltipManager.hide_tooltip()
 
 func _on_toggled(pressed: bool) -> void:
 	upgrade_mode = pressed

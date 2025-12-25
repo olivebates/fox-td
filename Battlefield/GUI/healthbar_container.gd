@@ -53,7 +53,7 @@ func _ready() -> void:
 	StatsManager.health_changed.connect(_on_health_changed)
 	StatsManager.max_health_changed.connect(_on_max_changed)
 	bar.resized.connect(_update_red_overlay)
-
+	
 	_update_text()
 	_update_red_overlay()
 
@@ -108,6 +108,7 @@ func _update_red_overlay() -> void:
 
 	red_overlay.position = Vector2(end_px, 0)
 	red_overlay.size = Vector2(overlay_width, bar.size.y)
+
 
 func _process(delta: float) -> void:
 	queue_redraw()

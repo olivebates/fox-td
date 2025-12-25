@@ -15,35 +15,72 @@ const RANK_COLORS = {
 	10: Color(1.0, 0.531, 0.986),
 	11: Color(0.565, 0.0, 0.18),
 }
-var base_spawn_cost = 50.0
+var base_spawn_cost = 20.0
 @onready var HealthBarGUI = get_tree().get_first_node_in_group("HealthBarContainer")
 @onready var grid_controller: Node2D = get_node("/root/GridController")
 var _merge_blink_timer: float = 0.0
 var _merge_blink_state: bool = false
 var cost_to_spawn = 50
 
+
 var items: Dictionary = {
-	"tower1": {
+	"Fox": {
 		"texture": preload("uid://cs2ic8oeq6fc0"),
 		"prefab": preload("uid://dfx5piisk4epn"),
 		"bullet": preload("uid://ciuly8asijcg5"),
 		"unlocked": true,
-		"tower_level": 1,
 		"attack_speed": 1,
-		"radius": 32,
+		"damage": 1,
+		"radius": 24,
 		"rarity": 1
 	},
-	"tower2": {
+	"Duck": {
 		"texture": preload("uid://cqgl3igwvfat8"),
 		"prefab": preload("uid://dfx5piisk4epn"),
 		"bullet": preload("uid://32xbub5ovblc"),
-		"unlocked": true,
-		"tower_level": 1,
+		"unlocked": false,
 		"attack_speed": 1,
-		"radius": 32,
+		"damage": 1,
+		"radius": 24,
 		"rarity": 2
 	},
 }
+
+
+var level_up_stats: Dictionary = {
+	"attack_speed": [0, 0, 0, 1, 0, 0, 0],
+	"damage":       [0, 1, 0, 0, 0, 1, 0],
+	"radius":       [4, 2, 2, 2, 2, 2, 2]
+}
+
+func get_placement_cost(id: String, tower_level: int, rank: int) -> float:
+	var base = items[id].get("rarity", 1) * base_spawn_cost
+	var level_factor = 1.0 + (tower_level * 0.2)
+	var rank_factor = pow(1.5, rank - 1)
+	return base * level_factor * rank_factor
+
+func apply_level_up(id: String) -> void:
+	var item_data = items.get(id, {})
+	if item_data.is_empty():
+		return
+	
+	# Increment base stats directly on the tower definition
+	item_data.tower_level += 1
+	item_data.attack_speed += level_up_stats.attack_speed[min(Gacha.unlocked_levels[id], level_up_stats.attack_speed.size() - 1)]
+	item_data.damage += level_up_stats.damage[min(Gacha.unlocked_levels[id], level_up_stats.damage.size() - 1)]
+	item_data.radius += level_up_stats.radius[min(Gacha.unlocked_levels[id], level_up_stats.radius.size() - 1)]
+
+func get_damage_calculation(rank):
+	return pow(2, rank - 1) + rank - 1
+
+func get_stat_for_rank(id: String, stat: String, rank: int) -> int:
+	if rank <= 0: return items[id][stat]
+	var base = items[id][stat]
+	var bonuses = level_up_stats.get(stat, [])
+	for i in range(1, rank + 1):
+		var bonus = bonuses[i - 1] if i <= bonuses.size() else bonuses.back()
+		base += bonus
+	return base
 
 # Runtime state
 var slots: Array[Panel] = []
@@ -61,8 +98,6 @@ func get_merge_cost(current_rank: int) -> float:
 	return base_spawn_cost #* pow(3.0, float(new_rank - 1)) / 3.0
 
 func register_inventory(grid: GridContainer, spawner_grid: GridContainer, preview: Control) -> void:
-	print("tower1 prefab:", items["tower1"].prefab.resource_path)
-	print("tower2 prefab:", items["tower2"].prefab.resource_path)
 	slots.clear()
 	for i in 21:
 		var slot = Panel.new()
@@ -77,7 +112,7 @@ func register_inventory(grid: GridContainer, spawner_grid: GridContainer, previe
 		_setup_slot_style(slot)
 	
 	# Example items
-	slots[0].set_meta("item", {"id": "tower1", "rank": 1})
+	slots[0].set_meta("item", {"id": "Fox", "rank": 1})
 	#slots[1].set_meta("item", {"id": "tower1", "rank": 1})
 	#slots[5].set_meta("item", {"id": "tower2", "rank": 5})
 	
@@ -143,75 +178,43 @@ func _draw() -> void:
 		return
 	var mouse_pos = get_global_mouse_position()
 	var draw_pos = mouse_pos - Vector2(5, 5)
-	# Preview highlight on grid
 	if potential_cell != Vector2i(-1, -1):
-		var cell_pos = GridController.grid_offset + Vector2(potential_cell.x * GridController.CELL_SIZE, potential_cell.y * GridController.CELL_SIZE)
-		var valid = GridController.is_valid_placement(potential_cell)
-		var fill_color = Color(0, 1, 0, 0.3) if valid else Color(1, 0, 0, 0.3)
-		draw_rect(Rect2(cell_pos, Vector2(GridController.CELL_SIZE, GridController.CELL_SIZE)), fill_color, true)
-	# Dragged item preview (existing code)
+		var nearest_cell = GridController.get_nearest_valid_cell(potential_cell)
+		if nearest_cell != Vector2i(-1, -1):
+			var cell_pos = GridController.grid_offset + Vector2(nearest_cell.x * GridController.CELL_SIZE, nearest_cell.y * GridController.CELL_SIZE)
+			var valid = GridController.is_valid_placement(nearest_cell, dragged_item)
+			var fill_color = Color(0, 1, 0, 0.3) if valid else Color(1, 0, 0, 0.3)
+			draw_rect(Rect2(cell_pos, Vector2(GridController.CELL_SIZE, GridController.CELL_SIZE)), fill_color, true)
 	var rank = dragged_item.get("rank", 0)
 	var border_color = RANK_COLORS.get(rank, Color(1, 1, 1))
 	draw_rect(Rect2(draw_pos + Vector2(1.5, 1.5), Vector2(7, 7)), border_color, false, 1.0)
-	#draw_rect(Rect2(draw_pos + Vector2(1, 1), Vector2(8, 8)), Color(0.1, 0.1, 0.1), true)
 	var tex = items[dragged_item.id].texture
 	if tex:
 		draw_texture(tex, draw_pos + Vector2(1, 1), Color(1.4, 1.4, 1.4))
+	
 
 # Add this function to InventoryManager.gd
 func _draw_slot(slot: Panel) -> void:
 	var item = slot.get_meta("item", {})
 	if item.is_empty():
 		return
-	
 	var rank = item.get("rank", 0)
 	var border_color = RANK_COLORS.get(rank, Color(1, 1, 1))
 	var base_color = border_color * 0.3
 	base_color.a = 1.0
-	
 	var hovered = slot.get_meta("hovered", false)
-	var dragged_data = get_current_dragged_data()
-	var is_matching = !dragged_data.is_empty() && item.id == dragged_data.id && item.rank == dragged_data.rank
-	
-	# Only blink if matching AND player can afford merge
-	var merge_cost = get_merge_cost(rank) if is_matching else 0.0
-	var can_afford = StatsManager.health >= merge_cost
-	var blink_on = _merge_blink_state if (is_matching and can_afford) else true
-	
-	var brighten = 1.0
-	if is_matching and can_afford:
-		brighten = 1.5 if blink_on else 1.2
-	elif hovered:
-		brighten = 1.3
-	
+	var brighten = 1.3 if hovered else 1.0
 	var bg_color = base_color * brighten
-	
-	slot.draw_rect(Rect2(0.5, 0.5, 7, 7), border_color, false, 1.0 + (0.5 if (hovered or (is_matching and can_afford)) else 0.0))
+	slot.draw_rect(Rect2(0.5, 0.5, 7, 7), border_color, false, 1.0 + (0.5 if hovered else 0.0))
 	slot.draw_rect(Rect2(1, 1, 6, 6), bg_color, true)
-	
-	var tex = items[item.id].texture
+	var tex = items.get(item.get("id", ""), {}).get("texture", null)
 	if tex:
 		slot.draw_texture(tex, Vector2(0, 0), Color(brighten, brighten, brighten))
-	
-	var rarity = items[item.id].rarity
+	var rarity = items.get(item.get("id", ""), {}).get("rarity", 0)
 	for i in range(rarity):
 		var offset = Vector2(0.8 + i * 1.5, 8.2)
-		slot.draw_colored_polygon(
-			PackedVector2Array([
-				offset + Vector2(0, -2.0),
-				offset + Vector2(1.4, 0.2),
-				offset + Vector2(-0.9, 0.2)
-			]),
-			Color(0.0, 0.0, 0.0, 1.0)
-		)
-		slot.draw_colored_polygon(
-			PackedVector2Array([
-				offset + Vector2(0, -1.5),
-				offset + Vector2(1, 0),
-				offset + Vector2(-0.5, 0)
-			]),
-			Color(0.98, 0.98, 0.0, 1.0)
-		)
+		slot.draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -2.0), offset + Vector2(1.4, 0.2), offset + Vector2(-0.9, 0.2)]), Color(0.0, 0.0, 0.0, 1.0))
+		slot.draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -1.5), offset + Vector2(1, 0), offset + Vector2(-0.5, 0)]), Color(0.98, 0.98, 0.0, 1.0))
 
 func _setup_slot_style(slot: Panel) -> void:
 	var style = StyleBoxFlat.new()
@@ -249,6 +252,34 @@ func refresh_inventory_highlights() -> void:
 func _on_slot_hover(slot: Panel, entered: bool) -> void:
 	slot.set_meta("hovered", entered)
 	_update_hover(slot)
+	if entered and !slot.get_meta("item", {}).is_empty():
+		var item = slot.get_meta("item")
+		var def = items[item.id]
+		var tower_level = def.get("tower_level", 0)
+		var atk = get_stat_for_rank(item.id, "attack_speed", item.rank)
+		var dmg = get_stat_for_rank(item.id, "damage", item.rank)
+		var rad = get_stat_for_rank(item.id, "radius", item.rank)
+		var cost = get_placement_cost(item.id, tower_level, item.rank)
+		
+		TooltipManager.show_tooltip(
+			def.get("name", item.id.capitalize()),
+			"[color=cornflower_blue]Place Cost: " + str(int(cost)) + "[/color]\n"+
+			"[font_size=2]Damage: " + str(dmg) + "\n" +
+			"Attack Speed: " + str(atk) + "/s\n" +
+			"Range: " + str(rad/8) + " tiles[/font_size]"
+		)
+		HealthBarGUI.show_cost_preview(cost)
+	elif !entered:
+		TooltipManager.hide_tooltip()
+		if dragged_item.is_empty():
+			var any_hovered = false
+			for s in slots:
+				if s.get_meta("hovered", false):
+					any_hovered = true
+					break
+			if !any_hovered:
+				if HealthBarGUI:
+					HealthBarGUI.show_cost_preview(0.0)
 
 func _update_hover(slot: Panel) -> void:
 	var style: StyleBoxFlat = slot.get_meta("style")
@@ -274,56 +305,20 @@ func _update_hover(slot: Panel) -> void:
 
 func _process(_delta: float) -> void:
 	var preview_cost: float = 0.0
-	
 	if !dragged_item.is_empty():
+		var item_def = items[dragged_item.id]
+		var tower_level = item_def.get("tower_level", 0)
+		var cost = get_placement_cost(dragged_item.id, tower_level, dragged_item.rank)
+		HealthBarGUI.show_cost_preview(cost)
 		var mouse_pos = get_global_mouse_position()
-		potential_cell = GridController.get_cell_from_pos(mouse_pos)
-		
-		# Inventory merge preview
-		var inv_target = get_closest_slot(mouse_pos, 8.0, false)
-		if inv_target and inv_target != original_slot:
-			var target_item = inv_target.get_meta("item", {})
-			if !target_item.is_empty() and target_item.id == dragged_item.id and target_item.rank == dragged_item.rank:
-				#var new_rank = dragged_item.rank + 1
-				preview_cost = get_merge_cost(dragged_item.rank)#(base_spawn_cost * pow(3.0, float(new_rank - 1))) / 3.0
-		
-		# Grid merge preview (only if no inventory merge detected)
-		if preview_cost == 0.0 and potential_cell != Vector2i(-1, -1):
-			var existing = GridController.get_grid_item_at_cell(potential_cell)
-			if existing:
-				var existing_data = existing.get_meta("item_data", {})
-				if existing_data.id == dragged_item.id and existing_data.rank == dragged_item.rank:
-					#var new_rank = existing_data.rank + 1
-					preview_cost = get_merge_cost(dragged_item.rank)
-		
-		HealthBarGUI.show_cost_preview(preview_cost)
-	else:
-		if potential_cell != Vector2i(-1, -1):
-			potential_cell = Vector2i(-1, -1)
+		var raw_cell = GridController.get_cell_from_pos(mouse_pos)
+		potential_cell = GridController.get_nearest_valid_cell(raw_cell) if raw_cell != Vector2i(-1, -1) else Vector2i(-1, -1)
 		queue_redraw()
-	
 	if original_slot != null:
 		queue_redraw()
-	
 	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) == false and original_slot != null:
 		_perform_drop()
-		HealthBarGUI.show_cost_preview(0.0)  # Clear preview after drop
-		
-	if !dragged_item.is_empty() or (grid_controller and grid_controller.dragged_tower != null):
-		_merge_blink_timer += _delta
-		if _merge_blink_timer >= 0.5:
-			_merge_blink_timer -= 0.5
-			_merge_blink_state = !_merge_blink_state
-			refresh_inventory_highlights()
-			if grid_controller:
-				grid_controller.refresh_grid_highlights()
-	else:
-		_merge_blink_timer = 0.0
-		if _merge_blink_state:
-			_merge_blink_state = false
-			refresh_inventory_highlights()
-			if grid_controller:
-				grid_controller.refresh_grid_highlights()
+		HealthBarGUI.show_cost_preview(0.0)
 
 func get_current_dragged_data(exclude_tower: Node = null) -> Dictionary:
 	if !dragged_item.is_empty():
@@ -336,33 +331,21 @@ func _perform_drop() -> void:
 	var mouse_pos = get_global_mouse_position()
 	var target = get_closest_slot(mouse_pos, 8.0, false)
 	var return_to_original = true
-	
 	if target and target != original_slot:
 		var target_item = target.get_meta("item", {})
 		if target_item.is_empty():
 			target.set_meta("item", dragged_item)
 			_update_slot(target)
 			return_to_original = false
-		elif !target_item.is_empty() and target_item.id == dragged_item.id and target_item.rank == dragged_item.rank:
-			#var new_rank = target_item.rank + 1
-			var cost = get_merge_cost(target_item.rank)
-			if StatsManager.spend_health(cost):
-				Utilities.spawn_floating_text("Rank up!", get_global_mouse_position(), null, true)
-				target_item.rank += 1
-				target.set_meta("item", target_item)
-				_update_slot(target)
-				return_to_original = false
-			else:
-				Utilities.spawn_floating_text("Not enough health...", get_global_mouse_position(), null, false)
-	
 	if return_to_original and potential_cell != Vector2i(-1, -1):
-		if GridController.place_item(dragged_item, potential_cell):
-			return_to_original = false
-	
+		var place_cell = GridController.get_nearest_valid_cell(potential_cell)
+		if place_cell != Vector2i(-1, -1):
+			if GridController.get_grid_item_at_cell(place_cell) == null && GridController.is_valid_placement(place_cell, dragged_item):
+				if GridController.place_item(dragged_item, place_cell):
+					return_to_original = false
 	if return_to_original:
 		original_slot.set_meta("item", dragged_item)
 		_update_slot(original_slot)
-	
 	dragged_item = {}
 	original_slot = null
 	drag_preview.visible = false

@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://dfx5piisk4epn"]
+[gd_scene load_steps=5 format=3 uid="uid://dfx5piisk4epn"]
 
 [ext_resource type="Script" uid="uid://uy1ki4lla8jl" path="res://Battlefield/Game/tower.gd" id="1_q6slx"]
 [ext_resource type="Texture2D" uid="uid://cs2ic8oeq6fc0" path="res://Battlefield/Sprites/Towers/Tower1.png" id="2_emh5o"]
+[ext_resource type="Script" uid="uid://c5ogy7ewrn5sp" path="res://Battlefield/Game/upgrade_cost.gd" id="3_emh5o"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mx82x"]
 size = Vector2(8, 8)
@@ -15,3 +16,12 @@ shape = SubResource("RectangleShape2D_mx82x")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("2_emh5o")
+
+[node name="UpgradeCost" type="Label" parent="."]
+offset_left = -4.0
+offset_top = -11.0
+offset_right = 4.0
+offset_bottom = 12.0
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("3_emh5o")

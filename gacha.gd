@@ -22,9 +22,14 @@ func pull() -> bool:
 		return false
 	
 	var id: String = items[randi() % items.size()]
-	var is_new: bool = !unlocked_levels.has(id)
+	
+	var was_unlocked: bool = InventoryManager.items[id].unlocked
+	var is_new: bool = !was_unlocked
 	
 	if is_new:
+		InventoryManager.items[id].unlocked = true
+	
+	if !unlocked_levels.has(id):
 		unlocked_levels[id] = 1
 	else:
 		unlocked_levels[id] += 1

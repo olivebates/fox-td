@@ -38,7 +38,7 @@ const ENEMY_TYPES = {
 		"count_mult": 1.5
 	},
 	"boss": {
-		"health": 15,
+		"health": 10,
 		"speed": 5.0,
 		"damage": 50,
 		"base_reward": 50.0,
@@ -96,7 +96,7 @@ func start_next_wave():
 	var type_data = ENEMY_TYPES[enemy_type]
 
 	var wave_health := 1
-	wave_health += floor((current_wave-2) + base_health * pow(1.1, current_wave - 1))
+	wave_health += ceil(floor((current_wave-2) + base_health * pow(1.25, current_wave - 1))/2)
 
 	# Apply type health multiplier
 	wave_health *= type_data.health

@@ -52,6 +52,20 @@ func _ready() -> void:
 	wall_prefab = ResourceLoader.load(WALL_PREFAB_UID)
 	wall_preview_texture = ResourceLoader.load(WALL_PREVIEW_TEXTURE_UID)
 	
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
+
+func _on_mouse_entered() -> void:
+	TooltipManager.show_tooltip(
+	"Build Walls",
+	"[font_size=3][color=cornflower_blue]Costs: " + str(int(GridController.get_wall_cost())) + "[/color][/font_size]\n" +
+	"[font_size=2][color=dark_gray]Click on the path to build a wall!\n" +
+	"Walls cannot be removed, so place them carefully![/color][/font_size]"
+	)
+
+func _on_mouse_exited() -> void:
+	TooltipManager.hide_tooltip()
+	
 func _on_toggled(pressed: bool) -> void:
 	highlight_mode = pressed
 	GridController.highlight_mode = pressed

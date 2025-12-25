@@ -5,7 +5,7 @@ var health: float = 50.0
 var max_health: float = 100.0
 var production_speed: float = 1.0
 var kill_multiplier: float = 1.0
-var money = 0
+var money = 100
 var level = 1
 
 signal health_changed(current: float, max: float)
@@ -87,7 +87,7 @@ func take_damage(amount: float) -> void:
 			node.queue_free()
 			
 		InventoryManager.clear_inventory()
-		InventoryManager.slots[0].set_meta("item", {"id": "tower1", "rank": 1})
+		InventoryManager.slots[0].set_meta("item", {"id": "Fox", "rank": 1})
 		
 		max_health = 100
 		level = 1

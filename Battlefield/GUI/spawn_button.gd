@@ -61,7 +61,7 @@ func _on_pressed() -> void:
 				slot.set_meta("item", new_item)
 				inventory_manager._update_slot(slot)
 				placed = true
-				InventoryManager.cost_to_spawn += 10
+				InventoryManager.cost_to_spawn += 5
 				break
 		if not placed:
 			Utilities.spawn_floating_text("Inventory full!", get_global_mouse_position(), null, false)

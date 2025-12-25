@@ -54,6 +54,19 @@ func _ready() -> void:
 	add_theme_stylebox_override("pressed", flat_pressed)
 	add_theme_stylebox_override("disabled", flat_disabled)
 	add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
+
+func _on_mouse_entered() -> void:
+	TooltipManager.show_tooltip(
+		"Start wave!",
+		"[font_size=3][color=cornflower_blue]Current Wave: " + str(int(WaveSpawner.current_wave)) + "[/color][/font_size]" + "
+[font_size=2][color=dark_gray]Click to start the next wave.[/color][/font_size]"
+	)
+	
+func _on_mouse_exited() -> void:
+	TooltipManager.hide_tooltip()
 
 func _process(delta: float) -> void:
 	disabled = get_tree().get_nodes_in_group("enemy").size() > 0

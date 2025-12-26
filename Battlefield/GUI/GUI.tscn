@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://baklm1pqc3pmt"]
+[gd_scene load_steps=15 format=3 uid="uid://baklm1pqc3pmt"]
 
 [ext_resource type="Script" uid="uid://xi1db20durn0" path="res://Battlefield/GUI/GUI.gd" id="1_q7530"]
 [ext_resource type="Script" uid="uid://cidutxx7swaph" path="res://Battlefield/GUI/drag_preview.gd" id="2_3yf0u"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://f1v8kkxu8ic1" path="res://Battlefield/GUI/start_first_wave_button.gd" id="7_1n0ix"]
 [ext_resource type="Script" uid="uid://c50y6s2eoks15" path="res://Battlefield/GUI/money_counter.gd" id="8_devaa"]
 [ext_resource type="Script" uid="uid://dg880b5rf876m" path="res://Battlefield/GUI/health_counter.gd" id="9_f86ex"]
+[ext_resource type="Script" uid="uid://bjjytbxv3h335" path="res://Battlefield/GUI/speedup_button.gd" id="14_qdse5"]
 
 [node name="GUI" type="Control"]
 z_index = -100
@@ -83,7 +84,7 @@ script = ExtResource("2_3yf0u")
 unique_name_in_owner = true
 script = ExtResource("4_37vil")
 
-[node name="HealthbarContainer" type="Control" parent="." groups=["HealthBarContainer", "bullet"]]
+[node name="HealthbarContainer" type="Control" parent="." groups=["HealthBarContainer"]]
 z_index = 200
 anchors_preset = 0
 offset_top = 11.0
@@ -156,3 +157,11 @@ offset_right = -175.0
 offset_bottom = 133.0
 text = "3c"
 script = ExtResource("8_devaa")
+
+[node name="SpeedupButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = -199.0
+offset_top = -17.0
+offset_right = -191.0
+offset_bottom = -9.0
+script = ExtResource("14_qdse5")

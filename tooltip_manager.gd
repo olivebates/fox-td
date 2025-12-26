@@ -11,6 +11,7 @@ func _ready() -> void:
 	add_child(tooltip)
 	tooltip.visible = false
 	tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tooltip.z_index = 1002
 	
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0, 0, 0, 0.8)

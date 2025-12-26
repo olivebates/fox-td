@@ -36,17 +36,17 @@ script = ExtResource("2_lhcbs")
 [node name="HBoxContainer" type="HBoxContainer" parent="BackpackContainer"]
 layout_mode = 2
 
-[node name="BackpackSort" type="Button" parent="BackpackContainer/HBoxContainer"]
+[node name="UnmergeTowers" type="Button" parent="BackpackContainer/HBoxContainer" groups=["unmerge_towers"]]
 layout_mode = 2
-script = ExtResource("3_n4df0")
+script = ExtResource("5_j6qdx")
 
 [node name="EmptySquad" type="Button" parent="BackpackContainer/HBoxContainer"]
 layout_mode = 2
 script = ExtResource("4_111ie")
 
-[node name="UnmergeTowers" type="Button" parent="BackpackContainer/HBoxContainer" groups=["unmerge_towers"]]
+[node name="BackpackSort" type="Button" parent="BackpackContainer/HBoxContainer"]
 layout_mode = 2
-script = ExtResource("5_j6qdx")
+script = ExtResource("3_n4df0")
 
 [node name="BackpackInventory" type="GridContainer" parent="BackpackContainer" groups=["backpack_inventory"]]
 layout_mode = 2
@@ -55,8 +55,8 @@ script = ExtResource("1_ef5b0")
 
 [node name="SquadContainer" type="VBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 90.0
-offset_right = 130.0
+offset_left = 92.0
+offset_right = 141.0
 offset_bottom = 40.0
 
 [node name="SquadTitle" type="Label" parent="SquadContainer"]
@@ -67,14 +67,14 @@ script = ExtResource("2_lhcbs")
 [node name="HBoxContainer" type="HBoxContainer" parent="SquadContainer"]
 layout_mode = 2
 
+[node name="AutoFill" type="Button" parent="SquadContainer/HBoxContainer"]
+layout_mode = 2
+script = ExtResource("5_4h4ep")
+
 [node name="SquadSort" type="Button" parent="SquadContainer/HBoxContainer"]
 layout_mode = 2
 script = ExtResource("3_n4df0")
 is_squad_inventory = true
-
-[node name="AutoFill" type="Button" parent="SquadContainer/HBoxContainer"]
-layout_mode = 2
-script = ExtResource("5_4h4ep")
 
 [node name="SquadInventory" type="GridContainer" parent="SquadContainer" groups=["squad_inventory"]]
 layout_mode = 2

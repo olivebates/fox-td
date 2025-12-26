@@ -50,23 +50,44 @@ func _input(event: InputEvent) -> void:
 				InventoryManager.HealthBarGUI.hide_cost_preview()
 			queue_redraw()
 		
+		if hovered and not was_hovered and has_meta("item_data"):
+			var data = get_meta("item_data")
+			var def = invManager.items[data.id]
+			var rank = data.rank
+			var dmg = data.get("damage", 1) * invManager.get_damage_calculation(rank)
+			var atk = def.attack_speed * pow(1.07, rank - 1)
+			var rad = def.radius * pow(1.07, rank - 1)
+			TooltipManager.show_tooltip(
+				def.get("name", data.id.capitalize()),
+				"[color=gray]————————————————[/color]\n[color=cornflower_blue]Damage: " + str(int(dmg)) + "\n" +
+				"Attack Speed: " + str(snapped(atk, 0.01)) + "/s\n" +
+				"Range: " + str(snapped(rad/8, 0.1)) + " tiles[/color]\n[color=gray]————————————————[/color]\n" +
+				"[font_size=2][color=dark_gray]" + def.get("description", "") + "[/color][/font_size]"
+			)
+		elif not hovered and was_hovered:
+			TooltipManager.hide_tooltip()
+		
 		if holding and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			holding = false
 			hold_timer = 0.0
 			InventoryManager.HealthBarGUI.hide_cost_preview()
 			queue_redraw()
+		
 	
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		if mouse_over and has_meta("item_data"):
 			var data = get_meta("item_data")
 			var rank = data.get("rank", 1)
-			upgrade_cost = InventoryManager.get_spawn_cost(rank)
+			upgrade_cost = InventoryManager.get_placement_cost(data.id, tower_level, rank)
 			holding = true
 			hold_timer = 0.0
 			var grid_controller = get_node("/root/GridController")
 			if grid_controller:
 				grid_controller.start_tower_drag(self, global_position - get_global_mouse_position())
 			get_viewport().set_input_as_handled()
+	
+	if holding:
+		TooltipManager.hide_tooltip()
 
 func _exit_tree() -> void:
 	hovered = false
@@ -107,8 +128,7 @@ func fire(target: Node2D) -> void:
 	bullet.target = target
 	if has_meta("item_data"):
 		var rank = get_meta("item_data").get("rank", 0)
-		bullet.damage = get_meta("item_data").get("damage", 1)
-		bullet.damage *= InventoryManager.get_damage_calculation(rank)
+		bullet.damage = InventoryManager.get_damage_calculation(rank)
 	var rand_dir = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized()
 	bullet.velocity = rand_dir * bullet.initial_speed
 	bullet.global_position = global_position

@@ -62,6 +62,7 @@ func _on_mouse_entered() -> void:
 	TooltipManager.show_tooltip(
 		"Start wave!",
 		"[font_size=3][color=cornflower_blue]Current Wave: " + str(int(WaveSpawner.current_wave)) + "[/color][/font_size]" + "
+[color=gray]————————————————[/color]
 [font_size=2][color=dark_gray]Click to start the next wave.[/color][/font_size]"
 	)
 	

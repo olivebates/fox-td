@@ -56,6 +56,22 @@ func _ready() -> void:
 	
 	_update_text()
 	_update_red_overlay()
+	$Bar.mouse_entered.connect(_on_mouse_entered)
+	$Bar.mouse_exited.connect(_on_mouse_exited)
+
+func _on_mouse_entered() -> void:
+	TooltipManager.show_tooltip(
+	"Meat",
+	"[font_size=3][color=cornflower_blue]Production: " + str(int(StatsManager.production_speed)) + "/s\n"+
+	"Kill multiplier: x" +str(StatsManager.kill_multiplier) +"\n"+
+	"[/color][/font_size]" +
+	"[color=gray]————————————————[/color]\n"+
+	"[font_size=2][color=dark_gray]Meat is used to buy and upgrade towers.
+Maxing it out levels up, increasing production![/color][/font_size]"
+	)
+
+func _on_mouse_exited() -> void:
+	TooltipManager.hide_tooltip()
 
 func _on_health_changed(current: float, max_val: float) -> void:
 	bar.value = current
@@ -64,7 +80,7 @@ func _on_health_changed(current: float, max_val: float) -> void:
 	_update_red_overlay()
 
 func _on_max_changed(new_max: float) -> void:
-	if new_max != 100:
+	if new_max != StatsManager.base_max_health:
 		Utilities.spawn_floating_text("Level Up!", get_parent().position, get_tree().current_scene, true)
 		StatsManager.level += 1
 	bar.max_value = new_max

@@ -45,8 +45,8 @@ func _ready() -> void:
 
 func _on_mouse_entered() -> void:
 	TooltipManager.show_tooltip(
-		"Upgrade Critters",
-        "Click a critter to upgrade it!"
+	"Upgrade Critters",
+	"[font_size=2][color=dark_gray]Click a critter on the field to upgrade it![/color][/font_size]"
 	)
 
 func _on_mouse_exited() -> void:

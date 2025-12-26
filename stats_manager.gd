@@ -1,8 +1,9 @@
 #StatsManager singleton
 extends Node
 
-var health: float = 50.0
-var max_health: float = 100.0
+var base_max_health = 200
+var health: float = base_max_health/2
+var max_health: float = base_max_health
 var production_speed: float = 1.0
 var kill_multiplier: float = 1.0
 var money = 100
@@ -52,7 +53,6 @@ func take_damage(amount: float) -> void:
 	if health <= 0:
 		get_tree().get_first_node_in_group("game_over_screen").visible = true
 		
-		InventoryManager.cost_to_spawn = 50
 		
 		WaveSpawner.cancel_current_waves()
 		WaveShower.reset_preview()

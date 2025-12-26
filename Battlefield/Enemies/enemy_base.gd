@@ -14,9 +14,8 @@ var health_bg: ColorRect
 var health_fg: ColorRect
 var sprite: Node
 var start_position
-var current_damage = 10
-signal enemy_died
-
+var current_damage = 1
+var cycles = 1
 func _on_astar_updated() -> void:
 	request_path()
 
@@ -53,11 +52,12 @@ func request_path() -> void:
 func _process(delta: float) -> void:
 	$Label.text = str(current_health)
 	if global_position.distance_to(target_position) < 8.0:
-		var damage = current_damage + 2*WaveSpawner.current_wave
+		current_damage = WaveSpawner.calculate_enemy_damage(current_health, cycles)
+		var damage = current_damage
 		Utilities.spawn_floating_text("-"+str(int(damage))+" Meat", position-Vector2(0,4)+Vector2(randf_range(-4, 4), randf_range(-4, 4)), get_tree().current_scene)
 		position = start_position
 		StatsManager.take_damage(damage)
-		current_damage *= 2
+		cycles += 1
 		request_path()
 		
 	if path.is_empty() or path_index >= path.size():
@@ -123,5 +123,5 @@ func die():
 	var money_gain = WaveSpawner.current_wave
 	StatsManager.money += money_gain
 	Utilities.spawn_floating_text("+€"+str(money_gain), global_position + Vector2(0, 8), get_tree().current_scene, false, Color.YELLOW)
-	get_tree().call_group("health_manager", "gain_health_from_kill", 5.0)
+	get_tree().call_group("health_manager", "gain_health_from_kill", WaveSpawner.current_wave)
 	queue_free()

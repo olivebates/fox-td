@@ -116,6 +116,27 @@ func _perform_unmerge(real_index: int, tower: Dictionary, slot: Panel) -> void:
 func _on_slot_hover(slot: Panel, entered: bool) -> void:
 	slot.set_meta("hovered", entered)
 	_update_hover(slot)
+	if entered:
+		show_tooltip(slot)
+	else:
+		TooltipManager.hide_tooltip()
+
+func show_tooltip(slot):
+	var real_index: int = slot.get_meta("real_index", -1)
+	if real_index != -1:
+		var tower = TowerManager.get_tower_at(real_index)
+		if !tower.is_empty():
+			var type = tower.type
+			var rank = tower.merged
+			var dmg = InventoryManager.get_damage_calculation(rank)
+			var atk = type.attack_speed
+			var rad = type.radius / 8.0
+			var cost = InventoryManager.get_placement_cost(tower.id, 0, rank)
+			TooltipManager.show_tooltip(
+				type.get("name", "Unnamed Tower"),  # Title is now the ID
+				"[color=cornflower_blue]Place Cost: %d[/color]\n[color=gray]————————————————[/color]\nDamage: %d\nAttack Speed: %.1f/s\nRange: %.1f tiles\n[color=gray]————————————————[/color]\n[font_size=2][color=dark_gray]%s[/color][/font_size]" %
+				[int(cost), dmg, atk, rad, type.get("description", "")]
+			)
 
 func _update_hover(slot: Panel) -> void:
 	var unmerge_button = get_tree().get_first_node_in_group("unmerge_towers")
@@ -166,13 +187,14 @@ func _perform_drop() -> void:
 		var target_inv = target_slot.get_parent()
 		if target_tower.is_empty():
 			TowerManager.set_tower_at(target_real, dragged_tower)
-			target_inv._update_slot(target_slot)
+			target_inv._update_slot(target_slot)  # Fixed: pass slot, not index
 			return_to_original = false
 		elif target_tower.type == dragged_tower.type && target_tower.merged == dragged_tower.merged:
 			var updated = target_tower.duplicate()
 			updated.merged += 1
 			TowerManager.set_tower_at(target_real, updated)
-			target_inv._update_slot(target_slot)
+			target_inv._update_slot(target_slot)  # Consistent
+			show_tooltip(target_slot)
 			return_to_original = false
 	if return_to_original && original_slot:
 		var orig_real: int = original_slot.get_meta("real_index")

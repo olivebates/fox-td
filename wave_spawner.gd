@@ -46,6 +46,10 @@ const ENEMY_TYPES = {
 	}
 }
 
+func calculate_enemy_damage(health, cycles):
+	return pow(health + current_wave, cycles)
+	
+
 var types = ENEMY_TYPES.keys()
 
 const MIN_X: int = 1
@@ -133,7 +137,7 @@ func spawn_enemy(wave: int, enemy_type: String, health: int):
 
 	enemy.max_speed = base_speed + wave * speed_inc
 	enemy.speed = type_data.speed
-	enemy.current_damage = type_data.damage
+	#enemy.current_damage = type_data.damage
 
 	enemy.health = health
 	enemy.current_health = health

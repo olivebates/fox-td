@@ -30,11 +30,12 @@ func _create_tower(id: String, merged: int) -> Dictionary:
 	var type_data = InventoryManager.items.get(id, {})
 	if type_data.is_empty():
 		return {}
-	var dps = type_data.damage * type_data.attack_speed
+	var dps = InventoryManager.get_damage_calculation(1) * type_data.attack_speed
 	return {
 		"type": type_data,
 		"merged": merged,
-		"power_level": dps
+		"power_level": dps,
+		"id": id  # Add this line
 	}
 
 func is_squad_index(index: int) -> bool:

@@ -25,9 +25,9 @@ StatsManager="*res://stats_manager.gd"
 Utilities="*res://utilities.gd"
 AStarManager="*res://a_star_manager.gd"
 WaveShower="*res://wave_shower.gd"
-Gacha="*res://gacha.gd"
 TowerManager="*res://tower_manager.gd"
 TooltipManager="*res://tooltip_manager.gd"
+Gacha="*res://gacha.gd"
 
 [display]
 

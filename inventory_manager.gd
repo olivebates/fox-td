@@ -15,34 +15,38 @@ const RANK_COLORS = {
 	10: Color(1.0, 0.531, 0.986),
 	11: Color(0.565, 0.0, 0.18),
 }
-var base_spawn_cost = 20.0
+var base_spawn_cost = 40.0
 @onready var HealthBarGUI = get_tree().get_first_node_in_group("HealthBarContainer")
 @onready var grid_controller: Node2D = get_node("/root/GridController")
 var _merge_blink_timer: float = 0.0
 var _merge_blink_state: bool = false
-var cost_to_spawn = 50
+#var cost_to_spawn = 30
 
 
 var items: Dictionary = {
 	"Fox": {
+		"name": "Fox",
 		"texture": preload("uid://cs2ic8oeq6fc0"),
 		"prefab": preload("uid://dfx5piisk4epn"),
 		"bullet": preload("uid://ciuly8asijcg5"),
 		"unlocked": true,
 		"attack_speed": 1,
-		"damage": 1,
+		#"damage": 1,
 		"radius": 24,
-		"rarity": 1
+		"rarity": 1,
+		"description": "A basic shooting fox!"
 	},
 	"Duck": {
+		"name": "Duck",
 		"texture": preload("uid://cqgl3igwvfat8"),
 		"prefab": preload("uid://dfx5piisk4epn"),
 		"bullet": preload("uid://32xbub5ovblc"),
 		"unlocked": false,
 		"attack_speed": 1,
-		"damage": 1,
+		#"damage": 1,
 		"radius": 24,
-		"rarity": 2
+		"rarity": 2,
+		"description": "A duck that shoots exploding bullets!"
 	},
 }
 
@@ -54,9 +58,9 @@ var level_up_stats: Dictionary = {
 }
 
 func get_placement_cost(id: String, tower_level: int, rank: int) -> float:
-	var base = items[id].get("rarity", 1) * base_spawn_cost
+	var base = items[id].rarity * 40
 	var level_factor = 1.0 + (tower_level * 0.2)
-	var rank_factor = pow(1.5, rank - 1)
+	var rank_factor = pow(3, rank - 1)
 	return base * level_factor * rank_factor
 
 func apply_level_up(id: String) -> void:
@@ -71,11 +75,11 @@ func apply_level_up(id: String) -> void:
 	item_data.radius += level_up_stats.radius[min(Gacha.unlocked_levels[id], level_up_stats.radius.size() - 1)]
 
 func get_damage_calculation(rank):
-	return pow(2, rank - 1) + rank - 1
+	return int(pow(3.5, rank - 1) + rank -1)
 
 func get_stat_for_rank(id: String, stat: String, rank: int) -> int:
 	if rank <= 0: return items[id][stat]
-	var base = items[id][stat]
+	var base = InventoryManager.get_damage_calculation(1)#items[id][stat]
 	var bonuses = level_up_stats.get(stat, [])
 	for i in range(1, rank + 1):
 		var bonus = bonuses[i - 1] if i <= bonuses.size() else bonuses.back()
@@ -90,12 +94,13 @@ var drag_preview: Control = null
 var drag_preview_item: Dictionary = {}
 var potential_cell: Vector2i = Vector2i(-1, -1)
 
-func get_spawn_cost(rank: int) -> float:
-	return base_spawn_cost * pow(2.0, float(rank))
 
 func get_merge_cost(current_rank: int) -> float:
 	var new_rank = current_rank + 1
 	return base_spawn_cost #* pow(3.0, float(new_rank - 1)) / 3.0
+
+#func _ready():
+	#Gacha.register_items(items.keys())
 
 func register_inventory(grid: GridContainer, spawner_grid: GridContainer, preview: Control) -> void:
 	slots.clear()
@@ -257,16 +262,16 @@ func _on_slot_hover(slot: Panel, entered: bool) -> void:
 		var def = items[item.id]
 		var tower_level = def.get("tower_level", 0)
 		var atk = get_stat_for_rank(item.id, "attack_speed", item.rank)
-		var dmg = get_stat_for_rank(item.id, "damage", item.rank)
+		var dmg = get_damage_calculation(item.rank)
 		var rad = get_stat_for_rank(item.id, "radius", item.rank)
 		var cost = get_placement_cost(item.id, tower_level, item.rank)
-		
 		TooltipManager.show_tooltip(
 			def.get("name", item.id.capitalize()),
-			"[color=cornflower_blue]Place Cost: " + str(int(cost)) + "[/color]\n"+
-			"[font_size=2]Damage: " + str(dmg) + "\n" +
+			"[color=cornflower_blue]Place Cost: " + str(int(cost)) + "[/color]\n[color=gray]————————————————[/color]\n" +
+			"Damage: " + str(dmg) + "\n" +
 			"Attack Speed: " + str(atk) + "/s\n" +
-			"Range: " + str(rad/8) + " tiles[/font_size]"
+			"Range: " + str(rad/8) + " tiles\n[color=gray]————————————————[/color]\n" +
+			"[font_size=2][color=dark_gray]" + def.get("description", "") + "[/color][/font_size]"
 		)
 		HealthBarGUI.show_cost_preview(cost)
 	elif !entered:
@@ -390,7 +395,7 @@ func _spawn_item(rank: int) -> bool:
 	if keys.is_empty(): return false
 	var id = keys[randi() % keys.size()]
 	var new_item = {"id": id, "rank": rank + 1}
-	var cost = get_spawn_cost(rank)
+	var cost = get_placement_cost(id, 1, rank)
 	if not StatsManager.spend_health(cost): return false
 	for slot in slots:
 		if slot.get_meta("item", {}).is_empty():

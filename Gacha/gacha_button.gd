@@ -42,11 +42,7 @@ func _on_pressed() -> void:
 	if keys.is_empty():
 		return
 	var random_id = keys[randi() % keys.size()]
-	var tower_type = InventoryManager.items[random_id]
-	var new_tower = {
-		"type": tower_type,
-		"merged": 1
-	}
+	var new_tower = TowerManager._create_tower(random_id, 1)
 	
 	var empty_index = -1
 	for i in TowerManager.tower_inventory.size():

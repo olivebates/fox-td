@@ -8,7 +8,8 @@ func _ready() -> void:
 	text = "Sort"
 	focus_mode = Control.FOCUS_NONE
 	add_theme_font_size_override("font_size", 4)
-	
+	add_theme_color_override("font_outline_color", Color.BLACK)
+	add_theme_constant_override("outline_size", 1)
 	var style_normal = StyleBoxFlat.new()
 	style_normal.bg_color = Color(0.2, 0.2, 0.2)
 	style_normal.border_width_left = 0
@@ -38,36 +39,54 @@ func _ready() -> void:
 	add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	
 	pressed.connect(_on_pressed)
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
 
-# InventorySorter.gd (updated for correct power_level)
+func _on_mouse_entered() -> void:
+	TooltipManager.show_tooltip(
+	"Sort by Power",
+	#"[color=gray]————————————————[/color]\n" +
+	"[font_size=2][color=dark_gray]Sorts your critters from strongest to weakest![/color][/font_size]"
+	)
+
+func _on_mouse_exited() -> void:
+	TooltipManager.hide_tooltip()
+
+#Press into shadow
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			position += Vector2(1, 1)
+			$ColorRect.visible = false
+		else:
+			position -= Vector2(1, 1)
+			$ColorRect.visible = true
+		
 
 func _on_pressed() -> void:
 	var inventory_size := TowerManager.get_inventory_size(is_squad_inventory)
 	var offset := 1000 if is_squad_inventory else 0
-	
 	var towers: Array[Dictionary] = []
+	
 	for i in inventory_size:
 		var index := i + offset
 		var tower = TowerManager.get_tower_at(index)
 		if !tower.is_empty():
-			var id = tower.type.get("id", "Fox")  # fallback if needed
-			var merged = tower.merged
-			var damage = InventoryManager.get_stat_for_rank(id, "damage", merged)
-			var final_damage = InventoryManager.get_damage_calculation(damage)
-			var attack_speed = InventoryManager.get_stat_for_rank(id, "attack_speed", merged)
-			tower.power_level = final_damage * attack_speed
-		towers.append(tower)
+			var id = tower.id
+			var rank = tower.get("rank", 1)  # Fixed: use "rank"
+			var damage = InventoryManager.get_damage_calculation(id, rank, 0)
+			var attack_speed = tower.type.attack_speed
+			tower.power_level = damage * attack_speed
+			towers.append(tower)
 	
 	towers.sort_custom(func(a, b):
 		if a.is_empty() and b.is_empty(): return false
 		if a.is_empty(): return false
 		if b.is_empty(): return true
-		
 		var pa = a.get("power_level", 0)
 		var pb = b.get("power_level", 0)
 		if pa != pb:
-			return pa > pb  # descending
-		
+			return pa > pb
 		var ta = a.type.get("texture", null)
 		var tb = b.type.get("texture", null)
 		if ta and tb:
@@ -77,7 +96,10 @@ func _on_pressed() -> void:
 	
 	for i in inventory_size:
 		var index := i + offset
-		TowerManager.set_tower_at(index, towers[i])
+		if i < towers.size():
+			TowerManager.set_tower_at(index, towers[i])
+		else:
+			TowerManager.set_tower_at(index, {})
 	
 	get_tree().call_group("backpack_inventory", "refresh_all_highlights")
 	get_tree().call_group("squad_inventory", "refresh_all_highlights")

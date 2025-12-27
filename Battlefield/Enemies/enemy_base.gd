@@ -16,21 +16,39 @@ var sprite: Node
 var start_position
 var current_damage = 1
 var cycles = 1
+var wobble_offset = Vector2.ZERO
+
+
 func _on_astar_updated() -> void:
+	await get_tree().process_frame
 	request_path()
 
 func _ready() -> void:
 	AStarManager.astar_updated.connect(_on_astar_updated)
-	$Label.add_theme_font_size_override("font_size", 3.5)
-	$Label.add_theme_color_override("font_color", Color.BLACK)
-	$Label.position = Vector2(-3.7, 0.5)
-	$Sprite2D2.modulate = Color(1.0, 0.2, 0.2)
+
+	$Visuals/Label.add_theme_font_size_override("font_size", 3.5)
+	$Visuals/Label.add_theme_color_override("font_color", Color.BLACK)
+	$Visuals/Label.position = Vector2(-3.7, 0.5)
+
+	$Visuals/Sprite2D2.modulate = Color(1.0, 0.2, 0.2)
+
 	start_position = position
 	add_to_group("enemies")
-	sprite = $Sprite2D
+
+	sprite = $Visuals/Sprite2D
+
 	create_healthbar()
 	update_healthbar()
 	request_path()
+
+	# ONE wobble offset for everything
+	wobble_offset = Vector2(
+		randi_range(-3.0, 3.0),
+		randi_range(-3.0, 3.0)
+	)
+
+	$Visuals.position = wobble_offset
+
 
 func request_path() -> void:
 	var astar = AStarManager.astar
@@ -50,7 +68,8 @@ func request_path() -> void:
 	path_index = 0
 
 func _process(delta: float) -> void:
-	$Label.text = str(current_health)
+	
+	$Visuals/Label.text = str(current_health)
 	if global_position.distance_to(target_position) < 8.0:
 		current_damage = WaveSpawner.calculate_enemy_damage(current_health, cycles)
 		var damage = current_damage
@@ -73,7 +92,6 @@ func _process(delta: float) -> void:
 		global_position += dir.normalized() * speed * delta
 	
 	
-	
 	update_healthbar()
 
 func create_healthbar():
@@ -90,8 +108,9 @@ func create_healthbar():
 	add_child(health_fg)
 
 func update_healthbar():
-	var offset = Vector2(0, 8)
+	var offset = Vector2(0, 8) + wobble_offset
 	var pos = (global_position + offset).round()
+
 	health_bg.global_position = pos - Vector2(0, 4)
 	health_fg.global_position = pos - Vector2(0, 3)
 	health_fg.size.x = 4.0 * (float(current_health) / health)
@@ -120,8 +139,8 @@ func take_damage(amount: int):
 		die()
 
 func die():
-	var money_gain = WaveSpawner.current_wave
+	var money_gain = WaveSpawner.get_enemy_death_money()
 	StatsManager.money += money_gain
 	Utilities.spawn_floating_text("+€"+str(money_gain), global_position + Vector2(0, 8), get_tree().current_scene, false, Color.YELLOW)
-	get_tree().call_group("health_manager", "gain_health_from_kill", WaveSpawner.current_wave)
+	get_tree().call_group("health_manager", "gain_health_from_kill", WaveSpawner.get_enemy_death_health_gain())
 	queue_free()

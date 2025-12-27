@@ -6,6 +6,8 @@ var tower_inventory: Array[Dictionary] = []
 var squad_slots: Array[Dictionary] = []  # Size 18
 var SQUAD_SIZE: int = 18
 var BACKPACK_SIZE: int = 7*6
+var pull_cost = 40
+var cost_increase = 10
 func _ready() -> void:
 	tower_inventory.clear()
 	tower_inventory.resize(BACKPACK_SIZE)
@@ -14,8 +16,6 @@ func _ready() -> void:
 	
 	# Example: add 3 test towers
 	tower_inventory[0] = _create_tower("Fox", 1)
-	tower_inventory[1] = _create_tower("Fox", 1)
-	tower_inventory[2] = _create_tower("Fox", 2)
 	
 	# Squad setup remains unchanged
 	squad_slots.clear()
@@ -23,19 +23,20 @@ func _ready() -> void:
 	for i in SQUAD_SIZE:
 		squad_slots[i] = {}
 	squad_slots[0] = _create_tower("Fox", 1)
-	squad_slots[1] = _create_tower("Fox", 2)
-	squad_slots[2] = _create_tower("Fox", 1)
+	squad_slots[1] = _create_tower("Fox", 1)
+	#squad_slots[2] = _create_tower("Fox", 1)
 
-func _create_tower(id: String, merged: int) -> Dictionary:
+func _create_tower(id: String, rank: int) -> Dictionary:
 	var type_data = InventoryManager.items.get(id, {})
 	if type_data.is_empty():
 		return {}
-	var dps = InventoryManager.get_damage_calculation(1) * type_data.attack_speed
+	var damage = InventoryManager.get_damage_calculation(id, rank, 0)  # path[0] = 0 initially
+	var dps = damage * type_data.attack_speed
 	return {
 		"type": type_data,
-		"merged": merged,
+		"rank": rank,
 		"power_level": dps,
-		"id": id  # Add this line
+		"id": id
 	}
 
 func is_squad_index(index: int) -> bool:

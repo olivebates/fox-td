@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://baklm1pqc3pmt"]
+[gd_scene load_steps=18 format=3 uid="uid://baklm1pqc3pmt"]
 
 [ext_resource type="Script" uid="uid://xi1db20durn0" path="res://Battlefield/GUI/GUI.gd" id="1_q7530"]
 [ext_resource type="Script" uid="uid://cidutxx7swaph" path="res://Battlefield/GUI/drag_preview.gd" id="2_3yf0u"]
@@ -6,14 +6,17 @@
 [ext_resource type="Script" uid="uid://duq08sumqlin5" path="res://Battlefield/GUI/next_wave_button.gd" id="2_dyjck"]
 [ext_resource type="Script" uid="uid://dtv1a1tqussd1" path="res://Battlefield/GUI/upgrade_button.gd" id="3_111fc"]
 [ext_resource type="Script" uid="uid://bj8lwo7q73o8" path="res://Battlefield/GUI/spawn_button.gd" id="3_nnufs"]
+[ext_resource type="Script" uid="uid://hflmog8s660p" path="res://color_tinter.gd" id="3_todsr"]
 [ext_resource type="Script" uid="uid://ganpq4sv7xrr" path="res://Battlefield/GUI/placement_root_node_2d.gd" id="4_37vil"]
 [ext_resource type="Script" uid="uid://dhoxx0mmu4v3k" path="res://Battlefield/GUI/healthbar_container.gd" id="5_jar5u"]
 [ext_resource type="Script" uid="uid://bcwrm8sthgh1t" path="res://Battlefield/GUI/wall_button.gd" id="5_r4j1y"]
 [ext_resource type="PackedScene" uid="uid://5qvnas3uklpm" path="res://Battlefield/GUI/NextWaveShower/NextWaveShower.tscn" id="6_pdy1f"]
 [ext_resource type="Script" uid="uid://f1v8kkxu8ic1" path="res://Battlefield/GUI/start_first_wave_button.gd" id="7_1n0ix"]
+[ext_resource type="Script" uid="uid://bob30va7t5a3g" path="res://Battlefield/GUI/destroy_wall_button.gd" id="7_cjuxc"]
 [ext_resource type="Script" uid="uid://c50y6s2eoks15" path="res://Battlefield/GUI/money_counter.gd" id="8_devaa"]
 [ext_resource type="Script" uid="uid://dg880b5rf876m" path="res://Battlefield/GUI/health_counter.gd" id="9_f86ex"]
 [ext_resource type="Script" uid="uid://bjjytbxv3h335" path="res://Battlefield/GUI/speedup_button.gd" id="14_qdse5"]
+[ext_resource type="Script" uid="uid://dynqyvnrv822q" path="res://Battlefield/GUI/level_shower.gd" id="16_60ota"]
 
 [node name="GUI" type="Control"]
 z_index = -100
@@ -32,9 +35,19 @@ offset_right = 22.0
 offset_bottom = 46.0
 theme_override_constants/separation = 2
 
-[node name="NextWaveButton" type="Button" parent="VBoxContainer"]
+[node name="NextWaveButton" type="Button" parent="VBoxContainer" groups=["next_wave_button"]]
 layout_mode = 2
 script = ExtResource("2_dyjck")
+
+[node name="ColorRect" type="ColorRect" parent="VBoxContainer/NextWaveButton"]
+z_index = -1
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+script = ExtResource("3_todsr")
+brightness_shift = 0.65
+is_button_shadow = true
 
 [node name="SpawnButtons" type="GridContainer" parent="VBoxContainer"]
 unique_name_in_owner = true
@@ -50,15 +63,67 @@ text = "+"
 script = ExtResource("3_nnufs")
 
 [node name="UpgradeButton" type="Button" parent="VBoxContainer/SpawnButtons" groups=["upgrade_button"]]
+visible = false
 layout_mode = 2
 text = "↑"
 script = ExtResource("3_111fc")
 
+[node name="ColorRect" type="ColorRect" parent="VBoxContainer/SpawnButtons/UpgradeButton"]
+z_index = -1
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+script = ExtResource("3_todsr")
+brightness_shift = 0.65
+is_button_shadow = true
+
 [node name="WallButton" type="Button" parent="VBoxContainer/SpawnButtons" groups=["occupier_highlight_button"]]
-z_index = 400
+z_index = 200
 layout_mode = 2
-text = "□"
+text = "▣"
 script = ExtResource("5_r4j1y")
+
+[node name="ColorRect" type="ColorRect" parent="VBoxContainer/SpawnButtons/WallButton"]
+z_index = -1
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+script = ExtResource("3_todsr")
+brightness_shift = 0.65
+is_button_shadow = true
+
+[node name="DestroyWallButton" type="Button" parent="VBoxContainer/SpawnButtons" groups=["remove_button"]]
+visible = false
+z_index = 200
+layout_mode = 2
+text = "▣"
+script = ExtResource("7_cjuxc")
+
+[node name="ColorRect" type="ColorRect" parent="VBoxContainer/SpawnButtons/DestroyWallButton"]
+z_index = -1
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+script = ExtResource("3_todsr")
+brightness_shift = 0.65
+is_button_shadow = true
+
+[node name="SpeedupButton" type="Button" parent="VBoxContainer/SpawnButtons"]
+layout_mode = 2
+script = ExtResource("14_qdse5")
+
+[node name="ColorRect" type="ColorRect" parent="VBoxContainer/SpawnButtons/SpeedupButton"]
+z_index = -1
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+script = ExtResource("3_todsr")
+brightness_shift = 0.65
+is_button_shadow = true
 
 [node name="Inventory" type="GridContainer" parent="VBoxContainer"]
 unique_name_in_owner = true
@@ -149,19 +214,17 @@ offset_bottom = 105.0
 script = ExtResource("7_1n0ix")
 
 [node name="MoneyCounter" type="Label" parent="."]
-visible = false
 layout_mode = 0
-offset_left = -200.0
-offset_top = 110.0
-offset_right = -175.0
-offset_bottom = 133.0
+offset_top = 102.0
+offset_right = 25.0
+offset_bottom = 125.0
 text = "3c"
 script = ExtResource("8_devaa")
 
-[node name="SpeedupButton" type="Button" parent="."]
+[node name="LevelShower" type="Label" parent="."]
 layout_mode = 0
-offset_left = -199.0
-offset_top = -17.0
-offset_right = -191.0
-offset_bottom = -9.0
-script = ExtResource("14_qdse5")
+offset_left = -112.0
+offset_top = -20.0
+offset_right = -72.0
+offset_bottom = 3.0
+script = ExtResource("16_60ota")

@@ -5,6 +5,8 @@ extends Label
 func _ready() -> void:
 	add_theme_font_size_override("font_size", 4)
 	add_theme_color_override("font_color", Color.YELLOW)
+	add_theme_color_override("font_outline_color", Color.BLACK)
+	add_theme_constant_override("outline_size", 1)
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.

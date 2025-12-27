@@ -31,10 +31,10 @@ var items: Dictionary = {
 		"bullet": preload("uid://ciuly8asijcg5"),
 		"unlocked": true,
 		"attack_speed": 1,
-		#"damage": 1,
-		"radius": 24,
+		"damage": 1,
+		"radius": 28,
 		"rarity": 1,
-		"description": "A basic shooting fox!"
+		"description": "A basic shooting fox!",
 	},
 	"Duck": {
 		"name": "Duck",
@@ -43,48 +43,76 @@ var items: Dictionary = {
 		"bullet": preload("uid://32xbub5ovblc"),
 		"unlocked": false,
 		"attack_speed": 1,
-		#"damage": 1,
-		"radius": 24,
+		"damage": 1,
+		"radius": 28,
 		"rarity": 2,
 		"description": "A duck that shoots exploding bullets!"
 	},
+	
+	"Snail": {
+		"name": "Snail",
+		"texture": preload("uid://cn7gkfeefcjd1"),
+		"prefab": preload("uid://bb3wn8l2vwp2f"),
+		"bullet": preload("uid://bgmdgfd4avpi0"),
+		"unlocked": false,
+		"attack_speed": 1,
+		"damage": 1,
+		"radius": 28,
+		"rarity": 2,
+		"description": "Shoots in all directions!"
+	},
+	
+	"Hawk": {
+		"name": "Hawk",
+		"texture": preload("uid://bu4gnw3uul700"),
+		"prefab": preload("uid://ynouns2yxpra"),
+		"bullet": preload("uid://d11coximypo74"),
+		"unlocked": false,
+		"attack_speed": 1,
+		"damage": 2,
+		"radius": 76,
+		"rarity": 3,
+		"description": "Long range sniper!"
+	},
+	
+	"Mouse": {
+		"name": "Mouse",
+		"texture": preload("uid://d32p5usdut0ad"),
+		"prefab": preload("uid://cq8akf1ulsky"),
+		"bullet": preload("uid://djhwllfo2eabv"),
+		"unlocked": false,
+		"attack_speed": 1,
+		"damage": 1,
+		"radius": 12,
+		"rarity": 4,
+		"description": "Continuously spits out mousetraps!"
+	},
 }
 
+func get_placement_cost(id: String, tower_level: int, rarity_level: int) -> float:
+	var base = 40 * pow(2, items[id].rarity-1) 
+	var level_factor = 1.0 + (tower_level * 0.2)
+	var rarity_factor = pow(2, rarity_level - 1)
+	return base * level_factor * rarity_factor
 
-var level_up_stats: Dictionary = {
-	"attack_speed": [0, 0, 0, 1, 0, 0, 0],
-	"damage":       [0, 1, 0, 0, 0, 1, 0],
-	"radius":       [4, 2, 2, 2, 2, 2, 2]
-}
-
-func get_placement_cost(id: String, tower_level: int, rank: int) -> float:
+func get_upgrade_cost(id: String, tower_level: int, path_level: int, rarity) -> float:
 	var base = items[id].rarity * 40
 	var level_factor = 1.0 + (tower_level * 0.2)
-	var rank_factor = pow(3, rank - 1)
-	return base * level_factor * rank_factor
+	var path_factor = pow(2, path_level - 1)
+	var rarity_factor = pow(2, rarity - 1)
+	return base * level_factor * path_factor * rarity_factor
 
-func apply_level_up(id: String) -> void:
-	var item_data = items.get(id, {})
-	if item_data.is_empty():
-		return
-	
-	# Increment base stats directly on the tower definition
-	item_data.tower_level += 1
-	item_data.attack_speed += level_up_stats.attack_speed[min(Gacha.unlocked_levels[id], level_up_stats.attack_speed.size() - 1)]
-	item_data.damage += level_up_stats.damage[min(Gacha.unlocked_levels[id], level_up_stats.damage.size() - 1)]
-	item_data.radius += level_up_stats.radius[min(Gacha.unlocked_levels[id], level_up_stats.radius.size() - 1)]
+func get_damage_calculation(id: String, rank: int, path_damage_level: int) -> int:
+	var base_damage = items[id].get("damage", 1)
+	var rank_multiplier = pow(3.5, rank - 1)
+	var path_bonus = path_damage_level  # or any formula, e.g. path_damage_level * 2
+	return int(base_damage * rank_multiplier + path_bonus)
 
-func get_damage_calculation(rank):
-	return int(pow(3.5, rank - 1) + rank -1)
+func get_attack_speed(tower_type, path_value):
+	return items[tower_type].attack_speed * (1.0 + path_value)
 
-func get_stat_for_rank(id: String, stat: String, rank: int) -> int:
-	if rank <= 0: return items[id][stat]
-	var base = InventoryManager.get_damage_calculation(1)#items[id][stat]
-	var bonuses = level_up_stats.get(stat, [])
-	for i in range(1, rank + 1):
-		var bonus = bonuses[i - 1] if i <= bonuses.size() else bonuses.back()
-		base += bonus
-	return base
+func get_tower_radius(tower_type, origen_tower):
+	return items[tower_type].radius + ((origen_tower.path[2]) * 4)
 
 # Runtime state
 var slots: Array[Panel] = []
@@ -117,9 +145,7 @@ func register_inventory(grid: GridContainer, spawner_grid: GridContainer, previe
 		_setup_slot_style(slot)
 	
 	# Example items
-	slots[0].set_meta("item", {"id": "Fox", "rank": 1})
-	#slots[1].set_meta("item", {"id": "tower1", "rank": 1})
-	#slots[5].set_meta("item", {"id": "tower2", "rank": 5})
+	give_starter_towers()
 	
 	for slot in slots:
 		_update_slot(slot)
@@ -167,6 +193,14 @@ func register_inventory(grid: GridContainer, spawner_grid: GridContainer, previe
 	
 	for slot in slots:
 		slot.draw.connect(_draw_slot.bind(slot))
+
+func give_starter_towers():
+	slots[0].set_meta("item", {"id": "Fox", "rank": 1})
+	slots[1].set_meta("item", {"id": "Fox", "rank": 1})
+	#slots[1].set_meta("item", {"id": "Mouse", "rank": 1})
+	#slots[2].set_meta("item", {"id": "Snail", "rank": 1})
+	#slots[3].set_meta("item", {"id": "Hawk", "rank": 1})
+	#slots[2].set_meta("item", {"id": "Fox", "rank": 1})
 
 var temp_drag_data: Dictionary = {}
 
@@ -261,9 +295,9 @@ func _on_slot_hover(slot: Panel, entered: bool) -> void:
 		var item = slot.get_meta("item")
 		var def = items[item.id]
 		var tower_level = def.get("tower_level", 0)
-		var atk = get_stat_for_rank(item.id, "attack_speed", item.rank)
-		var dmg = get_damage_calculation(item.rank)
-		var rad = get_stat_for_rank(item.id, "radius", item.rank)
+		var atk = def.attack_speed
+		var dmg = InventoryManager.get_damage_calculation(item.id, item.rank, item.get("path", [0,0,0])[0])
+		var rad = def.radius
 		var cost = get_placement_cost(item.id, tower_level, item.rank)
 		TooltipManager.show_tooltip(
 			def.get("name", item.id.capitalize()),

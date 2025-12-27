@@ -8,7 +8,8 @@ func _ready() -> void:
 	toggle_mode = true
 	button_pressed = false
 	toggled.connect(_on_toggled)
-	
+	add_theme_color_override("font_outline_color", Color.BLACK)
+	add_theme_constant_override("outline_size", 1)
 	# Remove padding and rounded corners
 	add_theme_font_size_override("font_size", 4)
 	var style_normal = StyleBoxFlat.new()
@@ -42,6 +43,17 @@ func _ready() -> void:
 	
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
+
+
+#Press into shadow
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			position += Vector2(1, 1)
+			$ColorRect.visible = false
+		else:
+			position -= Vector2(1, 1)
+			$ColorRect.visible = true
 
 func _on_mouse_entered() -> void:
 	TooltipManager.show_tooltip(
@@ -112,7 +124,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _attempt_upgrade(tower: Node) -> void:
 	var data = tower.get_meta("item_data")
-	var cost = InventoryManager.get_spawn_cost(data.rank)
+	var cost = InventoryManager.get_placement_cost(data.tower_type, 1, data.rarity)
 	if StatsManager.spend_health(cost):
 		data.rank += 1
 		tower.set_meta("item_data", data)

@@ -21,7 +21,7 @@ var walls_placed: int = 0
 const WALL_PREFAB_UID := "uid://823ref1rao2h"
 @onready var wall_prefab: PackedScene = ResourceLoader.load(WALL_PREFAB_UID)
 
-
+var delete_mode: bool = false
 @onready var HealthBarGUI = get_tree().get_first_node_in_group("HealthBarContainer")
 @onready var inventory = get_node("/root/InventoryManager")
 var original_slot: Panel = null
@@ -42,6 +42,7 @@ func _ready() -> void:
 		buildable_grid[y].fill(false)
 	
 	update_buildables()
+	change_level_color()
 
 func place_wall_at_cell(cell: Vector2i) -> bool:
 	if cell == Vector2i(-1, -1):
@@ -58,6 +59,7 @@ func place_wall_at_cell(cell: Vector2i) -> bool:
 		cell.x * CELL_SIZE + CELL_SIZE / 2,
 		cell.y * CELL_SIZE + CELL_SIZE / 2
 	)
+	wall.is_placed = true
 	add_child(wall)
 	wall.add_to_group("walls")
 	
@@ -69,14 +71,30 @@ func place_wall_at_cell(cell: Vector2i) -> bool:
 	
 	if !valid:
 		wall.queue_free()
-		AStarManager._update_grid()
 		Utilities.spawn_floating_text("Cannot block enemies...", get_global_mouse_position(), null, false)
+		await get_tree().process_frame
+		await get_tree().process_frame
+		await get_tree().process_frame
+		AStarManager._update_grid(false)
 		return false
 	
+	AStarManager._update_grid()
 	# Path is valid - wall stays, grid already updated
 	return true
 
 func _input(event: InputEvent) -> void:
+	if delete_mode:
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			var cell = get_cell_from_pos(get_global_mouse_position())
+			var item = get_grid_item_at_cell(cell)
+			if item and (item.is_in_group("walls") or item.is_in_group("placed_towers")):
+				item.queue_free()
+				if item.is_in_group("walls"):
+					walls_placed -= 1
+				grid[cell.y][cell.x] = null
+				AStarManager._update_grid()
+				queue_redraw()
+	
 	if !highlight_mode:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -108,7 +126,7 @@ func _input(event: InputEvent) -> void:
 			Utilities.spawn_floating_text("Not enough meat...", get_global_mouse_position(), null, false)
 			return
 		
-		if GridController.place_wall_at_cell(cell):
+		if await GridController.place_wall_at_cell(cell):
 			walls_placed += 1
 			GridController.queue_redraw()
 		else:
@@ -192,6 +210,17 @@ func _on_tower_input_event(viewport: Viewport, event: InputEvent, shape_idx: int
 		start_tower_drag(tower, offset)
 		get_viewport().set_input_as_handled()
 
+var random_tint: Color = Color.YELLOW
+var hue
+var saturation
+var value
+func change_level_color() -> void:
+	seed(WaveSpawner.current_level)
+	hue = randf()  # Random 0-1
+	saturation = randf_range(0.5, 0.7)  # High saturation
+	value = randf_range(0.8, 1.0)  # Bright
+	random_tint = Color.from_hsv(hue, saturation, value, 1)
+
 func start_tower_drag(tower: Node, offset: Vector2) -> void:
 	if dragged_tower != null: return
 	HealthBarGUI.show_cost_preview(0.0)
@@ -211,6 +240,7 @@ func start_tower_drag(tower: Node, offset: Vector2) -> void:
 
 func _process(_delta: float) -> void:
 	if dragged_tower != null:
+		TooltipManager.hide_tooltip()
 		var mouse_pos = get_global_mouse_position()
 		dragged_tower.global_position = mouse_pos + dragged_offset
 		var raw_cell = get_cell_from_pos(mouse_pos)
@@ -228,6 +258,8 @@ func _process(_delta: float) -> void:
 		if !Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			_perform_tower_drop()
 			HealthBarGUI.show_cost_preview(0.0)
+
+
 
 func get_nearest_valid_cell(base_cell: Vector2i) -> Vector2i:
 	if base_cell.x < 0 or base_cell.x >= WIDTH or base_cell.y < 0 or base_cell.y >= HEIGHT:
@@ -267,6 +299,14 @@ func _perform_tower_drop() -> void:
 
 # Optional: faint grid lines + drag highlight
 func _draw() -> void:
+	if delete_mode:
+		for y in range(HEIGHT):
+			for x in range(WIDTH):
+				var item = grid[y][x]
+				if item and (item.is_in_group("walls") or item.is_in_group("placed_towers")):
+					var pos = grid_offset + Vector2(x * CELL_SIZE, y * CELL_SIZE)
+					draw_rect(Rect2(pos, Vector2(CELL_SIZE, CELL_SIZE)), Color(1, 0, 0, 0.4), true)
+	
 	#var line_color = Color(0.3, 0.3, 0.3, 0.4)
 	#for x in WIDTH + 1:
 		#draw_line(grid_offset + Vector2(x * CELL_SIZE, 0), grid_offset + Vector2(x * CELL_SIZE, HEIGHT * CELL_SIZE), line_color, 1.0)

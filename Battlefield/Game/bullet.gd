@@ -9,6 +9,7 @@ extends Area2D
 
 var velocity: Vector2 = Vector2.ZERO
 var target: Node2D = null
+var has_hit: bool = false  # Track if already hit
 
 func _ready() -> void:
 	monitoring = true
@@ -34,31 +35,36 @@ func _physics_process(delta: float) -> void:
 	if lifetime <= 0:
 		queue_free()
 		return
-
+	
+	if has_hit:  # Stop moving after hit
+		return
+	
 	if target and is_instance_valid(target):
-		pass  # keep current target
+		pass
 	else:
 		target = find_closest_enemy()
-		if target == null:
-			queue_free()
-			return
-
+	
+	if target == null:
+		queue_free()
+		return
+	
 	var dir = (target.global_position - global_position).normalized()
 	velocity = velocity.lerp(dir * speed, homing_strength * delta)
-	
 	global_position += velocity * delta
 	
 	if velocity.length() > 0:
 		rotation = velocity.angle()
 
 func _on_body_entered(body: Node2D) -> void:
+	if has_hit:
+		return
 	if body.is_in_group("enemies"):
+		has_hit = true
 		apply_damage(body)
 		on_hit()
 
 func apply_damage(enemy: Node2D) -> void:
 	enemy.take_damage(damage)
-	#Utilities.shake(2.0, 0.2)
 
 func on_hit() -> void:
 	queue_free()

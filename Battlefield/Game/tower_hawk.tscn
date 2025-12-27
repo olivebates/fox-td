@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://ynouns2yxpra"]
+
+[ext_resource type="Script" uid="uid://4fbl68elarvv" path="res://Battlefield/Game/tower_hawk.gd" id="1_sj7ta"]
+[ext_resource type="Texture2D" uid="uid://cs2ic8oeq6fc0" path="res://Battlefield/Sprites/Towers/Tower1.png" id="2_63d4h"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mx82x"]
+size = Vector2(8, 8)
+
+[node name="Tower1" type="CharacterBody2D" groups=["tower"]]
+z_index = -20
+script = ExtResource("1_sj7ta")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_mx82x")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_63d4h")

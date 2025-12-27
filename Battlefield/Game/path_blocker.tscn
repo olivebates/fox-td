@@ -6,7 +6,7 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_u61fv"]
 size = Vector2(16, 16)
 
-[node name="PathBlocker" type="StaticBody2D" groups=["grid_occupiers"]]
+[node name="PathBlocker" type="StaticBody2D" groups=["grid_occupiers", "path_object"]]
 z_index = -600
 script = ExtResource("1_u61fv")
 

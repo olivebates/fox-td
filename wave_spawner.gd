@@ -14,41 +14,70 @@ extends Node2D
 var special_scene: PackedScene = ResourceLoader.load("uid://71114a1asxv") # Wall tiles
 @export var max_wave_spawn_time: float = 8.0
 var game_paused: bool = false
+var max_waves
+var current_wave_base_reward: float = 0.0
 
 const ENEMY_TYPES = {
 	"normal": {
 		"health": 1,
 		"speed": 10.0,
 		"damage": 10,
-		"base_reward": 5.0,
+		"base_reward": 1.0,
 		"count_mult": 1.0
 	},
 	"swarm": {
 		"health": 1,
-		"speed": 15.0,
+		"speed": 8.0,
 		"damage": 5,
-		"base_reward": 3.0,
+		"base_reward": 0.5,
 		"count_mult": 2.0
 	},
 	"fast": {
 		"health": 1,
 		"speed": 25.0,
 		"damage": 10,
-		"base_reward": 5.0,
+		"base_reward": 0.75,
 		"count_mult": 1.5
 	},
 	"boss": {
-		"health": 10,
+		"health": 3.8,
 		"speed": 5.0,
 		"damage": 50,
-		"base_reward": 50.0,
+		"base_reward": 7.0,
 		"count_mult": 0.2
 	}
 }
 
+var current_level = 3
+const LEVEL_CONFIG = {
+	1:  { base_health = 1,   health_scale = 0.8,  waves = 6 },
+	2:  { base_health = 2,   health_scale = 0.7, waves = 10 },
+	3:  { base_health = 3,   health_scale = 0.8,  waves = 12 },
+	4:  { base_health = 2,   health_scale = 0.85,  waves = 200 },
+	5:  { base_health = 8,   health_scale = 1.9,  waves = 200 },
+	6:  { base_health = 12,  health_scale = 2.3,  waves = 200 },
+	7:  { base_health = 18,  health_scale = 2.8,  waves = 200 },
+	8:  { base_health = 27,  health_scale = 3.4,  waves = 200 },
+	9:  { base_health = 40,  health_scale = 4.1,  waves = 200 },
+	10: { base_health = 60,  health_scale = 5.0,  waves = 200 }
+}
+
+
+func get_enemy_death_money():
+	return int(max(1, ceil(current_wave/5)*current_wave_base_reward))
+
+func get_enemy_death_health_gain():
+	return int(max(1, ceil(current_wave/5)*current_wave_base_reward+floor(WaveSpawner.current_level)))
+
 func calculate_enemy_damage(health, cycles):
-	return pow(health + current_wave, cycles)
-	
+	return pow(health + current_wave*4, cycles)
+
+func no_towers_upgraded() -> bool:
+	var towers = get_tree().get_nodes_in_group("tower")
+	for tower in towers:
+		if tower.path != [0, 0, 0]:
+			return false
+	return true
 
 var types = ENEMY_TYPES.keys()
 
@@ -76,7 +105,60 @@ func _ready():
 	path_tiles_container = Node2D.new()
 	add_child(path_tiles_container)
 	generate_path()
+	#await get_tree().process_frame#TEST
+	#StatsManager.take_damage(99999)#TEST
+
+var winscreen = preload("uid://tv785ptmh83y")
+var hint_label = null
+var empty_towers_hint = null
+var place_towers_hint = null
+func _process(delta: float) -> void:
+	var config = LEVEL_CONFIG.get(current_level, LEVEL_CONFIG[10])
+	max_waves = config.waves
+	if current_wave > config.waves-1 and !_is_spawning and get_tree().get_nodes_in_group("enemy").size() == 0:
+		current_level += 1
+		current_wave = 0
+		StatsManager.new_map()
+		var g = winscreen.instantiate()
+		get_tree().root.add_child(g)
+
+	#Upgrade Towers hint
+	if current_level == 1 and current_wave == 3 and !hint_label and no_towers_upgraded() and get_tree().get_nodes_in_group("enemy").size() == 0 and !WaveSpawner._is_spawning:
+		hint_label = Label.new()
+		hint_label.text = "Click critters to upgrade them!"
+		hint_label.position = Vector2(60, 60)
+		hint_label.add_theme_font_size_override("font_size", 24)
+		hint_label.add_theme_color_override("font_color", Color.WHITE)
+		hint_label.add_theme_font_size_override("font_size", 8)
+		get_tree().current_scene.add_child(hint_label)
 	
+	if hint_label and (!no_towers_upgraded() or current_wave == 0):
+		hint_label.queue_free()
+		
+	#Place Towers hint
+	if current_level == 1 and get_tree().get_nodes_in_group("tower").size() == 0 and empty_towers_hint == null and WaveSpawner._is_spawning:
+		empty_towers_hint = Label.new()
+		empty_towers_hint.text = "Drag a critter onto the field! :)"
+		empty_towers_hint.position = Vector2(60, 80)
+		empty_towers_hint.add_theme_font_size_override("font_size", 8)
+		empty_towers_hint.add_theme_color_override("font_color", Color.WHITE)
+		get_tree().current_scene.add_child(empty_towers_hint)
+	
+	if empty_towers_hint and get_tree().get_nodes_in_group("tower").size() > 0:
+		empty_towers_hint.queue_free()
+		empty_towers_hint = null
+	
+	if current_level == 1 and current_wave == 2 and get_tree().get_nodes_in_group("tower").size() <= 1 and place_towers_hint == null:
+		place_towers_hint = Label.new()
+		place_towers_hint.text = "Drag another critter onto the field! :)"
+		place_towers_hint.position = Vector2(60, 80)
+		place_towers_hint.add_theme_font_size_override("font_size", 8)
+		place_towers_hint.add_theme_color_override("font_color", Color.WHITE)
+		get_tree().current_scene.add_child(place_towers_hint)
+	
+	if place_towers_hint and (current_wave != 2 or get_tree().get_nodes_in_group("tower").size() > 1):
+		place_towers_hint.queue_free()
+		place_towers_hint = null
 
 func set_game_paused(p: bool) -> void:
 	game_paused = p
@@ -89,29 +171,33 @@ func await_delay(delay: float) -> void:
 			elapsed += get_process_delta_time()
 
 func get_enemy_type_for_wave(wave: int) -> String:
+	# Boss only if exactly every 9th wave (average of 8-10)
+	if wave % 9 == 0:
+		return "boss"
+	
 	var keys := ENEMY_TYPES.keys()
-	return keys[(wave - 1) % keys.size()]
+	keys.erase("boss")
+	return keys[randi() % keys.size()]
 
 func start_next_wave():
 	current_wave += 1
-	var wave := current_wave
-
-	var enemy_type := get_enemy_type_for_wave(wave)
+	seed(current_level*10000 + current_wave)
+	
+	var enemy_type := get_enemy_type_for_wave(current_wave)
 	var type_data = ENEMY_TYPES[enemy_type]
-
-	var wave_health := 1
-	wave_health += ceil(floor((current_wave-2) + base_health * pow(1.25, current_wave - 1))/2)
-
-	# Apply type health multiplier
+	
+	current_wave_base_reward = type_data.base_reward
+	
+	# Rest unchanged
+	var config = LEVEL_CONFIG.get(current_level, LEVEL_CONFIG[10])
+	var wave_health = pow(config.base_health * current_wave, config.health_scale)
+	wave_health = floor(wave_health) * type_data.health
 	wave_health *= type_data.health
-
 	var enemies_in_wave := int(7 * type_data.count_mult)
 	enemies_in_wave = max(enemies_in_wave, 1)
-
-	active_waves[wave] = enemies_in_wave
-	wave_started.emit(wave)
-
-	_spawn_wave_async(wave, enemy_type, wave_health, enemies_in_wave)
+	active_waves[current_wave] = enemies_in_wave
+	wave_started.emit(current_wave)
+	_spawn_wave_async(current_wave, enemy_type, wave_health, enemies_in_wave)
 
 func _spawn_wave_async(wave: int, enemy_type: String, health: int, count: int) -> void:
 	_is_spawning = true
@@ -154,7 +240,7 @@ func spawn_enemy(wave: int, enemy_type: String, health: int):
 
 
 func generate_path():
-	
+	seed(WaveSpawner.current_level+6 + WaveSpawner.current_level*2-2)
 	for child in get_children():
 		if child != path_node and child != path_tiles_container:
 			child.queue_free()
@@ -293,6 +379,7 @@ func generate_path():
 		var special_grid: Dictionary = {}
 		
 		for i in clusters:
+			seed(i+current_level)
 			var size: int = randi_range(5, 15)
 			if buildables.is_empty(): break
 			var start_idx: int = randi() % buildables.size()
@@ -312,6 +399,7 @@ func generate_path():
 						queue.append(nxt)
 						placed += 1
 						break
+		
 		
 		for i in buildables.size():
 			if special_grid.has(positions[i]):

@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://bb3wn8l2vwp2f"]
+
+[ext_resource type="Script" uid="uid://b0ftxeyp0ybr1" path="res://Battlefield/Game/tower_snail.gd" id="1_7vhj3"]
+[ext_resource type="Texture2D" uid="uid://cs2ic8oeq6fc0" path="res://Battlefield/Sprites/Towers/Tower1.png" id="2_b5qpn"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mx82x"]
+size = Vector2(8, 8)
+
+[node name="Tower1" type="CharacterBody2D" groups=["tower"]]
+z_index = -20
+script = ExtResource("1_7vhj3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_mx82x")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_b5qpn")

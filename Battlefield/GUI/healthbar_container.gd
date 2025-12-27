@@ -4,6 +4,7 @@ extends Control
 @onready var text: Label = $Text
 @onready var red_overlay: ColorRect = $Bar/RedOverlay
 @onready var prodSpeedLabel: Label = $ProdictionSpeed
+@onready var health_bar_gui = get_tree().get_first_node_in_group("HealthBarContainer")
 var cost_preview_amount: float = 0.0
 
 func _update_prod_speed_text() -> void:
@@ -129,16 +130,16 @@ func _update_red_overlay() -> void:
 func _process(delta: float) -> void:
 	queue_redraw()
 # Level number
-func _draw() -> void:
-	if bar.size.x <= 0: return
-	var center := Vector2(31, bar.size.y / 2.0 - 15.0)
-	var radius := 2.5
-	draw_circle(center, radius, Color(0.7, 0.95, 1.0))
-	draw_arc(center, radius, 0, TAU, 64, Color(0.1, 0.4, 0.6), 1.0)
-	
-	var font := get_theme_default_font()
-	var font_size := 3
-	var str_text := str(StatsManager.level)
-	var text_size := font.get_string_size(str_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
-	var pos := center - text_size / 2 + Vector2(0.25, 3.5)  # slight vertical tweak for centering
-	draw_string(font, pos, str_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color.BLACK)
+#func _draw() -> void:
+	#if bar.size.x <= 0: return
+	#var center := Vector2(31, bar.size.y / 2.0 - 15.0)
+	#var radius := 2.5
+	#draw_circle(center, radius, Color(0.7, 0.95, 1.0))
+	#draw_arc(center, radius, 0, TAU, 64, Color(0.1, 0.4, 0.6), 1.0)
+	#
+	#var font := get_theme_default_font()
+	#var font_size := 3
+	#var str_text := str(StatsManager.level)
+	#var text_size := font.get_string_size(str_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
+	#var pos := center - text_size / 2 + Vector2(0.25, 3.5)  # slight vertical tweak for centering
+	#draw_string(font, pos, str_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color.BLACK)

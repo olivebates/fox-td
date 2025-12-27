@@ -28,6 +28,7 @@ WaveShower="*res://wave_shower.gd"
 TowerManager="*res://tower_manager.gd"
 TooltipManager="*res://tooltip_manager.gd"
 Gacha="*res://gacha.gd"
+UpgradeManager="*res://upgrade_manager.gd"
 
 [display]
 
@@ -56,6 +57,10 @@ backpack_inventory=""
 squad_inventory=""
 gacha_menu=""
 unmerge_towers=""
+game_area=""
+next_wave_button=""
+remove_button=""
+path_object=""
 
 [rendering]
 

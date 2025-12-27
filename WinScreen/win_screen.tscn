@@ -1,0 +1,31 @@
+[gd_scene load_steps=3 format=3 uid="uid://tv785ptmh83y"]
+
+[ext_resource type="Script" uid="uid://hflmog8s660p" path="res://color_tinter.gd" id="1_3a5yh"]
+[ext_resource type="Script" uid="uid://bjncgpfssce8e" path="res://WinScreen/win_label.gd" id="1_4n2a8"]
+
+[node name="WinScreen" type="Control"]
+z_index = 600
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="WinLabel" type="Label" parent="."]
+z_index = 1
+layout_mode = 0
+offset_left = 52.0
+offset_top = 41.0
+offset_right = 92.0
+offset_bottom = 64.0
+horizontal_alignment = 1
+script = ExtResource("1_4n2a8")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 251.0
+offset_bottom = 142.0
+color = Color(0, 0, 0, 1)
+script = ExtResource("1_3a5yh")
+brightness_shift = 0.8

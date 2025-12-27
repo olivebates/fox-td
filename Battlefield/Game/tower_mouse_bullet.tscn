@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://djhwllfo2eabv"]
+
+[ext_resource type="Script" uid="uid://bx2lcd366xedx" path="res://Battlefield/Game/tower_mouse_bullet.gd" id="1_qs3d5"]
+[ext_resource type="Texture2D" uid="uid://dsqyqix3f72xa" path="res://Battlefield/Sprites/Towers/MouseTrap.png" id="2_qs3d5"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_awchd"]
+size = Vector2(2, 2)
+
+[node name="Tower2Bullet" type="Area2D" groups=["bullet"]]
+script = ExtResource("1_qs3d5")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_awchd")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_qs3d5")

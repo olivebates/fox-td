@@ -7,7 +7,8 @@ func _ready() -> void:
 	text = "Fill"
 	focus_mode = Control.FOCUS_NONE
 	add_theme_font_size_override("font_size", 4)
-	
+	add_theme_color_override("font_outline_color", Color.BLACK)
+	add_theme_constant_override("outline_size", 1)
 	var style_normal = StyleBoxFlat.new()
 	style_normal.bg_color = Color(0.2, 0.2, 0.2)
 	style_normal.content_margin_left = 3
@@ -27,58 +28,71 @@ func _ready() -> void:
 	add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	
 	pressed.connect(_on_pressed)
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
+
+func _on_mouse_entered() -> void:
+	TooltipManager.show_tooltip(
+	"Fill Squad",
+	#"[color=gray]————————————————[/color]\n" +
+	"[font_size=2][color=dark_gray]Moves your strongest critters in to the squad![/color][/font_size]"
+	)
+
+func _on_mouse_exited() -> void:
+	TooltipManager.hide_tooltip()
+
+#Press into shadow
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			position += Vector2(1, 1)
+			$ColorRect.visible = false
+		else:
+			position -= Vector2(1, 1)
+			$ColorRect.visible = true
 
 func _on_pressed() -> void:
-	# Collect all towers from both inventories
 	var all_towers: Array[Dictionary] = []
 	
-	# Add backpack towers
+	# Backpack
 	for i in TowerManager.BACKPACK_SIZE:
 		var tower = TowerManager.get_tower_at(i)
 		if !tower.is_empty():
 			all_towers.append(tower)
 	
-	# Add squad towers
+	# Squad
 	for i in TowerManager.SQUAD_SIZE:
 		var tower = TowerManager.get_tower_at(i + 1000)
 		if !tower.is_empty():
 			all_towers.append(tower)
 	
-	# Clear both inventories
+	# Clear inventories
 	for i in TowerManager.BACKPACK_SIZE:
 		TowerManager.set_tower_at(i, {})
 	for i in TowerManager.SQUAD_SIZE:
 		TowerManager.set_tower_at(i + 1000, {})
 	
-	# Calculate power_level for sorting
+	# Calculate power_level
 	for tower in all_towers:
-		var id = tower.type.get("id", "Fox")
-		var merged = tower.merged
-		var damage = InventoryManager.get_stat_for_rank(id, "damage", merged)
-		var final_damage = InventoryManager.get_damage_calculation(damage)
-		var attack_speed = InventoryManager.get_stat_for_rank(id, "attack_speed", merged)
-		tower.power_level = final_damage * attack_speed
+		var id = tower.id
+		var rank = tower.get("rank", 1)  # Fixed: use "rank"
+		var damage = InventoryManager.get_damage_calculation(id, rank, 0)
+		var attack_speed = tower.type.attack_speed
+		tower.power_level = damage * attack_speed
 	
-	# Sort descending by power_level
-	all_towers.sort_custom(func(a, b):
-		var pa = a.get("power_level", 0)
-		var pb = b.get("power_level", 0)
-		if pa != pb:
-			return pa > pb
-		return false
-	)
+	# Sort descending
+	all_towers.sort_custom(func(a, b): return a.power_level > b.power_level)
 	
-	# Fill squad with top towers
+	# Fill squad
 	for i in TowerManager.SQUAD_SIZE:
 		if i < all_towers.size():
 			TowerManager.set_tower_at(i + 1000, all_towers[i])
 		else:
 			TowerManager.set_tower_at(i + 1000, {})
 	
-	# Put remaining towers in backpack
-	var remaining_start = TowerManager.SQUAD_SIZE
-	for i in range(remaining_start, all_towers.size()):
-		TowerManager.set_tower_at(i - remaining_start, all_towers[i])
+	# Remaining to backpack
+	for i in range(TowerManager.SQUAD_SIZE, all_towers.size()):
+		TowerManager.set_tower_at(i - TowerManager.SQUAD_SIZE, all_towers[i])
 	
 	# Refresh UI
 	get_tree().call_group("backpack_inventory", "refresh_all_highlights")

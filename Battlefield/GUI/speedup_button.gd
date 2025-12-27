@@ -7,8 +7,9 @@ func _ready() -> void:
 	toggle_mode = true
 	toggled.connect(_on_toggled)
 	add_theme_font_size_override("font_size", 4)
-	text = ">>"
-	
+	text = "»"
+	add_theme_color_override("font_outline_color", Color.BLACK)
+	add_theme_constant_override("outline_size", 1)
 	var style_normal = StyleBoxFlat.new()
 	style_normal.bg_color = Color(0.2, 0.2, 0.2)
 	style_normal.content_margin_left = 3
@@ -32,10 +33,22 @@ func _ready() -> void:
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
 
+
+#Press into shadow
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			position += Vector2(1, 1)
+			$ColorRect.visible = false
+		else:
+			position -= Vector2(1, 1)
+			$ColorRect.visible = true
+
 func _on_mouse_entered() -> void:
 	TooltipManager.show_tooltip(
 		"Fast Forward",
-		"[font_size=3][color=yellow]Speeds up game by 3x[/color][/font_size]\n" +
+		"[font_size=3][color=cornflower_blue]Game speed: x"+str(3 if fast_mode else 1)+"[/color][/font_size]\n" +
+		"[color=gray]————————————————[/color]\n" +
 		"[font_size=2][color=dark_gray]Toggle to enable/disable fast mode[/color][/font_size]"
 	)
 
@@ -44,6 +57,7 @@ func _on_mouse_exited() -> void:
 
 func _on_toggled(pressed: bool) -> void:
 	fast_mode = pressed
+	_on_mouse_entered()
 	Engine.time_scale = 3.0 if pressed else 1.0
 	
 	var base = StyleBoxFlat.new()

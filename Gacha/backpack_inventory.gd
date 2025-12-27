@@ -59,7 +59,8 @@ func _update_slot(slot: Panel) -> void:
 	if tower.is_empty():
 		style.bg_color = Color(0.1, 0.1, 0.1)
 	else:
-		var rank_color = InventoryManager.RANK_COLORS.get(tower.merged, Color(1, 1, 1))
+		var rank = tower.get("rank", 1)  # Use "rank" instead of "merged"
+		var rank_color = InventoryManager.RANK_COLORS.get(rank, Color(1, 1, 1))
 		style.bg_color = rank_color * 0.3
 		style.bg_color.a = 1.0
 	slot.queue_redraw()
@@ -72,13 +73,13 @@ func _on_slot_input(event: InputEvent, slot: Panel) -> void:
 		var tower = TowerManager.get_tower_at(real_index)
 		var unmerge_button = get_tree().get_first_node_in_group("unmerge_towers")
 		
-		if unmerge_button and unmerge_button.unmerge_mode and event.pressed and !tower.is_empty() and tower.merged > 1:
+		if unmerge_button and unmerge_button.unmerge_mode and event.pressed and !tower.is_empty() and tower.get("rank", 1) > 1:
 			_perform_unmerge(real_index, tower, slot)
 			return  # Prevent drag if unmerging
 		
 		if event.pressed and !tower.is_empty():
 			# Disable drag for merged level 1 when unmerge mode is active
-			if unmerge_button and unmerge_button.unmerge_mode and tower.merged == 1:
+			if unmerge_button and unmerge_button.unmerge_mode and tower.get("rank", 1) == 1:
 				return
 			
 			# Start drag
@@ -95,7 +96,7 @@ func _on_slot_input(event: InputEvent, slot: Panel) -> void:
 
 func _perform_unmerge(real_index: int, tower: Dictionary, slot: Panel) -> void:
 	var lower = tower.duplicate()
-	lower.merged -= 1
+	lower.rank -= 1  # Fixed: use "rank"
 	TowerManager.set_tower_at(real_index, lower)
 	
 	# Place second copy in same inventory
@@ -120,23 +121,32 @@ func _on_slot_hover(slot: Panel, entered: bool) -> void:
 		show_tooltip(slot)
 	else:
 		TooltipManager.hide_tooltip()
-
 func show_tooltip(slot):
 	var real_index: int = slot.get_meta("real_index", -1)
-	if real_index != -1:
-		var tower = TowerManager.get_tower_at(real_index)
-		if !tower.is_empty():
-			var type = tower.type
-			var rank = tower.merged
-			var dmg = InventoryManager.get_damage_calculation(rank)
-			var atk = type.attack_speed
-			var rad = type.radius / 8.0
-			var cost = InventoryManager.get_placement_cost(tower.id, 0, rank)
-			TooltipManager.show_tooltip(
-				type.get("name", "Unnamed Tower"),  # Title is now the ID
-				"[color=cornflower_blue]Place Cost: %d[/color]\n[color=gray]————————————————[/color]\nDamage: %d\nAttack Speed: %.1f/s\nRange: %.1f tiles\n[color=gray]————————————————[/color]\n[font_size=2][color=dark_gray]%s[/color][/font_size]" %
-				[int(cost), dmg, atk, rad, type.get("description", "")]
-			)
+	if real_index == -1:
+		return
+	var tower = TowerManager.get_tower_at(real_index)
+	if tower.is_empty():
+		return
+	
+	var type = tower.type
+	var rank = tower.get("rank", 1)  # Fixed: use "rank" key
+	
+	var dmg = InventoryManager.get_damage_calculation(tower.id, rank, 0)
+	var atk = type.attack_speed
+	var rad = type.radius / 8.0
+	var cost = InventoryManager.get_placement_cost(tower.id, 0, rank)
+	
+	TooltipManager.show_tooltip(
+		type.get("name", "Unnamed Tower"),
+		"[color=cornflower_blue]Place Cost: " + str(int(cost)) + "[/color]\n" +
+		"[color=gray]————————————————[/color]\n" +
+		"[color=light_gray]Damage: " + str(dmg) + "\n" +
+		"Attack Speed: " + str(snapped(atk, 0.01)) + "/s\n" +
+		"Range: " + str(snapped(rad, 0.1)) + " tiles[/color]\n" +
+		"[color=gray]————————————————[/color]\n" +
+		"[font_size=2][color=dark_gray]" + type.get("description", "") + "[/color][/font_size]"
+	)
 
 func _update_hover(slot: Panel) -> void:
 	var unmerge_button = get_tree().get_first_node_in_group("unmerge_towers")
@@ -146,9 +156,12 @@ func _update_hover(slot: Panel) -> void:
 		return
 	var tower = TowerManager.get_tower_at(real_index)
 	var hovered = slot.get_meta("hovered", false)
-	var base_color = Color(0.1, 0.1, 0.1) if tower.is_empty() else InventoryManager.RANK_COLORS.get(tower.merged, Color(1,1,1)) * 0.3
+	var base_color = Color(0.1, 0.1, 0.1) if tower.is_empty() else InventoryManager.RANK_COLORS.get(tower.get("rank", 1), Color(1,1,1)) * 0.3
 	base_color.a = 1.0
-	var is_merge_target = !current_dragged_tower.is_empty() && !tower.is_empty() && tower.type == current_dragged_tower.type && tower.merged == current_dragged_tower.merged
+	var is_merge_target = !current_dragged_tower.is_empty() && \
+		 !tower.is_empty() && \
+		 tower.type == current_dragged_tower.type && \
+		 tower.get("rank", 1) == current_dragged_tower.get("rank", 1)
 	if is_merge_target and !unmerge_button.unmerge_mode:
 		style.bg_color = Color(0.1, 0.4, 0.1)
 	elif hovered and !unmerge_button.unmerge_mode:
@@ -157,7 +170,46 @@ func _update_hover(slot: Panel) -> void:
 		style.bg_color = base_color
 	
 
+func should_show_merge_hint() -> bool:
+	if WaveSpawner.current_level != 2:
+		return false
+	
+	# Check for any rank 2+ tower in either inventory
+	for tower in TowerManager.tower_inventory:
+		if !tower.is_empty() and tower.get("rank", 1) >= 2:
+			return false
+	for tower in TowerManager.squad_slots:
+		if !tower.is_empty() and tower.get("rank", 1) >= 2:
+			return false
+	
+	# Count rank 1 towers in squad
+	var count = 0
+	for tower in TowerManager.squad_slots:
+		if !tower.is_empty() and tower.get("rank", 1) == 1:
+			count += 1
+	
+	return count >= 3
+
+var hint_label = null
+
 func _process(_delta: float) -> void:
+	#Upgrade Towers hint
+	if WaveSpawner.current_level == 2 and !hint_label and should_show_merge_hint():
+		hint_label = Label.new()
+		hint_label.text = "Merge two critters! ^"
+		hint_label.position = Vector2(100, 50)
+		hint_label.add_theme_font_size_override("font_size", 24)
+		hint_label.add_theme_color_override("font_color", Color.WHITE)
+		hint_label.add_theme_font_size_override("font_size", 8)
+		hint_label.z_index = 800
+		get_tree().get_first_node_in_group("gacha_menu").add_child(hint_label)
+	
+		
+	if hint_label and (WaveSpawner.current_level != 2 or !should_show_merge_hint()):
+		hint_label.queue_free()
+	
+	
+	
 	if !dragged_tower.is_empty():
 		if drag_preview:
 			drag_preview.global_position = get_global_mouse_position() - Vector2(4, 4)
@@ -189,12 +241,13 @@ func _perform_drop() -> void:
 			TowerManager.set_tower_at(target_real, dragged_tower)
 			target_inv._update_slot(target_slot)  # Fixed: pass slot, not index
 			return_to_original = false
-		elif target_tower.type == dragged_tower.type && target_tower.merged == dragged_tower.merged:
+		elif target_tower.type == dragged_tower.type && target_tower.get("rank", 1) == dragged_tower.get("rank", 1):
 			var updated = target_tower.duplicate()
-			updated.merged += 1
+			updated.rank += 1  # Fixed: use "rank"
 			TowerManager.set_tower_at(target_real, updated)
-			target_inv._update_slot(target_slot)  # Consistent
+			target_inv._update_slot(target_slot)
 			show_tooltip(target_slot)
+			return_to_original = false
 			return_to_original = false
 	if return_to_original && original_slot:
 		var orig_real: int = original_slot.get_meta("real_index")
@@ -230,27 +283,33 @@ func refresh_all_highlights() -> void:
 func _draw_preview() -> void:
 	if dragged_tower.is_empty():
 		return
-	var rank = dragged_tower.merged
+	
+	var rank = dragged_tower.get("rank", 1)  # Fixed: use "rank" key
+	
 	var border_color = InventoryManager.RANK_COLORS.get(rank, Color(1, 1, 1))
 	drag_preview.draw_rect(Rect2(0.5, 0.5, 7, 7), border_color, false, 1.0)
+	
 	var tex = dragged_tower.type.texture
 	if tex:
 		drag_preview.draw_texture(tex, Vector2.ZERO, Color(1.4, 1.4, 1.4))
 
 func _draw_slot(slot: Panel) -> void:
-	var unmerge_button = get_tree().get_first_node_in_group("unmerge_towers")
 	var real_index: int = slot.get_meta("real_index", -1)
 	if real_index == -1:
 		return
 	var tower = TowerManager.get_tower_at(real_index)
 	if tower.is_empty():
 		return
-	var rank = tower.merged
+	
+	var rank = tower.get("rank", 1)  # Use "rank" instead of "merged"
+	
 	var border_color = InventoryManager.RANK_COLORS.get(rank, Color(1, 1, 1))
 	var base_color = border_color * 0.3
 	base_color.a = 1.0
+	
 	var hovered = slot.get_meta("hovered", false)
-	var is_merge_target = !current_dragged_tower.is_empty() && tower.type == current_dragged_tower.type && tower.merged == current_dragged_tower.merged
+	var is_merge_target = !current_dragged_tower.is_empty() && tower.type == current_dragged_tower.type && tower.get("rank", 1) == current_dragged_tower.get("rank", 1)
+	
 	var brighten = 1.0
 	if is_merge_target:
 		brighten = 1.5 if _merge_blink_state else 1.2
@@ -258,25 +317,43 @@ func _draw_slot(slot: Panel) -> void:
 		base_color = Color.YELLOW
 	elif hovered:
 		brighten = 1.3
-	var bg_color = base_color * brighten
-	if !unmerge_button.unmerge_mode or tower.merged > 1:
-		slot.draw_rect(Rect2(0.5, 0.5, 7, 7), border_color, false, 1.0 + (0.5 if (hovered or is_merge_target) else 0.0))
-	slot.draw_rect(Rect2(1, 1, 6, 6), bg_color, true)
-	var tex = tower.type.texture
 	
+	var bg_color = base_color * brighten
+	
+	var unmerge_button = get_tree().get_first_node_in_group("unmerge_towers")
 	var is_unmerge_active = unmerge_button and unmerge_button.unmerge_mode
-	var is_merged_level_1 = tower.merged == 1
-
+	var is_merged_level_1 = rank == 1
+	
+	if !is_unmerge_active or rank > 1:
+		slot.draw_rect(Rect2(0.5, 0.5, 7, 7), border_color, false, 1.0 + (0.5 if (hovered or is_merge_target) else 0.0))
+		slot.draw_rect(Rect2(1, 1, 6, 6), bg_color, true)
+	
+	var tex = tower.type.texture
 	var modulate = Color(brighten, brighten, brighten)
 	if is_unmerge_active and is_merged_level_1:
 		modulate = Color(0.4, 0.4, 0.4)
+	
+	if tex:
+		slot.draw_texture(tex, Vector2(0, 0), modulate)
+	
+	var rarity = tower.type.get("rarity", 0)
+	for i in range(rarity):
+		var offset = Vector2(0.8 + i * 1.5, 8.2)
+		slot.draw_colored_polygon(
+			PackedVector2Array([offset + Vector2(0, -2.0), offset + Vector2(1.4, 0.2), offset + Vector2(-0.9, 0.2)]),
+			Color(0.0, 0.0, 0.0, 1.0)
+		)
+		slot.draw_colored_polygon(
+			PackedVector2Array([offset + Vector2(0, -1.5), offset + Vector2(1, 0), offset + Vector2(-0.5, 0)]),
+			Color(0.98, 0.98, 0.0, 1.0)
+		)
 
 	if tex:
 		slot.draw_texture(tex, Vector2(0, 0), modulate)
 		
 	if tex and !unmerge_button.unmerge_mode:
 		slot.draw_texture(tex, Vector2(0, 0), Color(brighten, brighten, brighten))
-	var rarity = tower.type.get("rarity", 0)
+	rarity = tower.type.get("rarity", 0)
 	for i in range(rarity):
 		var offset = Vector2(0.8 + i * 1.5, 8.2)
 		slot.draw_colored_polygon(

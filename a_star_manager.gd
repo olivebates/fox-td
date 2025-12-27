@@ -3,7 +3,6 @@ extends Node2D
 var astar: AStarGrid2D = AStarGrid2D.new()
 const CELL_SIZE: Vector2 = Vector2(8, 8)
 signal astar_updated
-
 func _ready() -> void:
 	astar.cell_size = CELL_SIZE
 	astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER  # or adjust as needed
@@ -11,7 +10,7 @@ func _ready() -> void:
 	_update_grid()
 	
 	
-func _update_grid() -> void:
+func _update_grid(update_grid = true) -> void:
 	var viewport: Rect2 = get_viewport_rect()
 	var extra_cells: int = 4
 	var grid_cells: Vector2i = Vector2i(
@@ -63,9 +62,12 @@ func _update_grid() -> void:
 			var cell := Vector2i(x, y)
 			var is_valid := allowed_cells.has(cell)
 			astar.set_point_solid(cell, not is_valid)
-			
+	
 	astar.update()
-	emit_signal("astar_updated")  # add this line at the end
+	if update_grid:
+		emit_signal("astar_updated")
+
+
 
 func update_grid_and_check_path(start_world: Vector2, end_world: Vector2) -> bool:
 	_update_grid()
@@ -97,7 +99,6 @@ func update_grid_and_check_path(start_world: Vector2, end_world: Vector2) -> boo
 #func _draw() -> void:
 	#var green: Color = Color(0, 1, 0, 0.2)
 	#var red: Color = Color(1, 0, 0, 0.3)
-	#
 	#for x in astar.region.size.x:
 		#for y in astar.region.size.y:
 			#var cell_pos: Vector2i = Vector2i(x, y)

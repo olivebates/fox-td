@@ -6,7 +6,6 @@ extends BulletBase
 @onready var explosion_area: Area2D = Area2D.new()
 @onready var explosion_shape: CollisionShape2D = CollisionShape2D.new()
 
-var _direct_hit_body: Node2D = null
 
 func _ready() -> void:
 	super._ready()
@@ -20,7 +19,6 @@ func _ready() -> void:
 
 func _on_body_entered(body: Node2D) -> void:
 	if body.is_in_group("enemies"):
-		_direct_hit_body = body
 		on_hit()
 
 func on_hit() -> void:

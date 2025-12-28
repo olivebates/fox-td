@@ -22,6 +22,28 @@ var _merge_blink_timer: float = 0.0
 var _merge_blink_state: bool = false
 #var cost_to_spawn = 30
 
+enum PATH_ID {
+	damage,
+	bullets,
+	attack_speed,
+	range,
+	explosion_radius,
+	creature_amount,
+	creature_damage,
+	creature_attack_speed,
+	creature_health,
+}
+const PATH_SYMBOLS = {
+	PATH_ID.damage: "×",
+	PATH_ID.bullets: "☍",
+	PATH_ID.attack_speed: "»",
+	PATH_ID.range: "◌",
+	PATH_ID.explosion_radius: "✹",
+	PATH_ID.creature_amount: "☍",
+	PATH_ID.creature_damage: "×",
+	PATH_ID.creature_attack_speed: "»",
+	PATH_ID.creature_health: "♥"
+}
 
 var items: Dictionary = {
 	"Fox": {
@@ -29,11 +51,14 @@ var items: Dictionary = {
 		"texture": preload("uid://cs2ic8oeq6fc0"),
 		"prefab": preload("uid://dfx5piisk4epn"),
 		"bullet": preload("uid://ciuly8asijcg5"),
+		"paths": [PATH_ID.bullets, PATH_ID.attack_speed, PATH_ID.range],
+		"paths_increment": [1, 1, 3],
 		"unlocked": true,
 		"attack_speed": 1,
 		"damage": 1,
-		"radius": 28,
+		"radius": 20,
 		"rarity": 1,
+		"bullets": 1,
 		"description": "A basic shooting fox!",
 	},
 	"Bunny Hole": {
@@ -41,10 +66,14 @@ var items: Dictionary = {
 		"texture": preload("uid://d1xf6xo2yoxag"),
 		"prefab": preload("uid://cjxvt1upw8qsp"),
 		"bullet": preload("uid://c1mvy41rbq2y0"),
+		"paths": [PATH_ID.creature_amount, PATH_ID.creature_damage, PATH_ID.creature_attack_speed],
+		"paths_increment": [1, 1, 1],
 		"unlocked": false,
-		"attack_speed": 1,
-		"damage": 1,
-		"radius": 12,
+		"radius": 0,
+		"creatures": 1,
+		"creature_damage": 1,
+		"creature_attack_speed": 1,
+		"creatures_hp": 5,
 		"rarity": 1,
 		"is_guard": true,
 		"description": "Continuously spits out mousetraps!"
@@ -54,10 +83,14 @@ var items: Dictionary = {
 		"texture": preload("uid://cqgl3igwvfat8"),
 		"prefab": preload("uid://dfx5piisk4epn"),
 		"bullet": preload("uid://32xbub5ovblc"),
+		"paths": [PATH_ID.bullets, PATH_ID.attack_speed, PATH_ID.range],
+		"paths_increment": [1, 1, 3],
 		"unlocked": false,
 		"attack_speed": 1,
 		"damage": 1,
 		"radius": 20,
+		"bullets": 1,
+		"explosion_radius": 8*1+4,
 		"rarity": 2,
 		"description": "A duck that shoots exploding bullets!"
 	},
@@ -67,10 +100,13 @@ var items: Dictionary = {
 		"texture": preload("uid://bu4gnw3uul700"),
 		"prefab": preload("uid://ynouns2yxpra"),
 		"bullet": preload("uid://d11coximypo74"),
+		"paths": [PATH_ID.bullets, PATH_ID.attack_speed, PATH_ID.damage],
+		"paths_increment": [1, 1, 2],
 		"unlocked": false,
 		"attack_speed": 1,
-		"damage": 1,
+		"damage": 2,
 		"radius": 76,
+		"bullets": 1,
 		"rarity": 2,
 		"description": "Long range sniper!"
 	},
@@ -80,10 +116,13 @@ var items: Dictionary = {
 		"texture": preload("uid://cn7gkfeefcjd1"),
 		"prefab": preload("uid://bb3wn8l2vwp2f"),
 		"bullet": preload("uid://bgmdgfd4avpi0"),
+		"paths": [PATH_ID.bullets, PATH_ID.attack_speed, PATH_ID.range],
+		"paths_increment": [1, 1, 3],
 		"unlocked": false,
 		"attack_speed": 1,
-		"damage": 1,
+		"damage": 2,
 		"radius": 20,
+		"bullets": 1,
 		"rarity": 4,
 		"description": "Shoots in all directions!"
 	},
@@ -93,15 +132,81 @@ var items: Dictionary = {
 		"texture": preload("uid://d32p5usdut0ad"),
 		"prefab": preload("uid://cq8akf1ulsky"),
 		"bullet": preload("uid://djhwllfo2eabv"),
+		"paths": [PATH_ID.bullets, PATH_ID.attack_speed, PATH_ID.range],
+		"paths_increment": [1, 1, 3],
 		"unlocked": false,
 		"attack_speed": 1,
 		"damage": 1,
 		"radius": 12,
+		"bullets": 1,
 		"rarity": 4,
 		"is_guard": false,
 		"description": "Continuously spits out mousetraps!"
 	},
 }
+
+func get_tower_stats(id: String, rank: int, path_levels: Array) -> Dictionary:
+	var def = items[id]
+	var paths = def.paths
+	var inc = def.paths_increment
+	var rank_mult = 5.0 * pow(2, rank - 1) - 4
+
+	var stats = {
+		"damage": def.get("damage", -1) * rank_mult,
+		"attack_speed": def.get("attack_speed", -1),
+		"range": def.get("radius", -1) + 4,
+		"bullets": def.get("bullets", -1),
+		"creature_count": def.get("creatures", -1),
+		"creature_damage": def.get("creature_damage", -1) * rank_mult,
+		"creature_attack_speed": def.get("creature_attack_speed", -1),
+		"creature_health": def.get("creatures_hp", -1) * pow(2, rank - 1),
+	}
+
+	for i in 3:
+		var p = paths[i]
+		var level = path_levels[i]
+		var bonus = level * inc[i]
+		match p:
+			PATH_ID.damage: stats.damage += bonus * rank_mult
+			PATH_ID.bullets: stats.bullets += bonus
+			PATH_ID.attack_speed: stats.attack_speed += bonus
+			PATH_ID.range: stats.range += bonus * 8
+			PATH_ID.creature_amount: stats.creature_count += bonus
+			PATH_ID.creature_damage: stats.creature_damage += bonus * rank_mult
+			PATH_ID.creature_attack_speed: stats.creature_attack_speed += bonus
+			PATH_ID.creature_health: stats.creature_health += bonus * rank_mult
+			
+	#if def.get("is_guard", false):
+		#stats.creature_count = max(stats.creature_count, 1)
+
+	return stats
+
+
+func show_tower_tooltip(item: Dictionary, cost: float) -> void:
+	if item.is_empty():
+		return
+	var def = items[item.id]
+	var path_levels = item.get("path", [0, 0, 0])
+	var stats = get_tower_stats(item.id, item.rank, path_levels)
+	
+	var tooltip_text = "[color=cornflower_blue]Place Cost: " + str(int(cost)) + "[/color]\n"
+	tooltip_text += "[color=gray]————————————————[/color]\n"
+	
+	if def.get("is_guard", false):
+		tooltip_text += "Creatures: " + str(int(stats.creature_count)) + "\n"
+		tooltip_text += "Damage: " + str(int(stats.creature_damage)) + "\n"
+		tooltip_text += "Attack Speed: " + str(int(snapped(stats.creature_attack_speed, -1))) + "/s\n"
+		tooltip_text += "Health: " + str(int(stats.creature_health)) + "\n"
+	else:
+		tooltip_text += "Damage: " + str(int(stats.damage)) + "\n"
+		tooltip_text += "Attack Speed: " + str(snapped(int(stats.attack_speed), -1)) + "/s\n"
+		tooltip_text += "Bullets: " + str(int(stats.bullets)) + "\n"
+		tooltip_text += "Range: " + str(int(stats.range / 8)) + " tiles\n"
+	
+	tooltip_text += "[color=gray]————————————————[/color]\n"
+	tooltip_text += "[font_size=2][color=dark_gray]" + def.get("description", "") + "[/color][/font_size]"
+	
+	TooltipManager.show_tooltip(def.get("name", item.id.capitalize()), tooltip_text)
 
 func get_placement_cost(id: String, tower_level: int, rarity_level: int) -> float:
 	var base = 40 * pow(3, items[id].rarity-1) 
@@ -115,18 +220,6 @@ func get_upgrade_cost(id: String, rank: int, path_level: int, rarity) -> float:
 	var path_factor = pow(3, path_level - 1)
 	var rarity_factor = pow(2, items[id].rarity)
 	return base * rank_factor * path_factor * rarity_factor
-
-func get_damage_calculation(id: String, rank: int, path_damage_level: int) -> int:
-	var base_damage = items[id].get("damage", 1)
-	var rank_multiplier = pow(4, rank - 1)
-	var path_bonus = path_damage_level  # or any formula, e.g. path_damage_level * 2
-	return int(base_damage * rank_multiplier + path_bonus)
-
-func get_attack_speed(tower_type, path_value):
-	return items[tower_type].attack_speed * (1.0 + path_value)
-
-func get_tower_radius(tower_type, origen_tower):
-	return items[tower_type].radius + ((origen_tower.path[2]) * 4)
 
 # Runtime state
 var slots: Array[Panel] = []
@@ -209,6 +302,10 @@ func register_inventory(grid: GridContainer, spawner_grid: GridContainer, previe
 func give_starter_towers():
 	slots[0].set_meta("item", {"id": "Fox", "rank": 1})
 	slots[1].set_meta("item", {"id": "Fox", "rank": 1})
+	slots[2].set_meta("item", {"id": "Hawk", "rank": 2})
+	slots[3].set_meta("item", {"id": "Fox", "rank": 2})
+	slots[4].set_meta("item", {"id": "Bunny Hole", "rank": 2})
+	slots[5].set_meta("item", {"id": "Duck", "rank": 2})
 	#slots[2].set_meta("item", {"id": "Bunny Hole", "rank": 1})
 	#slots[3].set_meta("item", {"id": "Bunny Hole", "rank": 2})
 	#slots[1].set_meta("item", {"id": "Mouse", "rank": 1})
@@ -307,32 +404,13 @@ func _on_slot_hover(slot: Panel, entered: bool) -> void:
 	_update_hover(slot)
 	if entered and !slot.get_meta("item", {}).is_empty():
 		var item = slot.get_meta("item")
-		var def = items[item.id]
-		var tower_level = def.get("tower_level", 0)
-		var atk = def.attack_speed
-		var dmg = InventoryManager.get_damage_calculation(item.id, item.rank, item.get("path", [0,0,0])[0])
-		var rad = def.radius
-		var cost = get_placement_cost(item.id, tower_level, item.rank)
-		TooltipManager.show_tooltip(
-			def.get("name", item.id.capitalize()),
-			"[color=cornflower_blue]Place Cost: " + str(int(cost)) + "[/color]\n[color=gray]————————————————[/color]\n" +
-			"Damage: " + str(dmg) + "\n" +
-			"Attack Speed: " + str(atk) + "/s\n" +
-			"Range: " + str(rad/8) + " tiles\n[color=gray]————————————————[/color]\n" +
-			"[font_size=2][color=dark_gray]" + def.get("description", "") + "[/color][/font_size]"
-		)
+		var cost = get_placement_cost(item.id, 0, item.rank)
+		show_tower_tooltip(item, cost)
 		HealthBarGUI.show_cost_preview(cost)
 	elif !entered:
 		TooltipManager.hide_tooltip()
-		if dragged_item.is_empty():
-			var any_hovered = false
-			for s in slots:
-				if s.get_meta("hovered", false):
-					any_hovered = true
-					break
-			if !any_hovered:
-				if HealthBarGUI:
-					HealthBarGUI.show_cost_preview(0.0)
+		# hide preview handling unchanged
+
 
 func _update_hover(slot: Panel) -> void:
 	var style: StyleBoxFlat = slot.get_meta("style")

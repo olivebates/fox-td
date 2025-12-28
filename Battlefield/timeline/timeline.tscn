@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://hblhrcdb5215" path="res://Battlefield/timeline/timeline.gd" id="1_g1psu"]
 
-[node name="Timeline" type="Control"]
+[node name="Timeline" type="Control" groups=["timeline"]]
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_g1psu")

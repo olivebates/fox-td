@@ -52,7 +52,7 @@ var current_level = 1
 const LEVEL_CONFIG = {
 	1:  { base_health = 1,   health_scale = 0.8,  waves = 6 },
 	2:  { base_health = 2,   health_scale = 0.65, waves = 10 },
-	3:  { base_health = 0.7,   health_scale = 1.45,  waves = 12 },
+	3:  { base_health = 0.7,   health_scale = 1.40,  waves = 12 },
 	4:  { base_health = 2,   health_scale = 0.85,  waves = 200 },
 	5:  { base_health = 8,   health_scale = 1.9,  waves = 200 },
 	6:  { base_health = 12,  health_scale = 2.3,  waves = 200 },
@@ -183,7 +183,8 @@ func get_enemy_type_for_wave(wave: int) -> String:
 func start_next_wave():
 	var index = current_wave
 	TimelineManager.wave_replay_counts[index] = TimelineManager.wave_replay_counts.get(index, 0) + 1
-	TimelineManager.save_timeline(index)
+	if current_wave != 0:
+		TimelineManager.save_timeline(index)
 	
 	current_wave += 1
 	seed(current_level*10000 + current_wave)

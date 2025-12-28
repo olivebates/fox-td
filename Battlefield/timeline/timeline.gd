@@ -80,7 +80,8 @@ func _rebuild_buttons() -> void:
 		hover_tint.s = clamp(tint.s + sat_boost + 0.05, 0.0, 1.0)
 		var pressed_tint = tint.darkened(darkening + 0.1)
 		
-		if i == current_index:
+		var lose_screen = get_tree().get_first_node_in_group("lose_screen")
+		if i == current_index and lose_screen == null:
 			# Subtle hue shift highlight
 			if i == current_index:
 				darkening -= 0.3

@@ -21,6 +21,7 @@ var wait_timer: float = 0.0
 var wait_time: float = 0.0
 var state: String = "patrolling"  # "patrolling", "chasing", "fighting"  # "to_target", "moving", "waiting", "fighting"
 
+var attack_speed = 1.0
 var attack_timer: float = 0.0
 var current_enemy: Node2D = null
 
@@ -107,6 +108,8 @@ func take_damage(amount: int) -> void:
 	if current_health <= 0:
 		if tower:
 			tower.request_respawn(self)
+		if current_enemy:
+			current_enemy.remove_from_group("blocked")
 		queue_free()
 
 func _physics_process(delta: float) -> void:
@@ -165,14 +168,17 @@ func _physics_process(delta: float) -> void:
 
 		"fighting":
 			velocity = Vector2.ZERO
-			attack_timer += delta
-			if attack_timer >= 1.0:
-				attack_timer = 0.0
-				if is_instance_valid(current_enemy):
-					current_enemy.take_damage(damage_per_attack)
-				take_damage(1)
-				update_healthbar()
-				queue_redraw()
+			if is_instance_valid(current_enemy):
+				self_damage_timer += delta
+				if self_damage_timer >= 1.0:
+					self_damage_timer = 0.0
+					take_damage(1)
+					update_healthbar()
+				attack_timer += delta
+				if attack_timer >= 1/attack_speed:
+					attack_timer = 0.0
+					if is_instance_valid(current_enemy):
+						current_enemy.take_damage(damage_per_attack)
 
 	# Movement
 	global_position += velocity * delta
@@ -184,7 +190,7 @@ func _physics_process(delta: float) -> void:
 		sprite.flip_h = velocity.x > 0
 
 	update_healthbar()
-
+var self_damage_timer = 0.0
 
 func _find_nearest_enemy(max_dist: float) -> Node2D:
 	var enemies = get_tree().get_nodes_in_group("enemies")

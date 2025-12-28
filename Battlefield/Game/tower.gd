@@ -10,7 +10,7 @@ var current_target: Node2D = null
 var pick_radius: float = 4.0
 var fire_rate: float = 1.0
 var bullet_scene: PackedScene
-var attack_radius: float = 32.0
+var attack_radius: float = 20.0
 var tower_level: float = 0
 var pause_function = false
 var tower_type
@@ -28,15 +28,11 @@ var path = [0,0,0]
 func _ready() -> void:
 	if has_meta("item_data"):
 		var data = get_meta("item_data")
-		var item_def = invManager.items[data.id]
 		tower_type = data.id
-		tower_level = item_def.get("tower_level", 0)
-		fire_rate = item_def.attack_speed
-		bullet_scene = item_def.bullet
-		attack_radius = item_def.radius
 		rank = data.get("rank", 1)
-		#fire_rate *= pow(1.07, rank - 1)
-		#attack_radius *= pow(1.07, rank - 1)
+		path = data.get("path", [0, 0, 0])
+		var item_def = invManager.items[tower_type]
+		bullet_scene = item_def.bullet
 		sprite.texture = item_def.texture
 
 func is_mouse_over() -> bool:
@@ -62,23 +58,12 @@ func _input(event: InputEvent) -> void:
 
 		if hovered and not was_hovered and has_meta("item_data"):
 			var data = get_meta("item_data")
-			var item_def = invManager.items[data.id]
-			var rank = data.get("rank", 1)
-			
-			var cost = InventoryManager.get_placement_cost(data.id, tower_level, rank)
-			var dmg = InventoryManager.get_damage_calculation(data.id, rank, 0)
-			var atk = 1.0 / invManager.get_attack_speed(data.id, path[1]) / pow(1.07, rank - 1)
-			atk = snapped(atk, 0.01)
-			var rad = invManager.get_tower_radius(data.id, self)
-			
-			TooltipManager.show_tooltip(
-				item_def.get("name", data.id.capitalize()),
-				"[color=gray]————————————————[/color]\n" +
-				"[color=cornflower_blue]Damage: " + str(dmg) + "\n" +
-				"Attack Speed: " + str(int(atk)) + "/s\n" +
-				"Range: " + str(int(rad / 8)) + " tiles[/color]\n[color=gray]————————————————[/color]\n" +
-				"[font_size=2][color=dark_gray]Click to upgrade[/color][/font_size]"
-			)
+			var path_levels = path  # [path[0], path[1], path[2]]
+			var item_with_path = data.duplicate()
+			item_with_path["path"] = path_levels
+			var cost = InventoryManager.get_placement_cost(data.id, tower_level, data.rank)
+			InventoryManager.show_tower_tooltip(item_with_path, cost)
+			TooltipManager.append_to_current_tooltip("\n[font_size=2][color=dark_gray]Click to upgrade[/color][/font_size]")
 			pass
 		elif not hovered and was_hovered:
 			TooltipManager.hide_tooltip()
@@ -149,43 +134,50 @@ func update_target() -> void:
 			min_dist = dist
 			current_target = enemy
 
+func _process(delta: float) -> void:
+	if not has_meta("item_data"):
+		return
+
+	var data = get_meta("item_data")
+	var stats = InventoryManager.get_tower_stats(tower_type, data.rank, path)
+
+	# Apply calculated stats
+	bullets_shot = stats.bullets
+	fire_rate = stats.attack_speed
+	attack_radius = stats.range
+
+	# Creature towers use different stats (not needed for shooting logic here)
+	# bullet.damage will be updated in fire() using stats.damage if needed
+
+	if holding:
+		hold_timer += delta
+
+	if not get_tree().get_first_node_in_group("start_wave_button").is_paused:
+		_timer += delta
+
+	update_target()
+
+	if _timer >= 1.0 / fire_rate and current_target:
+		_timer = 0.0
+		fire(current_target)
+
+	queue_redraw()
+
 func fire(target: Node2D) -> void:
 	var dir = (target.global_position - global_position).normalized()
 	sprite.flip_h = dir.x > 0
+
+	var stats = InventoryManager.get_tower_stats(tower_type, get_meta("item_data").rank, path)
+	var damage = stats.damage
+
 	for i in bullets_shot:
 		var bullet = bullet_scene.instantiate()
 		bullet.target = target
-		if has_meta("item_data"):
-			var rank = get_meta("item_data").get("rank", 0)
-			var name = get_meta("item_data").get("name", 0)
-			bullet.damage = InventoryManager.get_damage_calculation(tower_type, rank, 0)
-			
-		var rand_dir = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized()
-		bullet.velocity = rand_dir * bullet.initial_speed
+		bullet.damage = damage
 		bullet.global_position = global_position
 		get_tree().current_scene.add_child(bullet)
-	
+
 	var tween = create_tween()
 	tween.tween_property(sprite, "position", dir * 1.0, 0.0)
 	tween.tween_interval(0.2)
 	tween.tween_property(sprite, "position", Vector2.ZERO, 0.0)
-
-func _process(delta: float) -> void:
-	bullets_shot = path[0] + 1
-	attack_radius = invManager.get_tower_radius(tower_type, self)
-	var rank = get_meta("item_data").get("rank", 1)
-	
-	
-	if holding:
-		hold_timer += delta
-	
-	fire_rate = invManager.get_attack_speed(tower_type, path[1])
-	fire_rate *= pow(1.07, rank - 1)
-	
-	if not get_tree().get_first_node_in_group("start_wave_button").is_paused:
-		_timer += delta
-		update_target()
-		if _timer >= 1.0 / fire_rate and current_target:
-			_timer = 0.0
-			fire(current_target)
-	queue_redraw()

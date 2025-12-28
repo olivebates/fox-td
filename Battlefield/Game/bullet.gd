@@ -14,6 +14,11 @@ var has_hit: bool = false  # Track if already hit
 func _ready() -> void:
 	monitoring = true
 	body_entered.connect(_on_body_entered)
+	
+	# Random initial direction and velocity
+	var random_angle: float = randf_range(0, TAU)
+	velocity = Vector2(cos(random_angle), sin(random_angle)) * initial_speed
+	rotation = velocity.angle()
 
 func find_closest_enemy() -> Node2D:
 	var enemies = get_tree().get_nodes_in_group("enemies")

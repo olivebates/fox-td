@@ -10,6 +10,8 @@ func _ready() -> void:
 	color_rect.gui_input.connect(_on_color_rect_gui_input)
 	TooltipManager.hide_tooltip()
 	
+	get_tree().get_first_node_in_group("timeline")._rebuild_buttons()
+	
 var gachascreen = preload("uid://cgtxb5iesuex6")
 
 func _on_color_rect_gui_input(event: InputEvent) -> void: pass

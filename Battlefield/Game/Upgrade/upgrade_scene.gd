@@ -23,27 +23,14 @@ func _on_color_rect_gui_input(event: InputEvent) -> void:
 		UpgradeManager.unpause_towers()
 		queue_free()
 
-func setup_buttons():
-	var inst = upgrade_button.instantiate()
-	inst.base_tower = base_tower
-	inst.tower_id = tower_id
-	inst.tower_level = tower_level
-	inst.path_id = 0
-	inst.current_level = path1
-	container.add_child(inst)
-	
-	inst = upgrade_button.instantiate()
-	inst.base_tower = base_tower
-	inst.tower_id = tower_id
-	inst.tower_level = tower_level
-	inst.path_id = 1
-	inst.current_level = path2
-	container.add_child(inst)
-	
-	inst = upgrade_button.instantiate()
-	inst.base_tower = base_tower
-	inst.tower_id = tower_id
-	inst.tower_level = tower_level
-	inst.path_id = 2
-	inst.current_level = path3
-	container.add_child(inst)
+# In upgrade UI script (setup_buttons)
+func setup_buttons() -> void:
+	var item_def = InventoryManager.items[tower_id]
+	for i in 3:
+		var inst = upgrade_button.instantiate()
+		inst.base_tower = base_tower
+		inst.tower_id = tower_id
+		inst.tower_level = tower_level
+		inst.path_id = i
+		inst.current_level = base_tower.path[i]
+		container.add_child(inst)

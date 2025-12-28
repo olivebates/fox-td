@@ -15,27 +15,31 @@ func _ready() -> void:
 	for i in BACKPACK_SIZE:
 		tower_inventory[i] = {}
 	
-	# Example: add 3 test towers
+	# Example: add test towers using updated function
 	tower_inventory[0] = _create_tower("Fox", 1)
 	
-	# Squad setup remains unchanged
 	squad_slots.clear()
 	squad_slots.resize(SQUAD_SIZE)
 	for i in SQUAD_SIZE:
 		squad_slots[i] = {}
+	
 	squad_slots[0] = _create_tower("Fox", 1)
 	squad_slots[1] = _create_tower("Fox", 1)
-	#squad_slots[2] = _create_tower("Fox", 1)
 
-func _create_tower(id: String, rank: int) -> Dictionary:
+func _create_tower(id: String, rank: int, path_levels: Array = [0, 0, 0]) -> Dictionary:
 	var type_data = InventoryManager.items.get(id, {})
 	if type_data.is_empty():
 		return {}
-	var damage = InventoryManager.get_damage_calculation(id, rank, 0)  # path[0] = 0 initially
-	var dps = damage * type_data.attack_speed
+	
+	var stats = InventoryManager.get_tower_stats(id, rank, path_levels)
+	var damage = stats.creature_damage if type_data.get("is_guard", false) else stats.damage
+	var attack_speed = stats.creature_attack_speed if type_data.get("is_guard", false) else stats.attack_speed
+	var dps = damage * attack_speed
+	
 	return {
 		"type": type_data,
 		"rank": rank,
+		"path": path_levels.duplicate(),
 		"power_level": dps,
 		"id": id
 	}

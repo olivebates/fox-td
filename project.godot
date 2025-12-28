@@ -64,6 +64,7 @@ remove_button=""
 path_object=""
 guard=""
 lose_screen=""
+timeline=""
 
 [rendering]
 

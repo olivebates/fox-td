@@ -299,10 +299,10 @@ func _perform_tower_drop() -> void:
 	InventoryManager.refresh_all_highlights()
 	queue_redraw()
 	
-	if not success:
-		dragged_tower.global_position = grid_offset + Vector2(original_cell.x * CELL_SIZE + CELL_SIZE / 2, original_cell.y * CELL_SIZE + CELL_SIZE / 2)
-		if original_cell.x >= 0 and original_cell.x < WIDTH and original_cell.y >= 0 and original_cell.y < HEIGHT:
-			grid[original_cell.y][original_cell.x] = dragged_tower
+	#if not success:
+		#dragged_tower.global_position = grid_offset + Vector2(original_cell.x * CELL_SIZE + CELL_SIZE / 2, original_cell.y * CELL_SIZE + CELL_SIZE / 2)
+		#if original_cell.x >= 0 and original_cell.x < WIDTH and original_cell.y >= 0 and original_cell.y < HEIGHT:
+			#grid[original_cell.y][original_cell.x] = dragged_tower
 
 # Optional: faint grid lines + drag highlight
 func _draw() -> void:

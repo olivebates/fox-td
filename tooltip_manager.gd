@@ -65,28 +65,41 @@ func show_tooltip(title: String, description_bbcode: String) -> void:
 	title_label.text = title
 	desc_rich.bbcode_text = description_bbcode
 	
-	# Force immediate layout update
+	tooltip.visible = true
+	# Force layout update for correct sizing
 	tooltip.size = Vector2(0, 0)
 	await get_tree().process_frame
-	
-	tooltip.visible = true
 
 func hide_tooltip() -> void:
 	tooltip.visible = false
 
-func _process(_delta: float) -> void:
+func append_to_current_tooltip(bbcode: String) -> void:
 	if tooltip.visible:
-		var mouse_pos = get_viewport().get_mouse_position()
-		var viewport_rect = get_viewport().get_visible_rect()
-		
-		var pos = mouse_pos + Vector2(10, 10)
-		
-		if pos.x + tooltip.size.x > viewport_rect.end.x:
-			pos.x = mouse_pos.x - tooltip.size.x - 10
-		if pos.y + tooltip.size.y > viewport_rect.end.y:
-			pos.y = mouse_pos.y - tooltip.size.y - 10
-		
-		pos.x = clamp(pos.x, 0, viewport_rect.size.x - tooltip.size.x)
-		pos.y = clamp(pos.y, 0, viewport_rect.size.y - tooltip.size.y)
-		
-		tooltip.position = pos
+		desc_rich.text += bbcode
+		tooltip.size = Vector2(0, 0)
+		await get_tree().process_frame
+
+func _process(_delta: float) -> void:
+	if not tooltip.visible:
+		return
+	
+	var mouse_pos = get_viewport().get_mouse_position()
+	var viewport_rect = get_viewport().get_visible_rect()
+	
+	var tooltip_size = tooltip.size
+	var offset = Vector2(16, 16)
+	var pos = mouse_pos + offset
+	
+	# Flip horizontally if off right edge
+	if pos.x + tooltip_size.x > viewport_rect.size.x:
+		pos.x = mouse_pos.x - tooltip_size.x - offset.x
+	
+	# Flip vertically if off bottom edge
+	if pos.y + tooltip_size.y > viewport_rect.size.y:
+		pos.y = mouse_pos.y - tooltip_size.y - offset.y
+	
+	# Clamp to viewport
+	pos.x = clamp(pos.x, 0, viewport_rect.size.x - tooltip_size.x)
+	pos.y = clamp(pos.y, 0, viewport_rect.size.y - tooltip_size.y)
+	
+	tooltip.position = pos

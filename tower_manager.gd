@@ -6,7 +6,8 @@ var tower_inventory: Array[Dictionary] = []
 var squad_slots: Array[Dictionary] = []  # Size 18
 var SQUAD_SIZE: int = 18
 var BACKPACK_SIZE: int = 7*6
-var pull_cost = 40
+var pull_cost_base = 40
+var pull_cost = pull_cost_base
 var cost_increase = 10
 func _ready() -> void:
 	tower_inventory.clear()
@@ -70,3 +71,15 @@ func get_inventory_size(is_squad: bool) -> int:
 		return SQUAD_SIZE
 	else:
 		return BACKPACK_SIZE  # Fixed 28 slots
+
+func clear_backpack() -> void:
+	tower_inventory.clear()
+	tower_inventory.resize(BACKPACK_SIZE)
+	for i in BACKPACK_SIZE:
+		tower_inventory[i] = {}
+
+func clear_squad() -> void:
+	squad_slots.clear()
+	squad_slots.resize(SQUAD_SIZE)
+	for i in SQUAD_SIZE:
+		squad_slots[i] = {}

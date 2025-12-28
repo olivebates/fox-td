@@ -27,8 +27,9 @@ AStarManager="*res://a_star_manager.gd"
 WaveShower="*res://wave_shower.gd"
 TowerManager="*res://tower_manager.gd"
 TooltipManager="*res://tooltip_manager.gd"
-Gacha="*res://gacha.gd"
 UpgradeManager="*res://upgrade_manager.gd"
+SaveManager="*res://save_manager.gd"
+TimelineManager="*res://timeline_manager.gd"
 
 [display]
 
@@ -61,6 +62,8 @@ game_area=""
 next_wave_button=""
 remove_button=""
 path_object=""
+guard=""
+lose_screen=""
 
 [rendering]
 

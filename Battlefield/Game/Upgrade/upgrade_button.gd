@@ -29,7 +29,7 @@ func _ready() -> void:
 	else:
 		var next_level = current_level + 1
 		var rank = base_tower.rank
-		var cost = InventoryManager.get_upgrade_cost(tower_id, 1, next_level, rank)
+		var cost = InventoryManager.get_upgrade_cost(tower_id, rank, next_level, rank)
 		cost_text.text = "[font_size=7.5][color=cornflower_blue]Cost: " + str(int(cost)) + "[/color][/font_size]"
 		
 		if path_id == 0:
@@ -70,7 +70,7 @@ func _on_mouse_exited() -> void:
 func _on_button_pressed() -> void:
 	var next_level = current_level + 1
 	var rank = base_tower.rank
-	var cost = InventoryManager.get_upgrade_cost(tower_id, 1, next_level, rank)
+	var cost = InventoryManager.get_upgrade_cost(tower_id, rank, next_level, rank)
 	
 	if StatsManager.spend_health(cost):
 		base_tower.path[path_id] += 1

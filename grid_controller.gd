@@ -230,7 +230,9 @@ func start_tower_drag(tower: Node, offset: Vector2) -> void:
 	if original_cell == Vector2i(-1, -1):
 		dragged_tower = null
 		return
-	grid[original_cell.y][original_cell.x] = null
+	# Safe access with bounds check
+	if original_cell.x >= 0 and original_cell.x < WIDTH and original_cell.y >= 0 and original_cell.y < HEIGHT:
+		grid[original_cell.y][original_cell.x] = null
 	tower.z_index = 1000
 	tower.modulate.a = 0.7
 	queue_redraw()
@@ -296,6 +298,11 @@ func _perform_tower_drop() -> void:
 	potential_cell = Vector2i(-1, -1)
 	InventoryManager.refresh_all_highlights()
 	queue_redraw()
+	
+	if not success:
+		dragged_tower.global_position = grid_offset + Vector2(original_cell.x * CELL_SIZE + CELL_SIZE / 2, original_cell.y * CELL_SIZE + CELL_SIZE / 2)
+		if original_cell.x >= 0 and original_cell.x < WIDTH and original_cell.y >= 0 and original_cell.y < HEIGHT:
+			grid[original_cell.y][original_cell.x] = dragged_tower
 
 # Optional: faint grid lines + drag highlight
 func _draw() -> void:

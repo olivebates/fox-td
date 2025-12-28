@@ -36,6 +36,19 @@ var items: Dictionary = {
 		"rarity": 1,
 		"description": "A basic shooting fox!",
 	},
+	"Bunny Hole": {
+		"name": "Bunny Hole",
+		"texture": preload("uid://d1xf6xo2yoxag"),
+		"prefab": preload("uid://cjxvt1upw8qsp"),
+		"bullet": preload("uid://c1mvy41rbq2y0"),
+		"unlocked": false,
+		"attack_speed": 1,
+		"damage": 1,
+		"radius": 12,
+		"rarity": 1,
+		"is_guard": true,
+		"description": "Continuously spits out mousetraps!"
+	},
 	"Duck": {
 		"name": "Duck",
 		"texture": preload("uid://cqgl3igwvfat8"),
@@ -44,9 +57,22 @@ var items: Dictionary = {
 		"unlocked": false,
 		"attack_speed": 1,
 		"damage": 1,
-		"radius": 28,
+		"radius": 20,
 		"rarity": 2,
 		"description": "A duck that shoots exploding bullets!"
+	},
+	
+	"Hawk": {
+		"name": "Hawk",
+		"texture": preload("uid://bu4gnw3uul700"),
+		"prefab": preload("uid://ynouns2yxpra"),
+		"bullet": preload("uid://d11coximypo74"),
+		"unlocked": false,
+		"attack_speed": 1,
+		"damage": 1,
+		"radius": 76,
+		"rarity": 2,
+		"description": "Long range sniper!"
 	},
 	
 	"Snail": {
@@ -57,22 +83,9 @@ var items: Dictionary = {
 		"unlocked": false,
 		"attack_speed": 1,
 		"damage": 1,
-		"radius": 28,
-		"rarity": 2,
+		"radius": 20,
+		"rarity": 4,
 		"description": "Shoots in all directions!"
-	},
-	
-	"Hawk": {
-		"name": "Hawk",
-		"texture": preload("uid://bu4gnw3uul700"),
-		"prefab": preload("uid://ynouns2yxpra"),
-		"bullet": preload("uid://d11coximypo74"),
-		"unlocked": false,
-		"attack_speed": 1,
-		"damage": 2,
-		"radius": 76,
-		"rarity": 3,
-		"description": "Long range sniper!"
 	},
 	
 	"Mouse": {
@@ -85,26 +98,27 @@ var items: Dictionary = {
 		"damage": 1,
 		"radius": 12,
 		"rarity": 4,
+		"is_guard": false,
 		"description": "Continuously spits out mousetraps!"
 	},
 }
 
 func get_placement_cost(id: String, tower_level: int, rarity_level: int) -> float:
-	var base = 40 * pow(2, items[id].rarity-1) 
+	var base = 40 * pow(3, items[id].rarity-1) 
 	var level_factor = 1.0 + (tower_level * 0.2)
-	var rarity_factor = pow(2, rarity_level - 1)
+	var rarity_factor = pow(3, rarity_level - 1)
 	return base * level_factor * rarity_factor
 
-func get_upgrade_cost(id: String, tower_level: int, path_level: int, rarity) -> float:
-	var base = items[id].rarity * 40
-	var level_factor = 1.0 + (tower_level * 0.2)
-	var path_factor = pow(2, path_level - 1)
-	var rarity_factor = pow(2, rarity - 1)
-	return base * level_factor * path_factor * rarity_factor
+func get_upgrade_cost(id: String, rank: int, path_level: int, rarity) -> float:
+	var base = 10
+	var rank_factor = pow(3, rank)
+	var path_factor = pow(3, path_level - 1)
+	var rarity_factor = pow(2, items[id].rarity)
+	return base * rank_factor * path_factor * rarity_factor
 
 func get_damage_calculation(id: String, rank: int, path_damage_level: int) -> int:
 	var base_damage = items[id].get("damage", 1)
-	var rank_multiplier = pow(3.5, rank - 1)
+	var rank_multiplier = pow(4, rank - 1)
 	var path_bonus = path_damage_level  # or any formula, e.g. path_damage_level * 2
 	return int(base_damage * rank_multiplier + path_bonus)
 
@@ -127,8 +141,6 @@ func get_merge_cost(current_rank: int) -> float:
 	var new_rank = current_rank + 1
 	return base_spawn_cost #* pow(3.0, float(new_rank - 1)) / 3.0
 
-#func _ready():
-	#Gacha.register_items(items.keys())
 
 func register_inventory(grid: GridContainer, spawner_grid: GridContainer, preview: Control) -> void:
 	slots.clear()
@@ -197,6 +209,8 @@ func register_inventory(grid: GridContainer, spawner_grid: GridContainer, previe
 func give_starter_towers():
 	slots[0].set_meta("item", {"id": "Fox", "rank": 1})
 	slots[1].set_meta("item", {"id": "Fox", "rank": 1})
+	#slots[2].set_meta("item", {"id": "Bunny Hole", "rank": 1})
+	#slots[3].set_meta("item", {"id": "Bunny Hole", "rank": 2})
 	#slots[1].set_meta("item", {"id": "Mouse", "rank": 1})
 	#slots[2].set_meta("item", {"id": "Snail", "rank": 1})
 	#slots[3].set_meta("item", {"id": "Hawk", "rank": 1})
@@ -237,7 +251,7 @@ func _draw_slot(slot: Panel) -> void:
 	var item = slot.get_meta("item", {})
 	if item.is_empty():
 		return
-	var rank = item.get("rank", 0)
+	var rank = int(item.get("rank", 0))
 	var border_color = RANK_COLORS.get(rank, Color(1, 1, 1))
 	var base_color = border_color * 0.3
 	base_color.a = 1.0

@@ -69,7 +69,6 @@ func reset_current_map():
 	for node in enemies:
 		node.queue_free()
 
-
 	var towers = get_tree().get_nodes_in_group("tower")
 	for node in towers:
 		node.queue_free()
@@ -102,6 +101,7 @@ func new_map():
 		i.queue_free()
 	for i in get_tree().get_nodes_in_group("walls"):
 		i.queue_free()
+		
 	WaveSpawner.generate_path()
 	AStarManager._update_grid()
 	GridController.update_buildables()
@@ -139,6 +139,8 @@ func new_map():
 
 	GridController.walls_placed = 0
 
+	
+	
 func take_damage(amount: float) -> void:
 	health -= amount
 	health_changed.emit(health, max_health)

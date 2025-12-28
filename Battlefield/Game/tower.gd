@@ -126,8 +126,8 @@ func _draw() -> void:
 	if not has_meta("item_data"):
 		return
 	var data = get_meta("item_data")
-	var rank = data.get("rank", 0)
-	var border_color = InventoryManager.RANK_COLORS.get(rank, Color(1, 1, 1))
+	var rank = int(data.get("rank", 0))
+	var border_color = InventoryManager.RANK_COLORS.get(rank, Color(0.192, 1.0, 1.0, 1.0))
 	var base_color = border_color * 0.3
 	base_color.a = 1.0
 	var brighten = 1.5 if hovered else 1.0

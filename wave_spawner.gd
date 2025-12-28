@@ -48,11 +48,11 @@ const ENEMY_TYPES = {
 	}
 }
 
-var current_level = 3
+var current_level = 1
 const LEVEL_CONFIG = {
 	1:  { base_health = 1,   health_scale = 0.8,  waves = 6 },
-	2:  { base_health = 2,   health_scale = 0.7, waves = 10 },
-	3:  { base_health = 3,   health_scale = 0.8,  waves = 12 },
+	2:  { base_health = 2,   health_scale = 0.65, waves = 10 },
+	3:  { base_health = 0.7,   health_scale = 1.45,  waves = 12 },
 	4:  { base_health = 2,   health_scale = 0.85,  waves = 200 },
 	5:  { base_health = 8,   health_scale = 1.9,  waves = 200 },
 	6:  { base_health = 12,  health_scale = 2.3,  waves = 200 },
@@ -67,7 +67,7 @@ func get_enemy_death_money():
 	return int(max(1, ceil(current_wave/5)*current_wave_base_reward))
 
 func get_enemy_death_health_gain():
-	return int(max(1, ceil(current_wave/5)*current_wave_base_reward+floor(WaveSpawner.current_level)))
+	return int(max(1, ceil(current_wave/5)*current_wave_base_reward + min(5, WaveSpawner.current_level)))
 
 func calculate_enemy_damage(health, cycles):
 	return pow(health + current_wave*4, cycles)
@@ -159,6 +159,7 @@ func _process(delta: float) -> void:
 	if place_towers_hint and (current_wave != 2 or get_tree().get_nodes_in_group("tower").size() > 1):
 		place_towers_hint.queue_free()
 		place_towers_hint = null
+	
 
 func set_game_paused(p: bool) -> void:
 	game_paused = p
@@ -180,6 +181,10 @@ func get_enemy_type_for_wave(wave: int) -> String:
 	return keys[randi() % keys.size()]
 
 func start_next_wave():
+	var index = current_wave
+	TimelineManager.wave_replay_counts[index] = TimelineManager.wave_replay_counts.get(index, 0) + 1
+	TimelineManager.save_timeline(index)
+	
 	current_wave += 1
 	seed(current_level*10000 + current_wave)
 	
@@ -193,11 +198,13 @@ func start_next_wave():
 	var wave_health = pow(config.base_health * current_wave, config.health_scale)
 	wave_health = floor(wave_health) * type_data.health
 	wave_health *= type_data.health
+	wave_health = max(1, wave_health)
 	var enemies_in_wave := int(7 * type_data.count_mult)
 	enemies_in_wave = max(enemies_in_wave, 1)
 	active_waves[current_wave] = enemies_in_wave
 	wave_started.emit(current_wave)
 	_spawn_wave_async(current_wave, enemy_type, wave_health, enemies_in_wave)
+	
 
 func _spawn_wave_async(wave: int, enemy_type: String, health: int, count: int) -> void:
 	_is_spawning = true
@@ -210,6 +217,8 @@ func _spawn_wave_async(wave: int, enemy_type: String, health: int, count: int) -
 		_remaining_enemies -= 1
 		if _remaining_enemies > 0:
 			await await_delay(delay)
+	
+	
 
 	_is_spawning = false
 func spawn_enemy(wave: int, enemy_type: String, health: int):
@@ -218,28 +227,24 @@ func spawn_enemy(wave: int, enemy_type: String, health: int):
 	enemy.position = start_pos + Vector2(0, 4)
 	enemy.target_position = end_pos
 	add_child(enemy)
-
 	enemy.add_to_group("enemy")
-
 	enemy.max_speed = base_speed + wave * speed_inc
 	enemy.speed = type_data.speed
-	#enemy.current_damage = type_data.damage
-
 	enemy.health = health
 	enemy.current_health = health
-
 	enemy.tree_exited.connect(func():
 		if not active_waves.has(wave):
 			return
-
 		active_waves[wave] -= 1
 		if active_waves[wave] <= 0:
 			active_waves.erase(wave)
 			wave_completed.emit(wave)
+			TimelineManager.save_timeline(wave)
 	)
 
 
 func generate_path():
+	
 	seed(WaveSpawner.current_level+6 + WaveSpawner.current_level*2-2)
 	for child in get_children():
 		if child != path_node and child != path_tiles_container:
@@ -408,6 +413,7 @@ func generate_path():
 				special.position = old.position
 				add_child(special)
 				old.queue_free()
+	
 	
 	GridController.update_buildables()
 	AStarManager._update_grid()	

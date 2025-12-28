@@ -1,0 +1,19 @@
+[gd_scene load_steps=5 format=3 uid="uid://cjxvt1upw8qsp"]
+
+[ext_resource type="Script" uid="uid://cqhyh1bmxoj3f" path="res://Battlefield/Game/tower_bunny.gd" id="1_teubo"]
+[ext_resource type="PackedScene" uid="uid://c1mvy41rbq2y0" path="res://Battlefield/Game/tower_bunny_bullet.tscn" id="2_r0qk4"]
+[ext_resource type="Texture2D" uid="uid://d1xf6xo2yoxag" path="res://Battlefield/Sprites/Towers/BunnyHole.png" id="3_yvyu8"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mx82x"]
+size = Vector2(8, 8)
+
+[node name="Tower1" type="CharacterBody2D" groups=["tower"]]
+z_index = -20
+script = ExtResource("1_teubo")
+minion_scene = ExtResource("2_r0qk4")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_mx82x")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("3_yvyu8")

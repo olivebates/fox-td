@@ -68,8 +68,13 @@ func request_path() -> void:
 	path_index = 0
 
 func _process(delta: float) -> void:
+	if path.is_empty() or path_index >= path.size():
+		request_path()
 	
 	$Visuals/Label.text = str(current_health)
+	
+	if is_in_group("blocked"):
+		return
 	if global_position.distance_to(target_position) < 8.0:
 		current_damage = WaveSpawner.calculate_enemy_damage(current_health, cycles)
 		var damage = current_damage
@@ -131,16 +136,17 @@ func take_damage(amount: int):
 	tw3.tween_property($Sprite2D2, "modulate", Color.RED, 0.1)
 	tw3.tween_property($Sprite2D2, "modulate", target_color, 0.3)
 	
-	$Label.add_theme_color_override("font_color", Color.WHITE)
+	$Visuals/Label.add_theme_color_override("font_color", Color.WHITE)
 	var tw2 = create_tween()
-	tw2.tween_property($Label, "theme_override_colors/font_color", Color.BLACK, 0.3)
+	tw2.tween_property($Visuals/Label, "theme_override_colors/font_color", Color.BLACK, 0.3)
 	
 	if current_health <= 0:
 		die()
 
 func die():
-	var money_gain = WaveSpawner.get_enemy_death_money()
+	var penalty = TimelineManager.wave_replay_counts.get(TimelineManager.current_wave_index, 0)
+	var money_gain = max(1, WaveSpawner.get_enemy_death_money()+10 - penalty)
 	StatsManager.money += money_gain
-	Utilities.spawn_floating_text("+€"+str(money_gain), global_position + Vector2(0, 8), get_tree().current_scene, false, Color.YELLOW)
+	Utilities.spawn_floating_text("+€"+str(int(money_gain)), global_position + Vector2(0, 8), get_tree().current_scene, false, Color.YELLOW)
 	get_tree().call_group("health_manager", "gain_health_from_kill", WaveSpawner.get_enemy_death_health_gain())
 	queue_free()

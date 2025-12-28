@@ -1,10 +1,11 @@
-[gd_scene load_steps=8 format=3 uid="uid://ctnmhorqxut1t"]
+[gd_scene load_steps=9 format=3 uid="uid://ctnmhorqxut1t"]
 
 [ext_resource type="Script" uid="uid://c58ore2lex6h5" path="res://main_scene.gd" id="1_7fr83"]
 [ext_resource type="Shader" uid="uid://dncm5bmmcgldt" path="res://Vignette.gdshader" id="2_5yw3w"]
 [ext_resource type="Script" uid="uid://dtxradeejcej0" path="res://path_manager.gd" id="3_tkmsp"]
 [ext_resource type="PackedScene" uid="uid://baklm1pqc3pmt" path="res://Battlefield/GUI/GUI.tscn" id="4_5yw3w"]
 [ext_resource type="Script" uid="uid://hflmog8s660p" path="res://color_tinter.gd" id="6_654x7"]
+[ext_resource type="PackedScene" uid="uid://0cs684mgxowq" path="res://Battlefield/timeline/timeline.tscn" id="7_lhke2"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_qtktj"]
 shader = ExtResource("2_5yw3w")
@@ -123,3 +124,9 @@ mouse_filter = 2
 color = Color(0.21176471, 0.24705882, 0.3764706, 1)
 script = ExtResource("6_654x7")
 brightness_shift = 0.5
+
+[node name="Timeline" parent="." instance=ExtResource("7_lhke2")]
+offset_left = 9.0
+offset_top = 130.0
+offset_right = 9.0
+offset_bottom = 130.0

@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://c1mvy41rbq2y0"]
+
+[ext_resource type="Script" uid="uid://bb2u3dbqbh7uj" path="res://Battlefield/Game/tower_bunny_bullet.gd" id="1_s61bq"]
+[ext_resource type="Texture2D" uid="uid://c5lperlidioiu" path="res://Battlefield/Sprites/Towers/Bunny.png" id="2_s61bq"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_awchd"]
+size = Vector2(2, 2)
+
+[node name="Tower2Bullet" type="Area2D" groups=["bullet", "guard"]]
+script = ExtResource("1_s61bq")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_awchd")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_s61bq")

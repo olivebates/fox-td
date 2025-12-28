@@ -98,3 +98,6 @@ func _on_pressed() -> void:
 	InventoryManager.refresh_inventory_highlights()
 	get_tree().call_group("backpack_inventory", "refresh_all_highlights")
 	get_tree().call_group("squad_inventory", "refresh_all_highlights")
+	
+	TimelineManager.save_timeline(0)
+	

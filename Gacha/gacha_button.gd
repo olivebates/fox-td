@@ -57,21 +57,25 @@ func _on_pressed() -> void:
 	if StatsManager.money < TowerManager.pull_cost:
 		Utilities.spawn_floating_text("Not enough €...", Vector2.ZERO, null)
 		return
-	
 	StatsManager.money -= TowerManager.pull_cost
 	TowerManager.pull_cost += TowerManager.cost_increase
 	text = "Pull New Critter (€" + str(TowerManager.pull_cost) + ")"
+
+	var rarity: int = 1 if randf() < 0.7 else 2
+	var possible: Array[String] = []
+	for id in InventoryManager.items.keys():
+		if InventoryManager.items[id].rarity == rarity:
+			possible.append(id)
 	
-	var keys = InventoryManager.items.keys()
-	if keys.is_empty():
+	if possible.is_empty():
 		return
 	
-	var random_id: String
-	if TowerManager.pull_cost == TowerManager.cost_increase + 40:  # First pull
-		random_id = "Duck"
-	else:
-		random_id = keys[randi() % keys.size()]
+	var random_id: String = possible[randi() % possible.size()]
 	
+	if (TowerManager.pull_cost == TowerManager.pull_cost_base + TowerManager.cost_increase):
+		random_id = "Duck"
+	if (TowerManager.pull_cost == TowerManager.pull_cost_base + TowerManager.cost_increase*2):
+		random_id = "Hawk"
 	var new_tower = TowerManager._create_tower(random_id, 1)
 	
 	var empty_index = -1
@@ -79,7 +83,6 @@ func _on_pressed() -> void:
 		if TowerManager.tower_inventory[i].is_empty():
 			empty_index = i
 			break
-	
 	if empty_index == -1:
 		TowerManager.tower_inventory.append(new_tower)
 	else:

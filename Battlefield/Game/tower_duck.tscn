@@ -1,17 +1,17 @@
 [gd_scene load_steps=4 format=3 uid="uid://bp8y13cyubdho"]
 
-[ext_resource type="Script" uid="uid://uy1ki4lla8jl" path="res://Battlefield/Game/tower.gd" id="1_w06uo"]
-[ext_resource type="Texture2D" uid="uid://cqgl3igwvfat8" path="res://Battlefield/Sprites/Towers/Tower2.png" id="2_w06uo"]
+[ext_resource type="Script" uid="uid://c2yr1x0k2yyrp" path="res://Battlefield/Game/tower_duck.gd" id="1_7axhj"]
+[ext_resource type="Texture2D" uid="uid://cqgl3igwvfat8" path="res://Battlefield/Sprites/Towers/Tower2.png" id="2_kf8c3"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_t3ens"]
 size = Vector2(8, 8)
 
 [node name="Tower2" type="StaticBody2D" groups=["grid_occupiers", "tower"]]
 z_index = 50
-script = ExtResource("1_w06uo")
+script = ExtResource("1_7axhj")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_t3ens")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-texture = ExtResource("2_w06uo")
+texture = ExtResource("2_kf8c3")

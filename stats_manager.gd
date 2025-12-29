@@ -1,7 +1,7 @@
 #StatsManager singleton
 extends Node
 
-var base_max_health = 20000
+var base_max_health = 200
 var health: float = base_max_health/2
 var max_health: float = base_max_health
 var production_speed: float = 1.0

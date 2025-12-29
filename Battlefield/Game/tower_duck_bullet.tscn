@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://32xbub5ovblc"]
 
-[ext_resource type="Script" uid="uid://b0y33ndaifpvq" path="res://Battlefield/Game/tower_2_bullet.gd" id="1_epys6"]
+[ext_resource type="Script" uid="uid://b0y33ndaifpvq" path="res://Battlefield/Game/tower_duck_bullet.gd" id="1_epys6"]
 [ext_resource type="Texture2D" uid="uid://0dkfej5pde8u" path="res://Battlefield/Sprites/Towers/tower1_bullet.png" id="2_mbdtg"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_awchd"]
@@ -8,12 +8,6 @@ size = Vector2(2, 2)
 
 [node name="Tower2Bullet" type="Area2D" groups=["bullet"]]
 script = ExtResource("1_epys6")
-explosion_radius = null
-speed = null
-initial_speed = null
-homing_strength = null
-damage = null
-lifetime = null
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_awchd")

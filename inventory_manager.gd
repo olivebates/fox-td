@@ -52,7 +52,7 @@ var items: Dictionary = {
 		"prefab": preload("uid://dfx5piisk4epn"),
 		"bullet": preload("uid://ciuly8asijcg5"),
 		"paths": [PATH_ID.bullets, PATH_ID.attack_speed, PATH_ID.range],
-		"paths_increment": [1, 1, 3],
+		"paths_increment": [1, 1, 1],
 		"unlocked": true,
 		"attack_speed": 1,
 		"damage": 1,
@@ -76,21 +76,22 @@ var items: Dictionary = {
 		"creatures_hp": 5,
 		"rarity": 1,
 		"is_guard": true,
-		"description": "Continuously spits out mousetraps!"
+		"description": "Continuously spits out bunnies!"
 	},
 	"Duck": {
 		"name": "Duck",
 		"texture": preload("uid://cqgl3igwvfat8"),
 		"prefab": preload("uid://dfx5piisk4epn"),
 		"bullet": preload("uid://32xbub5ovblc"),
-		"paths": [PATH_ID.bullets, PATH_ID.attack_speed, PATH_ID.range],
-		"paths_increment": [1, 1, 3],
+		"paths": [PATH_ID.bullets, PATH_ID.attack_speed, PATH_ID.explosion_radius],
+		"paths_increment": [1, 1, 1],
 		"unlocked": false,
 		"attack_speed": 1,
 		"damage": 1,
 		"radius": 20,
 		"bullets": 1,
 		"explosion_radius": 8*1+4,
+		"enemies_hit": 7,
 		"rarity": 2,
 		"description": "A duck that shoots exploding bullets!"
 	},
@@ -156,6 +157,8 @@ func get_tower_stats(id: String, rank: int, path_levels: Array) -> Dictionary:
 		"attack_speed": def.get("attack_speed", -1),
 		"range": def.get("radius", -1) + 4,
 		"bullets": def.get("bullets", -1),
+		"explosion_radius": def.get("explosion_radius", -1),
+		"enemies_hit": def.get("enemies_hit", -1),
 		"creature_count": def.get("creatures", -1),
 		"creature_damage": def.get("creature_damage", -1) * rank_mult,
 		"creature_attack_speed": def.get("creature_attack_speed", -1),
@@ -171,6 +174,7 @@ func get_tower_stats(id: String, rank: int, path_levels: Array) -> Dictionary:
 			PATH_ID.bullets: stats.bullets += bonus
 			PATH_ID.attack_speed: stats.attack_speed += bonus
 			PATH_ID.range: stats.range += bonus * 8
+			PATH_ID.explosion_radius: stats.explosion_radius += bonus*8
 			PATH_ID.creature_amount: stats.creature_count += bonus
 			PATH_ID.creature_damage: stats.creature_damage += bonus * rank_mult
 			PATH_ID.creature_attack_speed: stats.creature_attack_speed += bonus
@@ -193,15 +197,18 @@ func show_tower_tooltip(item: Dictionary, cost: float) -> void:
 	tooltip_text += "[color=gray]————————————————[/color]\n"
 	
 	if def.get("is_guard", false):
-		tooltip_text += "Creatures: " + str(int(stats.creature_count)) + "\n"
-		tooltip_text += "Damage: " + str(int(stats.creature_damage)) + "\n"
-		tooltip_text += "Attack Speed: " + str(int(snapped(stats.creature_attack_speed, -1))) + "/s\n"
-		tooltip_text += "Health: " + str(int(stats.creature_health)) + "\n"
+		tooltip_text += "Creatures:  [color=cornflower_blue]" + str(int(stats.creature_count)) + "\n[/color]"
+		tooltip_text += "Damage:  [color=cornflower_blue]" + str(int(stats.creature_damage)) + "\n[/color]"
+		tooltip_text += "Attack Speed [color=cornflower_blue]: " + str(int(snapped(stats.creature_attack_speed, -1))) + "[/color]\n"
+		tooltip_text += "Health:  [color=cornflower_blue]" + str(int(stats.creature_health)) + "\n[/color]"
 	else:
-		tooltip_text += "Damage: " + str(int(stats.damage)) + "\n"
-		tooltip_text += "Attack Speed: " + str(snapped(int(stats.attack_speed), -1)) + "/s\n"
-		tooltip_text += "Bullets: " + str(int(stats.bullets)) + "\n"
-		tooltip_text += "Range: " + str(int(stats.range / 8)) + " tiles\n"
+		tooltip_text += "Damage: [color=cornflower_blue]" + str(int(stats.damage)) + "[/color]\n"
+		tooltip_text += "Attack Speed: [color=cornflower_blue]" + str(snapped(int(stats.attack_speed), -1)) + "/s[/color]\n"
+		tooltip_text += "Bullets: [color=cornflower_blue]" + str(int(stats.bullets)) + "[/color]\n"
+		tooltip_text += "Range: [color=cornflower_blue]" + str(int(stats.range / 8)) + " tiles[/color]\n"
+		if stats.explosion_radius != -1:
+			tooltip_text += "Explosion Size: [color=cornflower_blue]" + str(int(stats.explosion_radius/8)) + " tiles[/color]\n"
+			tooltip_text += "Max enemies hit: [color=cornflower_blue]" + str(int(stats.enemies_hit)) + "[/color]\n"
 	
 	tooltip_text += "[color=gray]————————————————[/color]\n"
 	tooltip_text += "[font_size=2][color=dark_gray]" + def.get("description", "") + "[/color][/font_size]"

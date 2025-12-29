@@ -12,8 +12,21 @@ func _ready() -> void:
 	add_child(explosion_area)
 	explosion_area.add_child(explosion_shape)
 	var circle = CircleShape2D.new()
-	circle.radius = explosion_radius
 	explosion_shape.shape = circle
+	
+	# Fetch upgraded radius if not set
+	if explosion_radius <= 0:
+		var tower = get_parent()  # Tower that fired the bullet
+		if tower and tower.has_meta("item_data"):
+			var stats = InventoryManager.get_tower_stats(
+				tower.tower_type,
+				tower.get_meta("item_data").rank,
+				tower.path
+			)
+			explosion_radius = stats.explosion_radius
+	
+	circle.radius = explosion_radius
+	
 	explosion_area.monitoring = false
 	explosion_area.monitorable = false
 

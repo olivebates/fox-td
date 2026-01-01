@@ -29,8 +29,6 @@ func _ready() -> void:
 
 	bar.show_percentage = false
 	bar.min_value = 0
-	bar.max_value = StatsManager.max_health
-	bar.value = StatsManager.health
 
 	# Text overlay
 	text.anchor_left = 0
@@ -60,11 +58,12 @@ func _ready() -> void:
 	$Bar.mouse_entered.connect(_on_mouse_entered)
 	$Bar.mouse_exited.connect(_on_mouse_exited)
 
+
 func _on_mouse_entered() -> void:
 	TooltipManager.show_tooltip(
 	"Meat",
-	"[font_size=3][color=cornflower_blue]Production: " + str(int(StatsManager.production_speed)) + "/s\n"+
-	"Kill multiplier: x" +str(StatsManager.kill_multiplier) +"\n"+
+	"[font_size=3][color=cornflower_blue]Production: " + str(StatsManager.production_speed).trim_suffix(".0") + "/s\n"+
+	"Kill multiplier: x" +str(StatsManager.kill_multiplier).trim_suffix(".0") +"\n"+
 	"[/color][/font_size]" +
 	"[color=gray]————————————————[/color]\n"+
 	"[font_size=2][color=dark_gray]Meat is used to buy and upgrade towers.
@@ -128,6 +127,8 @@ func _update_red_overlay() -> void:
 
 
 func _process(delta: float) -> void:
+	bar.max_value = StatsManager.max_health
+	bar.value = StatsManager.health
 	queue_redraw()
 # Level number
 #func _draw() -> void:

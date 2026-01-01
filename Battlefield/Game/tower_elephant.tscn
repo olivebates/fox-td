@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://dt4rxcdac07qe"]
+
+[ext_resource type="Script" uid="uid://dbay3b7gg5wy1" path="res://Battlefield/Game/tower_elephant.gd" id="1_jcy2u"]
+[ext_resource type="Texture2D" uid="uid://cqnbvccmrcuat" path="res://Battlefield/Sprites/Towers/Elephant.png" id="2_3vxsq"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3boql"]
+size = Vector2(8, 8)
+
+[node name="TowerElephant" type="CharacterBody2D"]
+script = ExtResource("1_jcy2u")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_3boql")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_3vxsq")

@@ -65,6 +65,8 @@ path_object=""
 guard=""
 lose_screen=""
 timeline=""
+menu=""
+upgrade_scene=""
 
 [rendering]
 

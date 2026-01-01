@@ -8,7 +8,7 @@ var SQUAD_SIZE: int = 18
 var BACKPACK_SIZE: int = 7*6
 var pull_cost_base = 40
 var pull_cost = pull_cost_base
-var cost_increase = 10
+var cost_increase = 5
 func _ready() -> void:
 	tower_inventory.clear()
 	tower_inventory.resize(BACKPACK_SIZE)
@@ -17,7 +17,7 @@ func _ready() -> void:
 	
 	# Example: add test towers using updated function
 	tower_inventory[0] = _create_tower("Fox", 1)
-	
+	#add_all_towers_to_backpack()
 	squad_slots.clear()
 	squad_slots.resize(SQUAD_SIZE)
 	for i in SQUAD_SIZE:
@@ -25,6 +25,29 @@ func _ready() -> void:
 	
 	squad_slots[0] = _create_tower("Fox", 1)
 	squad_slots[1] = _create_tower("Fox", 1)
+
+func add_all_towers_to_backpack() -> void:
+	var index = 1
+	for id in InventoryManager.items.keys():
+		var tower1 = _create_tower(id, 1)
+		var tower2 = _create_tower(id, 2)
+		var tower3 = _create_tower(id, 3)
+		var tower4 = _create_tower(id, 4)
+		var tower5 = _create_tower(id, 5)
+		while index < tower_inventory.size():
+			if tower_inventory[index].is_empty():
+				tower_inventory[index] = tower1
+				index += 1
+				tower_inventory[index] = tower2
+				index += 1
+				tower_inventory[index] = tower3
+				index += 1
+				tower_inventory[index] = tower4
+				index += 1
+				tower_inventory[index] = tower5
+				index += 1
+				break
+			index += 1
 
 func _create_tower(id: String, rank: int, path_levels: Array = [0, 0, 0]) -> Dictionary:
 	var type_data = InventoryManager.items.get(id, {})

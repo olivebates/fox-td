@@ -1,14 +1,14 @@
 [gd_scene load_steps=11 format=3 uid="uid://c6pj2nc73reyx"]
 
-[ext_resource type="Script" uid="uid://cdkxgccj2umkb" path="res://Gacha/backpack_inventory.gd" id="1_ef5b0"]
-[ext_resource type="Script" uid="uid://cgi8lrep6btat" path="res://Gacha/gacha_button.gd" id="2_6ydk1"]
-[ext_resource type="Script" uid="uid://wp8d1hcb7bk2" path="res://Gacha/backpack_title.gd" id="2_lhcbs"]
-[ext_resource type="Script" uid="uid://mub3l2ptecvq" path="res://Gacha/backpack_sort.gd" id="3_n4df0"]
-[ext_resource type="Script" uid="uid://d2bwchj5f5dfd" path="res://Gacha/empty_squad.gd" id="4_111ie"]
-[ext_resource type="Script" uid="uid://kio18icqctb2" path="res://Gacha/auto_fill.gd" id="5_4h4ep"]
-[ext_resource type="Script" uid="uid://dq37xbj2a5vr0" path="res://Gacha/unmerge_towers.gd" id="5_j6qdx"]
-[ext_resource type="Script" uid="uid://bcwvynpmka4jo" path="res://Gacha/money_label.gd" id="6_hgej3"]
-[ext_resource type="Script" uid="uid://bhhur6j7ovoya" path="res://Gacha/start_new_game_button.gd" id="9_bakjs"]
+[ext_resource type="Script" uid="uid://cdkxgccj2umkb" path="res://Menus/Gacha/backpack_inventory.gd" id="1_ef5b0"]
+[ext_resource type="Script" uid="uid://cgi8lrep6btat" path="res://Menus/Gacha/gacha_button.gd" id="2_6ydk1"]
+[ext_resource type="Script" uid="uid://wp8d1hcb7bk2" path="res://Menus/Gacha/backpack_title.gd" id="2_lhcbs"]
+[ext_resource type="Script" uid="uid://mub3l2ptecvq" path="res://Menus/Gacha/backpack_sort.gd" id="3_n4df0"]
+[ext_resource type="Script" uid="uid://d2bwchj5f5dfd" path="res://Menus/Gacha/empty_squad.gd" id="4_111ie"]
+[ext_resource type="Script" uid="uid://kio18icqctb2" path="res://Menus/Gacha/auto_fill.gd" id="5_4h4ep"]
+[ext_resource type="Script" uid="uid://dq37xbj2a5vr0" path="res://Menus/Gacha/unmerge_towers.gd" id="5_j6qdx"]
+[ext_resource type="Script" uid="uid://bcwvynpmka4jo" path="res://Menus/Gacha/money_label.gd" id="6_hgej3"]
+[ext_resource type="Script" uid="uid://bhhur6j7ovoya" path="res://Menus/Gacha/start_new_game_button.gd" id="9_bakjs"]
 [ext_resource type="Script" uid="uid://hflmog8s660p" path="res://color_tinter.gd" id="10_piwdx"]
 
 [node name="Backpack" type="Control"]
@@ -22,15 +22,38 @@ anchors_preset = 0
 [node name="BackpackContainer" type="VBoxContainer" parent="."]
 layout_mode = 0
 offset_left = -20.0
-offset_top = -3.0
+offset_top = -10.0
 offset_right = 41.0
-offset_bottom = 63.0
+offset_bottom = 56.0
 alignment = 1
 
 [node name="BackpackTitle" type="Label" parent="BackpackContainer"]
+visible = false
 layout_mode = 2
 text = "Camp"
 script = ExtResource("2_lhcbs")
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="BackpackContainer"]
+layout_mode = 2
+
+[node name="GachaButton" type="Button" parent="BackpackContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+script = ExtResource("2_6ydk1")
+
+[node name="ColorRect" type="ColorRect" parent="BackpackContainer/HBoxContainer2/GachaButton"]
+z_index = -1
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+script = ExtResource("10_piwdx")
+brightness_shift = 0.55
+is_button_shadow = true
+
+[node name="MoneyLabel" type="Label" parent="BackpackContainer/HBoxContainer2"]
+layout_mode = 2
+script = ExtResource("6_hgej3")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="BackpackContainer"]
 layout_mode = 2
@@ -82,15 +105,25 @@ layout_mode = 2
 columns = 7
 script = ExtResource("1_ef5b0")
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="BackpackContainer"]
-layout_mode = 2
+[node name="SquadContainer" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 104.0
+offset_top = -10.0
+offset_right = 132.0
+offset_bottom = 41.0
 
-[node name="GachaButton" type="Button" parent="BackpackContainer/HBoxContainer2"]
-custom_minimum_size = Vector2(56, 0)
+[node name="SquadTitle" type="Label" parent="SquadContainer"]
+visible = false
 layout_mode = 2
-script = ExtResource("2_6ydk1")
+text = "Squad"
+script = ExtResource("2_lhcbs")
 
-[node name="ColorRect" type="ColorRect" parent="BackpackContainer/HBoxContainer2/GachaButton"]
+[node name="StartNewGameButton" type="Button" parent="SquadContainer"]
+z_index = 200
+layout_mode = 2
+script = ExtResource("9_bakjs")
+
+[node name="ColorRect" type="ColorRect" parent="SquadContainer/StartNewGameButton"]
 z_index = -1
 layout_mode = 0
 offset_right = 40.0
@@ -100,25 +133,8 @@ script = ExtResource("10_piwdx")
 brightness_shift = 0.55
 is_button_shadow = true
 
-[node name="MoneyLabel" type="Label" parent="BackpackContainer/HBoxContainer2"]
-layout_mode = 2
-script = ExtResource("6_hgej3")
-
-[node name="SquadContainer" type="VBoxContainer" parent="."]
-layout_mode = 0
-offset_left = 105.0
-offset_top = -3.0
-offset_right = 137.0
-offset_bottom = 48.0
-
-[node name="SquadTitle" type="Label" parent="SquadContainer"]
-layout_mode = 2
-text = "Squad"
-script = ExtResource("2_lhcbs")
-
 [node name="HBoxContainer" type="HBoxContainer" parent="SquadContainer"]
 layout_mode = 2
-alignment = 1
 
 [node name="AutoFill" type="Button" parent="SquadContainer/HBoxContainer"]
 layout_mode = 2
@@ -155,21 +171,6 @@ columns = 3
 script = ExtResource("1_ef5b0")
 is_squad_inventory = true
 
-[node name="StartNewGameButton" type="Button" parent="SquadContainer"]
-z_index = 200
-layout_mode = 2
-script = ExtResource("9_bakjs")
-
-[node name="ColorRect" type="ColorRect" parent="SquadContainer/StartNewGameButton"]
-z_index = -1
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-mouse_filter = 2
-script = ExtResource("10_piwdx")
-brightness_shift = 0.55
-is_button_shadow = true
-
 [node name="GachaBackground" type="ColorRect" parent="."]
 z_index = -2
 layout_mode = 0
@@ -186,9 +187,9 @@ brightness_shift = 0.6
 z_index = -2
 layout_mode = 0
 offset_left = -29.0
-offset_top = -3.0
+offset_top = -14.0
 offset_right = 76.0
-offset_bottom = 114.0
+offset_bottom = 94.0
 mouse_filter = 2
 color = Color(0.105882354, 0.11372549, 0.17254902, 1)
 script = ExtResource("10_piwdx")
@@ -197,9 +198,9 @@ script = ExtResource("10_piwdx")
 z_index = -2
 layout_mode = 0
 offset_left = -31.0
-offset_top = -5.0
+offset_top = -14.0
 offset_right = 74.0
-offset_bottom = 112.0
+offset_bottom = 92.0
 mouse_filter = 2
 color = Color(0.21176471, 0.24705882, 0.3764706, 1)
 script = ExtResource("10_piwdx")
@@ -209,9 +210,9 @@ brightness_shift = 0.3
 z_index = -2
 layout_mode = 0
 offset_left = 93.0
-offset_top = -3.0
+offset_top = -13.0
 offset_right = 155.0
-offset_bottom = 115.0
+offset_bottom = 93.0
 mouse_filter = 2
 color = Color(0.105882354, 0.11372549, 0.17254902, 1)
 script = ExtResource("10_piwdx")
@@ -219,10 +220,10 @@ script = ExtResource("10_piwdx")
 [node name="GachaBackground5" type="ColorRect" parent="."]
 z_index = -2
 layout_mode = 0
-offset_left = 91.0
-offset_top = -5.0
-offset_right = 153.0
-offset_bottom = 113.0
+offset_left = 92.0
+offset_top = -14.0
+offset_right = 154.0
+offset_bottom = 91.0
 mouse_filter = 2
 color = Color(0.21176471, 0.24705882, 0.3764706, 1)
 script = ExtResource("10_piwdx")

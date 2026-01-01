@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://cw0bhvjm3ukdv"]
 
-[ext_resource type="Script" uid="uid://dm38rstp41tti" path="res://WinScreen/lose_label.gd" id="1_3j6u8"]
+[ext_resource type="Script" uid="uid://dm38rstp41tti" path="res://Menus/WinScreen/lose_label.gd" id="1_3j6u8"]
 
 [node name="LoseScreen" type="Control" groups=["lose_screen"]]
 z_index = 600

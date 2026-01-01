@@ -1,0 +1,29 @@
+[gd_scene load_steps=4 format=3 uid="uid://bgnahptvucmwh"]
+
+[ext_resource type="Script" uid="uid://e5qb85w2p4fk" path="res://Menus/StatsMenu/stats_interface_button.gd" id="1_sfv3s"]
+[ext_resource type="Script" uid="uid://hflmog8s660p" path="res://color_tinter.gd" id="2_44d01"]
+[ext_resource type="Script" uid="uid://bxcn0evaodn4j" path="res://Menus/StatsMenu/increase_button.gd" id="2_dfqnq"]
+
+[node name="StatsInterfaceButton" type="HBoxContainer"]
+offset_right = 13.0
+offset_bottom = 35.0
+script = ExtResource("1_sfv3s")
+
+[node name="StatsLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="IncreaseButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("2_dfqnq")
+
+[node name="ColorRect" type="ColorRect" parent="IncreaseButton"]
+z_index = -1
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+script = ExtResource("2_44d01")
+brightness_shift = 0.55
+is_button_shadow = true

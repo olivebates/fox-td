@@ -16,6 +16,8 @@ const SAVE_PATHS = [
 	"user://null.save"
 ]
 
+const BASE_SAVE_KEY := "save_"
+
 # Encryption key (should be kept secret in a real application)
 const ENCRYPTION_KEY = "xai_savegame_key_2025"
 
@@ -160,13 +162,56 @@ func _input(event):
 					load_game(i - 1)
 					break
 			
-			# K for save dialog
-			if event.keycode == KEY_K:
-				show_save_dialog()
-				
-			# L for load dialog
-			if event.keycode == KEY_L:
-				show_load_dialog()
+			## K for save dialog
+			#if event.keycode == KEY_K:
+				#show_save_dialog()
+				#
+			## L for load dialog
+			#if event.keycode == KEY_L:
+				#show_load_dialog()
+
+func rename_save(slot: int, new_name: String):
+	var path = SAVE_PATHS[slot]
+	var encrypted := ""
+
+	if OS.get_name() == "Web":
+		var key = path.replace("user://", "save_")
+		encrypted = JavaScriptBridge.eval(
+			"localStorage.getItem('%s') || ''" % key,
+			true
+		)
+	else:
+		if not FileAccess.file_exists(path):
+			return
+		var f = FileAccess.open(path, FileAccess.READ)
+		encrypted = f.get_as_text()
+		f.close()
+
+	if encrypted.is_empty():
+		return
+
+	var json_string := decrypt_data(encrypted)
+	var parsed = JSON.parse_string(json_string)
+
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return
+
+	parsed["save_name"] = new_name
+
+	var new_json := JSON.stringify(parsed)
+	var new_encrypted := encrypt_data(new_json)
+
+	if OS.get_name() == "Web":
+		var key = path.replace("user://", "save_")
+		JavaScriptBridge.eval(
+			"localStorage.setItem('%s', '%s')" % [key, new_encrypted]
+		)
+	else:
+		var f2 = FileAccess.open(path, FileAccess.WRITE)
+		if f2:
+			f2.store_string(new_encrypted)
+			f2.close()
+
 
 func show_save_dialog():
 	var file_dialog = FileDialog.new()
@@ -356,11 +401,13 @@ func save_game(slot: int = 0, custom_path: String = ""):
 		"version": "1.0.0",
 		"version_number": CURRENT_VERSION,
 		"timestamp": Time.get_unix_time_from_system(),
+		"save_name": StatsManager.current_save_name,
 		"money": StatsManager.money,
 		"current_level": WaveSpawner.current_level,
 		"backpack_inventory": serialized_backpack,
 		"squad_inventory": serialized_squad,
 		"pull_cost": TowerManager.pull_cost,
+		"persistent_upgrades": StatsManager.persistent_upgrade_data
 	}
 
 	
@@ -488,12 +535,13 @@ func load_game(slot: int = 0, custom_path: String = "", direct_string: String = 
 	
 	if save_dict.has("current_level"):
 		WaveSpawner.current_level = int(save_dict["current_level"])
-		WaveSpawner.generate_path()
 
 	if save_dict.has("pull_cost"):
 		TowerManager.pull_cost = int(save_dict["pull_cost"])
 	
-
+	if save_dict.has("persistent_upgrades"):
+		StatsManager.persistent_upgrade_data =  save_dict["persistent_upgrades"]
+	
 	# Load backpack inventory
 	if save_dict.has("backpack_inventory"):
 		TowerManager.clear_backpack()
@@ -526,8 +574,10 @@ func load_game(slot: int = 0, custom_path: String = "", direct_string: String = 
 	get_tree().call_group("backpack_inventory", "_rebuild_slots")
 	get_tree().call_group("squad_inventory", "_rebuild_slots")
 	
-	var i = load("uid://cgtxb5iesuex6").instantiate()
+	var i = load("uid://cda7be4lkl7n8").instantiate()
 	get_tree().root.add_child(i)
+	
+	StatsManager.new_map()
 
 func _on_popup_close_pressed(popup: Window):
 	popup.queue_free()

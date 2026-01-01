@@ -31,11 +31,20 @@ func _ready() -> void:
 		var item_def = invManager.items[tower_type]
 		bullet_scene = item_def.bullet
 		sprite.texture = item_def.texture
+		
+		
+	#mouse_exited.connect(_on_mouse_exited)
+#
+#func _on_mouse_exited() -> void:
+	#TooltipManager.hide_tooltip()
 
 func is_mouse_over() -> bool:
 	return get_global_mouse_position().distance_to(global_position) < pick_radius
 
 func _input(event: InputEvent) -> void:
+	if (get_tree().get_nodes_in_group("upgrade_scene").size() > 0):
+		return
+	
 	if pause_function: return
 	var mouse_over = is_mouse_over()
 	if event is InputEventMouseMotion:
@@ -142,7 +151,8 @@ func fire(target: Node2D) -> void:
 		bullet.target = target
 		bullet.damage = damage
 		if stats.has("explosion_radius"):
-			bullet.explosion_radius = stats.explosion_radius
+			if stats.explosion_radius != -1:
+				bullet.explosion_radius = int(stats.explosion_radius)
 		bullet.global_position = global_position
 		get_tree().current_scene.add_child(bullet)
 	var tween = create_tween()

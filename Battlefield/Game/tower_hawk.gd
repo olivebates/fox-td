@@ -37,8 +37,8 @@ func _input(event: InputEvent) -> void:
 	if hovered:
 		var data = get_meta("item_data")
 		InventoryManager.show_tower_tooltip(data, 0.0)
-	elif not hovered:
-		TooltipManager.hide_tooltip()
+	#elif not hovered:
+		#TooltipManager.hide_tooltip()
 
 func fire(target: Node2D) -> void:
 	if target == null:

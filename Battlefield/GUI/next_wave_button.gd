@@ -25,31 +25,31 @@ func _ready() -> void:
 	# Use flat styleboxes with minimal content margin
 	var flat_normal := StyleBoxFlat.new()
 	flat_normal.bg_color = Color(0.2, 0.2, 0.2)
-	flat_normal.content_margin_left = 4
-	flat_normal.content_margin_right = 4
-	flat_normal.content_margin_top = 2
-	flat_normal.content_margin_bottom = 2
+	flat_normal.content_margin_left = 0
+	flat_normal.content_margin_right = 0
+	flat_normal.content_margin_top = 0
+	flat_normal.content_margin_bottom = 0
 	
 	var flat_hover := StyleBoxFlat.new()
 	flat_hover.bg_color = Color(0.3, 0.3, 0.3)
-	flat_hover.content_margin_left = 4
-	flat_hover.content_margin_right = 4
-	flat_hover.content_margin_top = 2
-	flat_hover.content_margin_bottom = 2
+	flat_hover.content_margin_left = 0
+	flat_hover.content_margin_right = 0
+	flat_hover.content_margin_top = 0
+	flat_hover.content_margin_bottom = 0
 	
 	var flat_pressed := StyleBoxFlat.new()
 	flat_pressed.bg_color = Color(0.1, 0.1, 0.1)
-	flat_pressed.content_margin_left = 4
-	flat_pressed.content_margin_right = 4
-	flat_pressed.content_margin_top = 2
-	flat_pressed.content_margin_bottom = 2
+	flat_pressed.content_margin_left = 0
+	flat_pressed.content_margin_right = 0
+	flat_pressed.content_margin_top = 0
+	flat_pressed.content_margin_bottom = 0
 	
 	var flat_disabled := StyleBoxFlat.new()
 	flat_disabled.bg_color = Color(0.15, 0.15, 0.15)
-	flat_disabled.content_margin_left = 4
-	flat_disabled.content_margin_right = 4
-	flat_disabled.content_margin_top = 2
-	flat_disabled.content_margin_bottom = 2
+	flat_disabled.content_margin_left = 0
+	flat_disabled.content_margin_right = 0
+	flat_disabled.content_margin_top = 0
+	flat_disabled.content_margin_bottom = 0
 	
 	add_theme_stylebox_override("normal", flat_normal)
 	add_theme_stylebox_override("hover", flat_hover)

@@ -17,7 +17,7 @@ var game_paused: bool = false
 var max_waves
 var current_wave_base_reward: float = 0.0
 
-const ENEMY_TYPES = {
+var ENEMY_TYPES = {
 	"normal": {
 		"health": 1,
 		"speed": 10.0,
@@ -33,14 +33,14 @@ const ENEMY_TYPES = {
 		"count_mult": 2.0
 	},
 	"fast": {
-		"health": 1,
+		"health": 0.6,
 		"speed": 25.0,
 		"damage": 10,
 		"base_reward": 0.75,
 		"count_mult": 1.5
 	},
 	"boss": {
-		"health": 3.8,
+		"health": 2.5,
 		"speed": 5.0,
 		"damage": 50,
 		"base_reward": 7.0,
@@ -49,12 +49,15 @@ const ENEMY_TYPES = {
 }
 
 var current_level = 1
-const LEVEL_CONFIG = {
-	1:  { base_health = 1,   health_scale = 0.8,  waves = 6 },
+
+#Obsolete level config
+var LEVEL_CONFIG = {
+	0: { base_health = 1,   health_scale = 1.0,  waves = 200 },
+	1:  { base_health = 1,   health_scale = 1.4,  waves = 6 },
 	2:  { base_health = 2,   health_scale = 0.65, waves = 10 },
-	3:  { base_health = 0.7,   health_scale = 1.40,  waves = 12 },
-	4:  { base_health = 2,   health_scale = 0.85,  waves = 200 },
-	5:  { base_health = 8,   health_scale = 1.9,  waves = 200 },
+	3:  { base_health = 0.7,   health_scale = 1.35,  waves = 12 },
+	4:  { base_health = 5,   health_scale = 1.0,  waves = 12 },
+	5:  { base_health = 2,   health_scale = 1.0,  waves = 200 },
 	6:  { base_health = 12,  health_scale = 2.3,  waves = 200 },
 	7:  { base_health = 18,  health_scale = 2.8,  waves = 200 },
 	8:  { base_health = 27,  health_scale = 3.4,  waves = 200 },
@@ -62,15 +65,84 @@ const LEVEL_CONFIG = {
 	10: { base_health = 60,  health_scale = 5.0,  waves = 200 }
 }
 
+func get_level_config(level: int) -> Dictionary:
+	ENEMY_TYPES = {
+		"normal": {
+			"health": 1,
+			"speed": 10.0,
+			"damage": 10,
+			"base_reward": 1.0,
+			"count_mult": 1.0
+		},
+		"swarm": {
+			"health": 0.75,
+			"speed": 8.0,
+			"damage": 5,
+			"base_reward": 0.5,
+			"count_mult": 1.5
+		},
+		"fast": {
+			"health": 0.44,
+			"speed": 25.0,
+			"damage": 10,
+			"base_reward": 0.75,
+			"count_mult": 1.3
+		},
+		"boss": {
+			"health": 5.0,
+			"speed": 5.0,
+			"damage": 50,
+			"base_reward": 7.0,
+			"count_mult": 0.2
+		}
+	}
+	# Hand-tuned early game
+	if level == 0:
+		return { base_health = 1.0, wave_growth = 1.08, waves = 6 }
+	if level == 1:
+		return { base_health = 3.0, wave_growth = 1.5, waves = 6 }
+	if level == 2:
+		return { base_health = 3.0, wave_growth = 1.4, waves = 7 }
+	if level == 3:
+		return { base_health = 2.2, wave_growth = 1.3, waves = 12 }
+	#if level == 4:
+		#return { base_health = 3.0, wave_growth = 1.4, waves = 14 }
+
+	# Procedural scaling after level 4
+	var lvl := level - 3
+
+	var base_health := 3.0 * pow(1.35, lvl)
+	var wave_growth := (1.12 + lvl * 0.008 + (0.002 + current_wave * 0.012)/pow(current_wave, 0.7))/pow(current_wave, 0.02)
+	var waves = 12 + floor(lvl/3) * 2
+
+
+	return {
+		base_health = base_health,
+		wave_growth = wave_growth,
+		waves = waves
+	}
+
+func calculate_target_final_hp(level: int, final_wave: int) -> float:
+	return 1000.0 * pow(5.0, level - 5)  # increased from 3.5
+
+func print_wave_info():
+	var config = get_level_config(current_level)
+	var final_wave = config.waves
+	var base = config.base_health * final_wave
+	var wave_health_base = floor(pow(base, config.health_scale))
+	var enemy_health = wave_health_base * 1.0 * 1.0  # normal type
+	var enemies = max(int(7 * 1.0), 1)
+	var total_hp = enemies * enemy_health
+	print("Level ", current_level, " final wave total HP: ", total_hp)
 
 func get_enemy_death_money():
-	return int(max(1, ceil(current_wave/5)*current_wave_base_reward))
+	return int(max(1, floor(current_level/3) + ceil(current_wave/5)*current_wave_base_reward))
 
 func get_enemy_death_health_gain():
-	return int(max(1, ceil(current_wave/5)*current_wave_base_reward + min(5, WaveSpawner.current_level)))
+	return int(max(1, ceil(current_wave/2)*current_wave_base_reward))
 
 func calculate_enemy_damage(health, cycles):
-	return pow(health + current_wave*4, cycles)
+	return pow(health + current_wave*3, cycles)
 
 func no_towers_upgraded() -> bool:
 	var towers = get_tree().get_nodes_in_group("tower")
@@ -81,15 +153,15 @@ func no_towers_upgraded() -> bool:
 
 var types = ENEMY_TYPES.keys()
 
-const MIN_X: int = 1
-const MAX_X: int = 10
-const MIN_Y: int = 1
-const MAX_Y: int = 7
-const BORDER_Y_MIN: int = 0
-const BORDER_Y_MAX: int = 8
+var MIN_X: int = 1
+var  MAX_X: int = 10
+var  MIN_Y: int = 1
+var  MAX_Y: int = 7
+var  BORDER_Y_MIN: int = 0
+var  BORDER_Y_MAX: int = 8
 
 var active_waves := {} # wave_number -> remaining_enemies
-var current_wave: int = 0
+var current_wave: int = 1
 var spawn_delay: float = 1.0
 
 signal wave_completed(wave: int)
@@ -104,7 +176,9 @@ func _ready():
 	add_child(path_node)
 	path_tiles_container = Node2D.new()
 	add_child(path_tiles_container)
-	generate_path()
+	await get_tree().process_frame
+	StatsManager.new_map()
+	
 	#await get_tree().process_frame#TEST
 	#StatsManager.take_damage(99999)#TEST
 
@@ -113,11 +187,13 @@ var hint_label = null
 var empty_towers_hint = null
 var place_towers_hint = null
 func _process(delta: float) -> void:
-	var config = LEVEL_CONFIG.get(current_level, LEVEL_CONFIG[10])
+	
+	var config = get_level_config(current_level)
+		
 	max_waves = config.waves
-	if current_wave > config.waves-1 and !_is_spawning and get_tree().get_nodes_in_group("enemy").size() == 0:
+	if current_wave > config.waves and !_is_spawning and get_tree().get_nodes_in_group("enemy").size() == 0:
 		current_level += 1
-		current_wave = 0
+		current_wave = 1
 		StatsManager.new_map()
 		var g = winscreen.instantiate()
 		get_tree().root.add_child(g)
@@ -181,30 +257,36 @@ func get_enemy_type_for_wave(wave: int) -> String:
 	return keys[randi() % keys.size()]
 
 func start_next_wave():
-	var index = current_wave
+	var index := current_wave
 	TimelineManager.wave_replay_counts[index] = TimelineManager.wave_replay_counts.get(index, 0) + 1
-	if current_wave != 0:
-		TimelineManager.save_timeline(index)
-	
-	current_wave += 1
-	seed(current_level*10000 + current_wave)
-	
+
+	seed(current_level * 10000 + current_wave)
+
 	var enemy_type := get_enemy_type_for_wave(current_wave)
 	var type_data = ENEMY_TYPES[enemy_type]
-	
+
 	current_wave_base_reward = type_data.base_reward
-	
-	# Rest unchanged
-	var config = LEVEL_CONFIG.get(current_level, LEVEL_CONFIG[10])
-	var wave_health = pow(config.base_health * current_wave, config.health_scale)
-	wave_health = floor(wave_health) * type_data.health
+
+	var config := get_level_config(current_level)
+
+	# --- HEALTH SCALING ---
+	# Base health grows per level, then ramps per wave
+	var wave_health = config.base_health * pow(config.wave_growth, current_wave - 1)
 	wave_health *= type_data.health
-	wave_health = max(1, wave_health)
-	var enemies_in_wave := int(7 * type_data.count_mult)
+	wave_health = int(max(1, round(wave_health)))
+
+	# --- COUNT SCALING ---
+	# Enemy count grows slowly so AoE stays relevant
+	var enemies_in_wave := int(6 + current_wave * 0.3)
+	enemies_in_wave = int(enemies_in_wave * type_data.count_mult)
 	enemies_in_wave = max(enemies_in_wave, 1)
+
 	active_waves[current_wave] = enemies_in_wave
 	wave_started.emit(current_wave)
+
 	_spawn_wave_async(current_wave, enemy_type, wave_health, enemies_in_wave)
+
+	
 	
 
 func _spawn_wave_async(wave: int, enemy_type: String, health: int, count: int) -> void:
@@ -240,7 +322,6 @@ func spawn_enemy(wave: int, enemy_type: String, health: int):
 		if active_waves[wave] <= 0:
 			active_waves.erase(wave)
 			wave_completed.emit(wave)
-			TimelineManager.save_timeline(wave)
 	)
 
 
@@ -262,7 +343,7 @@ func generate_path():
 	var internal_end := Vector2i(exit_x, MAX_Y)
 	var internal_path_cells: Array[Vector2i] = []
 	var found := false
-	const MAX_ATTEMPTS := 100
+	var MAX_ATTEMPTS := 100
 	var attempts := 0
 	
 	while not found and attempts < MAX_ATTEMPTS:
@@ -271,8 +352,8 @@ func generate_path():
 		var visited := {internal_start: true}
 		var current := internal_start
 		var steps := 0
-		const MAX_STEPS := 300
-		const DIRS := [Vector2i(0,1), Vector2i(-1,0), Vector2i(1,0), Vector2i(0,-1)]
+		var MAX_STEPS := 300
+		var DIRS := [Vector2i(0,1), Vector2i(-1,0), Vector2i(1,0), Vector2i(0,-1)]
 		var base_weights := [25.0, 10.0, 10.0, 4.0]
 		var noise := FastNoiseLite.new()
 		noise.seed = randi()
@@ -431,4 +512,4 @@ func cancel_current_waves() -> void:
 	for enemy in get_tree().get_nodes_in_group("enemy"):
 		if is_instance_valid(enemy):
 			enemy.queue_free()
-	current_wave = 0
+	current_wave = 1

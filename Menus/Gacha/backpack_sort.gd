@@ -1,28 +1,16 @@
-# InventorySorter.gd (updated with matching style)
-
 extends Button
-
 @export var is_squad_inventory: bool = false
-
 func _ready() -> void:
 	text = "Sort"
 	focus_mode = Control.FOCUS_NONE
 	add_theme_font_size_override("font_size", 4)
 	add_theme_color_override("font_outline_color", Color.BLACK)
 	add_theme_constant_override("outline_size", 1)
+	
 	var style_normal = StyleBoxFlat.new()
 	style_normal.bg_color = Color(0.2, 0.2, 0.2)
-	style_normal.border_width_left = 0
-	style_normal.border_width_top = 0
-	style_normal.border_width_right = 0
-	style_normal.border_width_bottom = 0
-	style_normal.corner_radius_top_left = 0
-	style_normal.corner_radius_top_right = 0
-	style_normal.corner_radius_bottom_left = 0
-	style_normal.corner_radius_bottom_right = 0
 	style_normal.content_margin_left = 3
 	style_normal.content_margin_right = 3
-	style_normal.content_margin_top = 0
 	style_normal.content_margin_bottom = 1
 	
 	var style_hover = style_normal.duplicate()
@@ -41,18 +29,10 @@ func _ready() -> void:
 	pressed.connect(_on_pressed)
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
-
 func _on_mouse_entered() -> void:
-	TooltipManager.show_tooltip(
-	"Sort by Power",
-	#"[color=gray]————————————————[/color]\n" +
-	"[font_size=2][color=dark_gray]Sorts your critters from strongest to weakest![/color][/font_size]"
-	)
-
+	TooltipManager.show_tooltip("Sort by Rank", "Sorts the squad by rank, then by tower type")
 func _on_mouse_exited() -> void:
 	TooltipManager.hide_tooltip()
-
-#Press into shadow
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
@@ -61,8 +41,6 @@ func _gui_input(event: InputEvent) -> void:
 		else:
 			position -= Vector2(1, 1)
 			$ColorRect.visible = true
-		
-
 func _on_pressed() -> void:
 	var inventory_size := TowerManager.get_inventory_size(is_squad_inventory)
 	var offset := 1000 if is_squad_inventory else 0
@@ -72,26 +50,22 @@ func _on_pressed() -> void:
 		var index := i + offset
 		var tower = TowerManager.get_tower_at(index)
 		if !tower.is_empty():
-			var id = tower.id
-			var rank = tower.get("rank", 1)  # Fixed: use "rank"
-			var damage = InventoryManager.get_damage_calculation(id, rank, 0)
-			var attack_speed = tower.type.attack_speed
-			tower.power_level = damage * attack_speed
 			towers.append(tower)
 	
 	towers.sort_custom(func(a, b):
-		if a.is_empty() and b.is_empty(): return false
 		if a.is_empty(): return false
 		if b.is_empty(): return true
-		var pa = a.get("power_level", 0)
-		var pb = b.get("power_level", 0)
-		if pa != pb:
-			return pa > pb
-		var ta = a.type.get("texture", null)
-		var tb = b.type.get("texture", null)
-		if ta and tb:
-			return ta.resource_path < tb.resource_path
-		return false
+		
+		# Sort by rank first (highest rank first)
+		var rank_a = a.get("rank", 1)
+		var rank_b = b.get("rank", 1)
+		if rank_a != rank_b:
+			return rank_a > rank_b
+		
+		# Then sort by tower id alphabetically
+		var id_a = a.get("id", "")
+		var id_b = b.get("id", "")
+		return id_a < id_b
 	)
 	
 	for i in inventory_size:
@@ -100,6 +74,7 @@ func _on_pressed() -> void:
 			TowerManager.set_tower_at(index, towers[i])
 		else:
 			TowerManager.set_tower_at(index, {})
+	
 	
 	get_tree().call_group("backpack_inventory", "refresh_all_highlights")
 	get_tree().call_group("squad_inventory", "refresh_all_highlights")

@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://tv785ptmh83y"]
 
 [ext_resource type="Script" uid="uid://hflmog8s660p" path="res://color_tinter.gd" id="1_3a5yh"]
-[ext_resource type="Script" uid="uid://bjncgpfssce8e" path="res://WinScreen/win_label.gd" id="1_4n2a8"]
+[ext_resource type="Script" uid="uid://bjncgpfssce8e" path="res://Menus/WinScreen/win_label.gd" id="1_4n2a8"]
 
 [node name="WinScreen" type="Control"]
 z_index = 600

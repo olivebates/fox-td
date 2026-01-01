@@ -4,7 +4,7 @@ extends Control
 
 @export var preparation_time: float = 20.0
 var upcoming_waves: Array[int] = []
-var container: VBoxContainer
+var container: VBoxContainer = VBoxContainer.new()
 @onready var next_wave_shower = get_tree().get_first_node_in_group("next_wave_shower")
 
 func _ready():
@@ -16,7 +16,6 @@ func _ready():
 	offset_top = 80
 	offset_bottom = -80
 	
-	container = VBoxContainer.new()
 	container.alignment = BoxContainer.ALIGNMENT_END
 	container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(container)

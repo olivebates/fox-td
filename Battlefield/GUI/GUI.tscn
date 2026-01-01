@@ -127,6 +127,21 @@ script = ExtResource("3_todsr")
 brightness_shift = 0.65
 is_button_shadow = true
 
+[node name="SpeedupButton2" type="Button" parent="VBoxContainer/SpawnButtons"]
+layout_mode = 2
+script = ExtResource("14_qdse5")
+x10 = true
+
+[node name="ColorRect" type="ColorRect" parent="VBoxContainer/SpawnButtons/SpeedupButton2"]
+z_index = -1
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+script = ExtResource("3_todsr")
+brightness_shift = 0.65
+is_button_shadow = true
+
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 alignment = 1

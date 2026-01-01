@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://datj3xnepvajp" path="res://Battlefield/Game/Upgrade/upgrade_scene.gd" id="1_vnld7"]
 
-[node name="UpgradeScene" type="Control"]
+[node name="UpgradeScene" type="Control" groups=["upgrade_scene"]]
 z_index = 200
 layout_mode = 3
 anchors_preset = 0

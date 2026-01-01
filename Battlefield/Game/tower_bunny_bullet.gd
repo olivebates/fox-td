@@ -119,6 +119,9 @@ func _physics_process(delta: float) -> void:
 		if wander_center != target_object.global_position:
 			wander_center = target_object.global_position
 			set_new_wander_target()
+	
+	if !WaveSpawner._is_spawning and get_tree().get_nodes_in_group("enemy").size() <= 0:
+		current_health = max_health
 
 	var nearest_enemy := _find_nearest_enemy(16.0)
 
@@ -175,7 +178,7 @@ func _physics_process(delta: float) -> void:
 					take_damage(1)
 					update_healthbar()
 				attack_timer += delta
-				if attack_timer >= 1/attack_speed:
+				if attack_timer >= float(1.0/attack_speed):
 					attack_timer = 0.0
 					if is_instance_valid(current_enemy):
 						current_enemy.take_damage(damage_per_attack)

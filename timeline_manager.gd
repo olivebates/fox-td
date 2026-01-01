@@ -210,8 +210,8 @@ func load_timeline(slot: int = 0):
 	var save_dict = json.data
 	
 	#Basic vars
-	if save_dict.has("current_wave"):
-		WaveSpawner.current_wave = save_dict["current_wave"]
+	#if save_dict.has("current_wave"):
+		#WaveSpawner.current_wave = save_dict["current_wave"]
 	current_wave_index = slot
 	saves_changed.emit()
 	
@@ -255,8 +255,7 @@ func load_timeline(slot: int = 0):
 	# Clear all existing towers
 	var towers = get_tree().get_nodes_in_group("tower")
 	for tower in towers:
-		if is_instance_valid(tower) and not tower.is_queued_for_deletion():
-			tower.queue_free()
+		tower.queue_free()
 
 	# Also clear grid occupations
 	for y in range(GridController.HEIGHT):

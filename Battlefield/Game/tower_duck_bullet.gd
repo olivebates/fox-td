@@ -41,7 +41,7 @@ func on_hit() -> void:
 	
 	var enemies_hit: int = 0
 	for body in explosion_area.get_overlapping_bodies():
-		if body.is_in_group("enemies") and enemies_hit < 7:
+		if body.is_in_group("enemies") and enemies_hit < 3:
 			apply_damage(body)
 			enemies_hit += 1
 	

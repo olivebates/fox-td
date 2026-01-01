@@ -149,4 +149,7 @@ func die():
 	StatsManager.money += money_gain
 	Utilities.spawn_floating_text("+€"+str(int(money_gain)), global_position + Vector2(0, 8), get_tree().current_scene, false, Color.YELLOW)
 	get_tree().call_group("health_manager", "gain_health_from_kill", WaveSpawner.get_enemy_death_health_gain())
+	if get_tree().get_nodes_in_group("enemy").size() == 1 and !WaveSpawner._is_spawning:
+		TimelineManager.save_timeline(WaveSpawner.current_wave)
+		WaveSpawner.current_wave += 1
 	queue_free()

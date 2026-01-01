@@ -124,7 +124,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _attempt_upgrade(tower: Node) -> void:
 	var data = tower.get_meta("item_data")
-	var cost = InventoryManager.get_placement_cost(data.tower_type, 1, data.rarity)
+	var id: String = data.id  # tower_type replaced with id
+	var rank: int = data.rank
+	var rarity: int = InventoryManager.items[id].rarity
+	var cost: float = InventoryManager.get_placement_cost(id, 0, rank + 1)  # cost for new rank
 	if StatsManager.spend_health(cost):
 		data.rank += 1
 		tower.set_meta("item_data", data)

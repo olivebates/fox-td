@@ -32,6 +32,7 @@ enum PATH_ID {
 	creature_damage,
 	creature_attack_speed,
 	creature_health,
+	creature_respawn_time,
 }
 const PATH_SYMBOLS = {
 	PATH_ID.damage: "×",
@@ -51,14 +52,15 @@ var items: Dictionary = {
 		"texture": preload("uid://cs2ic8oeq6fc0"),
 		"prefab": preload("uid://dfx5piisk4epn"),
 		"bullet": preload("uid://ciuly8asijcg5"),
-		"paths": [PATH_ID.bullets, PATH_ID.attack_speed, PATH_ID.range],
+		"paths": [PATH_ID.bullets, PATH_ID.damage, PATH_ID.attack_speed],
 		"paths_increment": [1, 1, 1],
 		"unlocked": true,
 		"attack_speed": 1,
-		"damage": 1,
-		"radius": 20,
+		"damage": 2,
+		"radius": 16,
 		"rarity": 1,
 		"bullets": 1,
+		"dps_multiplier": 1,
 		"description": "A basic shooting fox!",
 	},
 	"Bunny Hole": {
@@ -71,78 +73,95 @@ var items: Dictionary = {
 		"unlocked": false,
 		"radius": 0,
 		"creatures": 1,
-		"creature_damage": 1,
+		"creature_damage": 2,
 		"creature_attack_speed": 1,
 		"creatures_hp": 5,
+		"creature_respawn_time": 25,
 		"rarity": 1,
 		"is_guard": true,
 		"description": "Continuously spits out bunnies!"
+	},
+	"Hawk": {
+		"name": "Hawk",
+		"texture": preload("uid://bu4gnw3uul700"),
+		"prefab": preload("uid://ynouns2yxpra"),
+		"bullet": preload("uid://d11coximypo74"),
+		"paths": [PATH_ID.bullets, PATH_ID.damage, PATH_ID.attack_speed],
+		"paths_increment": [1, 1, 1],
+		"unlocked": false,
+		"attack_speed": 1,
+		"damage": 1,
+		"radius": 76,
+		"bullets": 1,
+		"rarity": 2,
+		"dps_multiplier": 2.5,
+		"description": "Long range sniper!"
 	},
 	"Duck": {
 		"name": "Duck",
 		"texture": preload("uid://cqgl3igwvfat8"),
 		"prefab": preload("uid://dfx5piisk4epn"),
 		"bullet": preload("uid://32xbub5ovblc"),
-		"paths": [PATH_ID.bullets, PATH_ID.attack_speed, PATH_ID.explosion_radius],
+		"paths": [PATH_ID.bullets, PATH_ID.damage, PATH_ID.attack_speed],
 		"paths_increment": [1, 1, 1],
 		"unlocked": false,
 		"attack_speed": 1,
 		"damage": 1,
 		"radius": 20,
 		"bullets": 1,
-		"explosion_radius": 8*1+4,
-		"enemies_hit": 7,
-		"rarity": 2,
+		"explosion_radius": 8,
+		"enemies_hit": 3,
+		"rarity": 3,
+		"dps_multiplier": 2.8,
 		"description": "A duck that shoots exploding bullets!"
 	},
-	
-	"Hawk": {
-		"name": "Hawk",
-		"texture": preload("uid://bu4gnw3uul700"),
-		"prefab": preload("uid://ynouns2yxpra"),
-		"bullet": preload("uid://d11coximypo74"),
-		"paths": [PATH_ID.bullets, PATH_ID.attack_speed, PATH_ID.damage],
-		"paths_increment": [1, 1, 2],
+	"Elephant": {
+		"name": "Elephant",
+		"texture": preload("uid://cqnbvccmrcuat"),
+		"prefab": preload("uid://dt4rxcdac07qe"),  # reuse base tower prefab or create new
+		"bullet": preload("uid://dky2mhn475xk0"),
+		"paths": [PATH_ID.bullets, PATH_ID.damage, PATH_ID.attack_speed],
+		"paths_increment": [1, 2, 1],
 		"unlocked": false,
-		"attack_speed": 1,
-		"damage": 2,
-		"radius": 76,
+		"attack_speed": 1,        # slow fire rate
+		"damage": 3,
+		"radius": 8,                # used for targeting
 		"bullets": 1,
-		"rarity": 2,
-		"description": "Long range sniper!"
+		"rarity": 3,
+		"dps_multiplier": 1.0,
+		"description": "Melee attacker."
 	},
-	
-	"Snail": {
-		"name": "Snail",
-		"texture": preload("uid://cn7gkfeefcjd1"),
-		"prefab": preload("uid://bb3wn8l2vwp2f"),
-		"bullet": preload("uid://bgmdgfd4avpi0"),
-		"paths": [PATH_ID.bullets, PATH_ID.attack_speed, PATH_ID.range],
-		"paths_increment": [1, 1, 3],
-		"unlocked": false,
-		"attack_speed": 1,
-		"damage": 2,
-		"radius": 20,
-		"bullets": 1,
-		"rarity": 4,
-		"description": "Shoots in all directions!"
-	},
-	
 	"Mouse": {
 		"name": "Mouse",
 		"texture": preload("uid://d32p5usdut0ad"),
 		"prefab": preload("uid://cq8akf1ulsky"),
 		"bullet": preload("uid://djhwllfo2eabv"),
-		"paths": [PATH_ID.bullets, PATH_ID.attack_speed, PATH_ID.range],
-		"paths_increment": [1, 1, 3],
+		"paths": [PATH_ID.bullets, PATH_ID.damage, PATH_ID.attack_speed],
+		"paths_increment": [1, 1, 1],
 		"unlocked": false,
 		"attack_speed": 1,
-		"damage": 1,
-		"radius": 12,
+		"damage": 2,
+		"radius": 0,
 		"bullets": 1,
 		"rarity": 4,
-		"is_guard": false,
+		"dps_multiplier": 2,
 		"description": "Continuously spits out mousetraps!"
+	},
+	"Snail": {
+		"name": "Snail",
+		"texture": preload("uid://cn7gkfeefcjd1"),
+		"prefab": preload("uid://bb3wn8l2vwp2f"),
+		"bullet": preload("uid://bgmdgfd4avpi0"),
+		"paths": [PATH_ID.bullets, PATH_ID.damage, PATH_ID.attack_speed],
+		"paths_increment": [1, 1, 1],
+		"unlocked": false,
+		"attack_speed": 1,
+		"damage": 2,
+		"radius": 20,
+		"bullets": 1,
+		"rarity": 5,
+		"dps_multiplier": 3,
+		"description": "Shoots in all directions!"
 	},
 }
 
@@ -150,8 +169,14 @@ func get_tower_stats(id: String, rank: int, path_levels: Array) -> Dictionary:
 	var def = items[id]
 	var paths = def.paths
 	var inc = def.paths_increment
-	var rank_mult = 5.0 * pow(2, rank - 1) - 4
-
+	var rarity = def.rarity
+	# Rank multiplier - damage INCREASES with rank
+	var rank_mult = pow(2, rank - 1)
+	var upgrade_rank_mult = pow(2.0, rank )  - pow(1.3, rank )
+	if rank >= 7:
+		upgrade_rank_mult *= pow(1.1, rank - 6)
+	upgrade_rank_mult = max(1, upgrade_rank_mult)
+	
 	var stats = {
 		"damage": def.get("damage", -1) * rank_mult,
 		"attack_speed": def.get("attack_speed", -1),
@@ -162,27 +187,26 @@ func get_tower_stats(id: String, rank: int, path_levels: Array) -> Dictionary:
 		"creature_count": def.get("creatures", -1),
 		"creature_damage": def.get("creature_damage", -1) * rank_mult,
 		"creature_attack_speed": def.get("creature_attack_speed", -1),
-		"creature_health": def.get("creatures_hp", -1) * pow(2, rank - 1),
+		"creature_health": def.get("creatures_hp", -1) * pow(1.6, rank - 1),  # Reduced from pow(2)
+		"creature_respawn_time": def.get("creature_respawn_time", -1),
 	}
-
+	
 	for i in 3:
 		var p = paths[i]
 		var level = path_levels[i]
 		var bonus = level * inc[i]
 		match p:
-			PATH_ID.damage: stats.damage += bonus * rank_mult
-			PATH_ID.bullets: stats.bullets += bonus
 			PATH_ID.attack_speed: stats.attack_speed += bonus
+			PATH_ID.bullets: stats.bullets += bonus
+			PATH_ID.damage: stats.damage += bonus * upgrade_rank_mult
 			PATH_ID.range: stats.range += bonus * 8
 			PATH_ID.explosion_radius: stats.explosion_radius += bonus*8
 			PATH_ID.creature_amount: stats.creature_count += bonus
-			PATH_ID.creature_damage: stats.creature_damage += bonus * rank_mult
+			PATH_ID.creature_damage: stats.creature_damage += bonus * upgrade_rank_mult
 			PATH_ID.creature_attack_speed: stats.creature_attack_speed += bonus
-			PATH_ID.creature_health: stats.creature_health += bonus * rank_mult
-			
-	#if def.get("is_guard", false):
-		#stats.creature_count = max(stats.creature_count, 1)
-
+			PATH_ID.creature_health:stats.creature_health += (rank - 1) * 2
+			PATH_ID.creature_respawn_time: stats.creature_respawn_time -= 0
+	
 	return stats
 
 
@@ -199,11 +223,12 @@ func show_tower_tooltip(item: Dictionary, cost: float) -> void:
 	if def.get("is_guard", false):
 		tooltip_text += "Creatures:  [color=cornflower_blue]" + str(int(stats.creature_count)) + "\n[/color]"
 		tooltip_text += "Damage:  [color=cornflower_blue]" + str(int(stats.creature_damage)) + "\n[/color]"
-		tooltip_text += "Attack Speed [color=cornflower_blue]: " + str(int(snapped(stats.creature_attack_speed, -1))) + "[/color]\n"
+		tooltip_text += "Attack Speed [color=cornflower_blue]: " + str(int(stats.creature_attack_speed)) + "/s[/color]\n"
 		tooltip_text += "Health:  [color=cornflower_blue]" + str(int(stats.creature_health)) + "\n[/color]"
+		tooltip_text += "Respawn:  [color=cornflower_blue]" + str(int(stats.creature_respawn_time)) + "s\n[/color]"
 	else:
 		tooltip_text += "Damage: [color=cornflower_blue]" + str(int(stats.damage)) + "[/color]\n"
-		tooltip_text += "Attack Speed: [color=cornflower_blue]" + str(snapped(int(stats.attack_speed), -1)) + "/s[/color]\n"
+		tooltip_text += "Attack Speed: [color=cornflower_blue]" + str(stats.attack_speed) + "[/color]\n"
 		tooltip_text += "Bullets: [color=cornflower_blue]" + str(int(stats.bullets)) + "[/color]\n"
 		tooltip_text += "Range: [color=cornflower_blue]" + str(int(stats.range / 8)) + " tiles[/color]\n"
 		if stats.explosion_radius != -1:
@@ -215,18 +240,57 @@ func show_tower_tooltip(item: Dictionary, cost: float) -> void:
 	
 	TooltipManager.show_tooltip(def.get("name", item.id.capitalize()), tooltip_text)
 
-func get_placement_cost(id: String, tower_level: int, rarity_level: int) -> float:
-	var base = 40 * pow(3, items[id].rarity-1) 
-	var level_factor = 1.0 + (tower_level * 0.2)
-	var rarity_factor = pow(3, rarity_level - 1)
-	return base * level_factor * rarity_factor
+func calculate_max_dps(id: String, rank: int) -> float:
+	var def = items[id]
+	var max_upgrades = rank - 1
+	var path_levels = [max_upgrades, max_upgrades, max_upgrades]
+	var stats = get_tower_stats(id, rank, path_levels)
+	
+	var dps: float
+	if def.get("is_guard", false):
+		dps = (stats.creature_damage * stats.creature_attack_speed) * max(1, stats.creature_count * 0.85)  # Increased from 0.75
+	else:
+		dps = stats.damage * stats.attack_speed * stats.bullets
+	
+	var item = items[id]
+	if "dps_multiplier" in item:
+		dps *= item.dps_multiplier
+	
+	# Calculate total cost
+	var place_cost = get_placement_cost(id, 0, rank)
+	var upgrade_cost = 0.0
+	for i in 3:
+		for lvl in range(1, max_upgrades + 1):
+			upgrade_cost += get_upgrade_cost(id, rank, lvl, items[id].rarity)
+	
+	var total_cost = place_cost + upgrade_cost
+	return total_cost / max(dps, 0.001)
+
+
+func get_all_max_dps_per_rank() -> Dictionary:
+	var result = {}
+	for id in items.keys():
+		result[id] = {}
+		for rank in range(1, 13):
+			result[id][rank] = calculate_max_dps(id, rank)
+	return result
+
+func get_placement_cost(id: String, tower_level: int, rank: int) -> float:
+	var base := 40.0
+	var rank_factor := pow(2.75, rank - 1)
+	if rank >= 5:
+		rank_factor *= pow(0.65, rank - 4)  # Even stronger discount
+	var rarity_factor := pow(1.35, items[id].rarity - 1)
+	return floor(base * rank_factor * rarity_factor / 10) * 10
 
 func get_upgrade_cost(id: String, rank: int, path_level: int, rarity) -> float:
-	var base = 10
-	var rank_factor = pow(3, rank)
-	var path_factor = pow(3, path_level - 1)
-	var rarity_factor = pow(2, items[id].rarity)
-	return base * rank_factor * path_factor * rarity_factor
+	var base := 40.0
+	var rank_factor := pow(2.75, rank - 1)
+	if rank >= 5:
+		rank_factor *= pow(0.65, rank - 4)
+	var path_factor := pow(1.6, path_level - 1)
+	var rarity_factor := pow(1.3, items[id].rarity - 1)
+	return floor(base * rank_factor * path_factor * rarity_factor / 10) * 10
 
 # Runtime state
 var slots: Array[Panel] = []
@@ -257,48 +321,13 @@ func register_inventory(grid: GridContainer, spawner_grid: GridContainer, previe
 		_setup_slot_style(slot)
 	
 	# Example items
+	await get_tree().process_frame
+	await get_tree().process_frame
 	give_starter_towers()
-	
+	#give_all_towers()
+	print_all_tower_dps()
 	for slot in slots:
 		_update_slot(slot)
-	
-	#var spawner_textures: Array[Texture2D] = [
-		#preload("uid://dyan40sgre5b1"), 
-		#preload("uid://dyan40sgre5b1"), 
-		#preload("uid://dyan40sgre5b1"), 
-		#preload("uid://dyan40sgre5b1"), 
-		#preload("uid://dyan40sgre5b1"), 
-		#preload("uid://dyan40sgre5b1"), 
-		#preload("uid://dyan40sgre5b1"), 
-		#preload("uid://dyan40sgre5b1"), 
-		#preload("uid://dyan40sgre5b1"), 
-	#]
-
-	#for rank in range(1):
-		#var btn = TextureRect.new()
-		#btn.texture = spawner_textures[rank]
-		#btn.expand_mode = TextureRect.EXPAND_KEEP_SIZE
-		#btn.stretch_mode = TextureRect.STRETCH_KEEP
-		#btn.custom_minimum_size = Vector2(8, 8)
-		#btn.mouse_filter = Control.MOUSE_FILTER_STOP
-		#
-		#var cost = get_spawn_cost(rank)
-		#
-		#btn.mouse_entered.connect(func():
-			#btn.modulate = Color(1.3, 1.3, 1.3)
-			#HealthBarGUI.show_cost_preview(cost))
-		#
-		#btn.mouse_exited.connect(func():
-			#btn.modulate = Color(1, 1, 1)
-			#HealthBarGUI.hide_cost_preview())
-		#
-		#btn.gui_input.connect(func(event):
-			#if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-				#if !_spawn_item(rank):
-					#Utilities.spawn_floating_text("Not enough meat...", Vector2.ZERO, null))
-		#
-		#spawner_grid.add_child(btn)
-		
 	
 	drag_preview = preview
 	drag_preview.visible = false
@@ -306,19 +335,54 @@ func register_inventory(grid: GridContainer, spawner_grid: GridContainer, previe
 	for slot in slots:
 		slot.draw.connect(_draw_slot.bind(slot))
 
+func print_all_tower_dps() -> void:
+	for id in items.keys():
+		var tower_name = items[id].name
+		print(tower_name + ":")
+		for rank in range(1, 9):
+			var dps = calculate_max_dps(id, rank)
+			print("  Rank %d: Max DPS = %.2f" % [rank, dps])
+
+func give_all_towers() -> void:
+	var slot_index: int = 0
+	for id in InventoryManager.items.keys():
+		if slot_index >= slots.size():
+			break
+		slots[slot_index].set_meta("item", {"id": id, "rank": 1})
+		slot_index += 1
+		if slot_index >= slots.size():
+			break
+		slots[slot_index].set_meta("item", {"id": id, "rank": 2})
+		slot_index += 1
+	for slot in slots:
+		_update_slot(slot)
+	
+	for slot in slots:
+		var item = slot.get_meta("item", {})
+		if !item.is_empty():
+			var dps = calculate_max_dps(item.id, item.rank)
+			print(items[item.id].name + " (Rank " + str(item.rank) + "): Max DPS = " + str(snapped(dps, 0.01)))
+
 func give_starter_towers():
 	slots[0].set_meta("item", {"id": "Fox", "rank": 1})
 	slots[1].set_meta("item", {"id": "Fox", "rank": 1})
-	slots[2].set_meta("item", {"id": "Hawk", "rank": 2})
-	slots[3].set_meta("item", {"id": "Fox", "rank": 2})
-	slots[4].set_meta("item", {"id": "Bunny Hole", "rank": 2})
-	slots[5].set_meta("item", {"id": "Duck", "rank": 2})
-	#slots[2].set_meta("item", {"id": "Bunny Hole", "rank": 1})
-	#slots[3].set_meta("item", {"id": "Bunny Hole", "rank": 2})
-	#slots[1].set_meta("item", {"id": "Mouse", "rank": 1})
-	#slots[2].set_meta("item", {"id": "Snail", "rank": 1})
-	#slots[3].set_meta("item", {"id": "Hawk", "rank": 1})
+	slots[2].set_meta("item", {"id": "Elephant", "rank": 1})
+	WaveSpawner.current_wave = 1
+	TimelineManager.save_timeline(0)
 	#slots[2].set_meta("item", {"id": "Fox", "rank": 1})
+	#slots[3].set_meta("item", {"id": "Fox", "rank": 1})
+	#slots[4].set_meta("item", {"id": "Fox", "rank": 1})
+	#slots[5].set_meta("item", {"id": "Fox", "rank": 1})
+	#slots[6].set_meta("item", {"id": "Fox", "rank": 1})
+	#slots[7].set_meta("item", {"id": "Fox", "rank": 1})
+	#slots[8].set_meta("item", {"id": "Fox", "rank": 1})
+	#slots[9].set_meta("item", {"id": "Fox", "rank": 1})
+	#slots[10].set_meta("item", {"id": "Fox", "rank": 1})
+	#slots[11].set_meta("item", {"id": "Fox", "rank": 1})
+	#slots[12].set_meta("item", {"id": "Fox", "rank": 1})
+	#await get_tree().process_frame
+	#StatsManager.health = 10000
+	
 
 var temp_drag_data: Dictionary = {}
 
@@ -416,6 +480,7 @@ func _on_slot_hover(slot: Panel, entered: bool) -> void:
 		HealthBarGUI.show_cost_preview(cost)
 	elif !entered:
 		TooltipManager.hide_tooltip()
+		HealthBarGUI.hide_cost_preview()
 		# hide preview handling unchanged
 
 

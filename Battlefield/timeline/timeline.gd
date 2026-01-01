@@ -38,6 +38,7 @@ func _rebuild_buttons() -> void:
 		
 		btn.pressed.connect(func():
 			TimelineManager.load_timeline(i)
+			WaveSpawner.current_wave = i+1
 			var lose_screen = get_tree().get_first_node_in_group("lose_screen")
 			if lose_screen:
 				lose_screen.queue_free()

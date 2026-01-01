@@ -1,0 +1,29 @@
+[gd_scene load_steps=2 format=3 uid="uid://d4efbo7ussulp"]
+
+[ext_resource type="Script" uid="uid://dooofcsobor43" path="res://Menus/LoadDialogue/save_slot.gd" id="1_t24x6"]
+
+[node name="SaveSlot" type="HBoxContainer"]
+offset_right = 42.0
+offset_bottom = 23.0
+script = ExtResource("1_t24x6")
+
+[node name="SlotLabel" type="Label" parent="."]
+layout_mode = 2
+
+[node name="NameEdit" type="LineEdit" parent="."]
+layout_mode = 2
+
+[node name="InfoLabel" type="Label" parent="."]
+layout_mode = 2
+
+[node name="SaveButton" type="Button" parent="."]
+layout_mode = 2
+text = "S"
+
+[node name="LoadButton" type="Button" parent="."]
+layout_mode = 2
+text = "L"
+
+[node name="DeleteButton" type="Button" parent="."]
+layout_mode = 2
+text = "D"

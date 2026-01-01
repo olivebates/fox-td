@@ -8,7 +8,7 @@ func _ready() -> void:
 	color_rect.gui_input.connect(_on_color_rect_gui_input)
 	TooltipManager.hide_tooltip()
 
-var gachascreen = preload("uid://cgtxb5iesuex6")
+var gachascreen = preload("uid://cda7be4lkl7n8")
 
 
 func _on_color_rect_gui_input(event: InputEvent) -> void:

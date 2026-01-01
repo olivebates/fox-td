@@ -33,6 +33,8 @@ func _ready() -> void:
 	mouse_exited.connect(_on_mouse_exited)
 	button_down.connect(_on_button_down)
 
+
+
 func _on_button_down() -> void:
 	if !unmerge_mode:
 		position += Vector2(1, 1)

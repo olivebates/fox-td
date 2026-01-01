@@ -1,7 +1,7 @@
 # CreateObjectButton.gd
 extends Button
 
-@export var resource_path: String = "uid://cgtxb5iesuex6"
+@export var resource_path: String = "uid://cda7be4lkl7n8"
 var has_been_unlocked = false
 func _process(delta: float) -> void:
 	if has_been_unlocked or WaveSpawner.current_level >= 2:

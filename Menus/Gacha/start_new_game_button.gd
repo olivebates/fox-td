@@ -58,6 +58,11 @@ func _process(delta: float) -> void:
 func _on_pressed() -> void:
 	const SQUAD_SIZE = 18
 	
+	
+	var guards = get_tree().get_nodes_in_group("guard")
+	for node in guards:
+		node.queue_free()
+		
 	GridController.change_level_color()
 	if WaveSpawner.hint_label:
 		WaveSpawner.hint_label.queue_free()
@@ -91,13 +96,13 @@ func _on_pressed() -> void:
 					break
 	
 	# Hide gacha menu
-	var gacha_menu = get_tree().get_first_node_in_group("gacha_menu")
+	var gacha_menu = get_tree().get_first_node_in_group("menu")
 	gacha_menu.queue_free()
 	
 	# Refresh visuals
 	InventoryManager.refresh_inventory_highlights()
 	get_tree().call_group("backpack_inventory", "refresh_all_highlights")
 	get_tree().call_group("squad_inventory", "refresh_all_highlights")
-	
+	WaveSpawner.current_wave = 1
 	TimelineManager.save_timeline(0)
 	

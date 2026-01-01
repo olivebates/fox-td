@@ -4,7 +4,7 @@ var upgrade_scene = load("uid://87wiugxjr5xt")
 
 func upgrade(calling_tower_reference, tower_id, tower_level, path1, path2, path3):#calling tower reference is always "self"
 	pause()
-	pause_towers()
+	#pause_towers()
 	
 	var inst = upgrade_scene.instantiate()
 	inst.base_tower = calling_tower_reference
@@ -15,13 +15,13 @@ func upgrade(calling_tower_reference, tower_id, tower_level, path1, path2, path3
 	inst.path3 = path3
 	get_tree().root.add_child(inst)
 
-func pause_towers():
-	for node in get_tree().get_nodes_in_group("tower"):
-		node.pause_function = true
-		
-func unpause_towers():
-	for node in get_tree().get_nodes_in_group("tower"):
-		node.pause_function = false
+#func pause_towers():
+	#for node in get_tree().get_nodes_in_group("tower"):
+		#node.pause_function = true
+		#
+#func unpause_towers():
+	#for node in get_tree().get_nodes_in_group("tower"):
+		#node.pause_function = false
 
 func pause():
 	var is_paused = true

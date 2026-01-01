@@ -20,7 +20,6 @@ func _ready() -> void:
 func _on_color_rect_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		UpgradeManager.unpause()
-		UpgradeManager.unpause_towers()
 		queue_free()
 
 # In upgrade UI script (setup_buttons)

@@ -7,6 +7,8 @@ var base_minion_damage: int = 1
 var desired_minion_count := 0
 var last_desired_minion_count := 0
 var minions: Array = []
+var respawn_timers: Dictionary = {}  # minion_instance_id -> remaining_time
+var current_respawn_time: float = 15.0
 
 func _ready() -> void:
 	super._ready()
@@ -14,7 +16,6 @@ func _ready() -> void:
 	last_desired_minion_count = desired_minion_count
 	spawn_minions()
 
-var respawn_timers: Dictionary = {}  # minion_instance_id -> timer
 
 # Modify spawn_minions()
 func spawn_minions() -> void:
@@ -40,7 +41,7 @@ func request_respawn(minion) -> void:
 	var id = minion.get_instance_id()
 	if respawn_timers.has(id):
 		return
-	respawn_timers[id] = 5.0
+	respawn_timers[id] = current_respawn_time
 	minions.erase(minion)
 
 # Override to disable shooting
@@ -70,8 +71,12 @@ func _input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	var data = get_meta("item_data")
 	var stats = InventoryManager.get_tower_stats(tower_type, data.rank, path)
-	
+	current_respawn_time = stats.creature_respawn_time
 	desired_minion_count = stats.creature_count
+	
+	if !WaveSpawner._is_spawning and get_tree().get_nodes_in_group("enemy").size() == 0:
+		while minions.size() < desired_minion_count:
+			_spawn_single_minion(stats.creature_health, stats.creature_damage, stats.creature_attack_speed)
 	
 	# Spawn new minions if count increased
 	if respawn_timers.is_empty() and minions.size() < desired_minion_count:
@@ -85,6 +90,7 @@ func _process(delta: float) -> void:
 			#minion.current_health = minion.max_health  # heal on upgrade
 			minion.damage_per_attack = stats.creature_damage
 			minion.attack_speed = stats.creature_attack_speed
+			
 	
 	# Respawn logic
 	var keys_to_respawn := []

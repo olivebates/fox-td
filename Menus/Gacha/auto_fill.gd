@@ -1,14 +1,13 @@
 # AutoSquadButton.gd
 extends Button
-
-@export var is_squad_inventory: bool = false  # Not used, but matches style
-
+@export var is_squad_inventory: bool = false
 func _ready() -> void:
 	text = "Fill"
 	focus_mode = Control.FOCUS_NONE
 	add_theme_font_size_override("font_size", 4)
 	add_theme_color_override("font_outline_color", Color.BLACK)
 	add_theme_constant_override("outline_size", 1)
+	
 	var style_normal = StyleBoxFlat.new()
 	style_normal.bg_color = Color(0.2, 0.2, 0.2)
 	style_normal.content_margin_left = 3
@@ -30,18 +29,13 @@ func _ready() -> void:
 	pressed.connect(_on_pressed)
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
-
 func _on_mouse_entered() -> void:
 	TooltipManager.show_tooltip(
-	"Fill Squad",
-	#"[color=gray]————————————————[/color]\n" +
-	"[font_size=2][color=dark_gray]Moves your strongest critters in to the squad![/color][/font_size]"
+		"Fill Squad",
+        "[font_size=2][color=dark_gray]Moves your strongest critters into the squad![/color][/font_size]"
 	)
-
 func _on_mouse_exited() -> void:
 	TooltipManager.hide_tooltip()
-
-#Press into shadow
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
@@ -50,7 +44,6 @@ func _gui_input(event: InputEvent) -> void:
 		else:
 			position -= Vector2(1, 1)
 			$ColorRect.visible = true
-
 func _on_pressed() -> void:
 	var all_towers: Array[Dictionary] = []
 	
@@ -72,16 +65,22 @@ func _on_pressed() -> void:
 	for i in TowerManager.SQUAD_SIZE:
 		TowerManager.set_tower_at(i + 1000, {})
 	
-	# Calculate power_level
-	for tower in all_towers:
-		var id = tower.id
-		var rank = tower.get("rank", 1)  # Fixed: use "rank"
-		var damage = InventoryManager.get_damage_calculation(id, rank, 0)
-		var attack_speed = tower.type.attack_speed
-		tower.power_level = damage * attack_speed
-	
-	# Sort descending
-	all_towers.sort_custom(func(a, b): return a.power_level > b.power_level)
+	# Sort by rank first (highest first), then by tower id alphabetically
+	all_towers.sort_custom(func(a, b):
+		if a.is_empty(): return false
+		if b.is_empty(): return true
+		
+		# Sort by rank first (highest rank first)
+		var rank_a = a.get("rank", 1)
+		var rank_b = b.get("rank", 1)
+		if rank_a != rank_b:
+			return rank_a > rank_b
+		
+		# Then sort by tower id alphabetically
+		var id_a = a.get("id", "")
+		var id_b = b.get("id", "")
+		return id_a < id_b
+	)
 	
 	# Fill squad
 	for i in TowerManager.SQUAD_SIZE:

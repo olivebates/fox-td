@@ -79,9 +79,9 @@ func _on_mouse_exited() -> void:
 	TooltipManager.hide_tooltip()
 
 func _on_button_pressed() -> void:
+	get_viewport().set_input_as_handled()  # Prevent further input bubbling
 	if current_level >= rank:
 		return
-
 	var next_level = current_level + 1
 	var cost = InventoryManager.get_upgrade_cost(tower_id, rank, next_level, rank)
 	if StatsManager.spend_health(cost):
@@ -89,12 +89,10 @@ func _on_button_pressed() -> void:
 		current_level += 1
 		_update_display()
 		UpgradeManager.unpause()
-		UpgradeManager.unpause_towers()
-		# Optionally close UI or refresh all buttons
+		get_parent().get_parent().queue_free()
 	else:
 		Utilities.spawn_floating_text("Not enough meat...", Vector2(0, 0), null)
-	
-	get_parent().get_parent().queue_free()
+		# Do NOT queue_free here — keep UI open on failure
 
 func _draw() -> void:
 	var tower_rarity = InventoryManager.items[tower_id].rarity

@@ -1,0 +1,28 @@
+[gd_scene load_steps=3 format=3 uid="uid://cda7be4lkl7n8"]
+
+[ext_resource type="PackedScene" uid="uid://dh1ffivuryhcu" path="res://Menus/menu_tab_selector.tscn" id="1_7qk2t"]
+[ext_resource type="Script" uid="uid://hflmog8s660p" path="res://color_tinter.gd" id="2_w0hos"]
+
+[node name="Menu" type="Control" groups=["menu"]]
+layout_mode = 3
+anchors_preset = 0
+
+[node name="MenuTabSelector" parent="." instance=ExtResource("1_7qk2t")]
+layout_mode = 0
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+grow_horizontal = 1
+grow_vertical = 1
+
+[node name="GachaBackground2" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = -2.0
+offset_top = -27.0
+offset_right = 248.0
+offset_bottom = 117.0
+mouse_filter = 2
+color = Color(0.13333334, 0.14509805, 0.21960784, 1)
+script = ExtResource("2_w0hos")
+brightness_shift = 0.6

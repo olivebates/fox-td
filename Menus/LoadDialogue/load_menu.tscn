@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bj2rwmg64pjy2" path="res://Menus/LoadDialogue/load_menu.gd" id="1_ivpv6"]
 
 [node name="LoadMenu" type="Control"]
+z_index = 2000
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_ivpv6")

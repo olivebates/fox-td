@@ -67,6 +67,8 @@ lose_screen=""
 timeline=""
 menu=""
 upgrade_scene=""
+persistant_bullet=""
+fill_button=""
 
 [rendering]
 

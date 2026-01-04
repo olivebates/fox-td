@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://cbo0btp4vmx8l"]
+
+[ext_resource type="Script" uid="uid://chqrfymojgs61" path="res://Battlefield/Game/tower_porcupine.gd" id="1_py0sn"]
+[ext_resource type="Texture2D" uid="uid://dx1e5kbto0dbp" path="res://Battlefield/Sprites/Towers/Porcupine.png" id="2_py0sn"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mx82x"]
+size = Vector2(8, 8)
+
+[node name="Tower1" type="CharacterBody2D" groups=["tower"]]
+z_index = -20
+script = ExtResource("1_py0sn")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_mx82x")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_py0sn")

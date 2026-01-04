@@ -17,6 +17,7 @@ func _ready() -> void:
 		drag_preview.visible = false
 		drag_preview.draw.connect(_draw_preview)
 	_rebuild_slots()
+	
 
 func set_current_dragged(tower: Dictionary) -> void:
 	current_dragged_tower = tower.duplicate() if !tower.is_empty() else {}
@@ -48,7 +49,11 @@ func _rebuild_slots() -> void:
 
 func _setup_slot_style(slot: Panel) -> void:
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.1, 0.1, 0.1)
+	var base = GridController.random_tint
+	style.bg_color = Color.from_hsv(GridController.hue, GridController.saturation, GridController.value - 0.7, 1.0)
+	style.border_width_top = 1
+	style.border_width_left = 1
+	style.border_color = Color.from_hsv(GridController.hue, GridController.saturation, GridController.value - 0.6, 1.0)  # lighter
 	slot.add_theme_stylebox_override("panel", style)
 	slot.set_meta("style", style)
 
@@ -174,12 +179,16 @@ var hint_label = null
 func _process(_delta: float) -> void:
 	if WaveSpawner.current_level == 2 and !hint_label and should_show_merge_hint():
 		hint_label = Label.new()
-		hint_label.text = "Merge two critters! ^"
-		hint_label.position = Vector2(100, 50)
+		hint_label.text = "Merge two critters by draggin one atop the other! ^"
+		hint_label.position = Vector2(80, 50)
 		hint_label.add_theme_font_size_override("font_size", 24)
 		hint_label.add_theme_color_override("font_color", Color.WHITE)
 		hint_label.add_theme_font_size_override("font_size", 8)
 		hint_label.z_index = 800
+		var tween = create_tween()
+		tween.set_loops()
+		tween.tween_property(hint_label, "position:y", position.y -13, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tween.tween_property(hint_label, "position:y", position.y -11, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		get_tree().get_first_node_in_group("gacha_menu").add_child(hint_label)
 	if hint_label and (WaveSpawner.current_level != 2 or !should_show_merge_hint()):
 		hint_label.queue_free()
@@ -262,6 +271,7 @@ func _draw_preview() -> void:
 	if tex:
 		drag_preview.draw_texture(tex, Vector2.ZERO, Color(1.4, 1.4, 1.4))
 
+
 func _draw_slot(slot: Panel) -> void:
 	var real_index: int = slot.get_meta("real_index", -1)
 	if real_index == -1:
@@ -269,6 +279,14 @@ func _draw_slot(slot: Panel) -> void:
 	var tower = TowerManager.get_tower_at(real_index)
 	if tower.is_empty():
 		return
+		
+	if tower.is_empty():
+		var light_color = Color.from_hsv(GridController.hue, GridController.saturation, GridController.value - 0.4, 1.0)
+		# Right border (outside)
+		slot.draw_line(Vector2(8.5, 1), Vector2(8.5, 9), light_color, 1.0)
+		# Bottom border (outside)
+		slot.draw_line(Vector2(1, 8.5), Vector2(9, 8.5), light_color, 1.0)
+		
 	var rank = tower.get("rank", 1)
 	var border_color = InventoryManager.RANK_COLORS.get(rank, Color(1, 1, 1))
 	var base_color = border_color * 0.3
@@ -293,8 +311,12 @@ func _draw_slot(slot: Panel) -> void:
 	var tex = tower.type.texture
 	if tex:
 		slot.draw_texture(tex, Vector2(0, 0), modulate)
+		
+
+	
 	var rarity = tower.type.get("rarity", 0)
 	for i in range(rarity):
 		var offset = Vector2(0.8 + i * 1.5, 8.2)
 		slot.draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -2.0), offset + Vector2(1.4, 0.2), offset + Vector2(-0.9, 0.2)]), Color(0.0, 0.0, 0.0, 1.0))
 		slot.draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -1.5), offset + Vector2(1, 0), offset + Vector2(-0.5, 0)]), Color(0.98, 0.98, 0.0, 1.0))
+		

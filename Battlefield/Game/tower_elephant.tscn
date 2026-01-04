@@ -6,7 +6,7 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3boql"]
 size = Vector2(8, 8)
 
-[node name="TowerElephant" type="CharacterBody2D"]
+[node name="TowerElephant" type="CharacterBody2D" groups=["tower"]]
 script = ExtResource("1_jcy2u")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

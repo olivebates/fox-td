@@ -60,7 +60,8 @@ func save_timeline(slot: int = 0):
 		"current_wave": WaveSpawner.current_wave,
 		"health": StatsManager.health,
 		"max_health": StatsManager.max_health,
-		"base_max_health": StatsManager.base_max_health
+		"base_max_health": StatsManager.base_max_health,
+		"level": StatsManager.level,
 	}
 	
 	save_dict["wave_replay_count"] = wave_replay_counts.get(slot, 0)
@@ -72,6 +73,20 @@ func save_timeline(slot: int = 0):
 		var item = i.get_meta("item", {})
 		inventory_data.append(item.duplicate() if !item.is_empty() else {})
 	save_dict["inventory"] = inventory_data
+	
+	# Bullets (persistent)
+	var bullets_data: Array = []
+	var bullets = get_tree().get_nodes_in_group("persistant_bullet")
+	for bullet in bullets:
+		if bullet.has_meta("item_data"):
+			var data = bullet.get_meta("item_data").duplicate()
+			var cell = get_cell_from_pos(bullet.global_position)
+			data["cell_x"] = cell.x
+			data["cell_y"] = cell.y
+			# Add any bullet-specific state here if needed
+			bullets_data.append(data)
+	save_dict["persistant_bullets"] = bullets_data
+	
 	
 	#Towers
 	var temp_pos = Vector2.ZERO
@@ -100,7 +115,7 @@ func save_timeline(slot: int = 0):
 	
 	#Walls
 	var walls_data: Array = []
-	var walls = get_tree().get_nodes_in_group("placed_walls")
+	var walls = get_tree().get_nodes_in_group("walls")
 	for wall in walls:
 		if wall.is_placed:
 			var cell = GridController.get_cell_from_pos(wall.global_position)
@@ -227,6 +242,9 @@ func load_timeline(slot: int = 0):
 		StatsManager.max_health = save_dict["max_health"]
 	if save_dict.has("base_max_health"):
 		StatsManager.base_max_health = save_dict["base_max_health"]
+	if save_dict.has("level"):
+		StatsManager.level = save_dict["level"]
+		
 		
 	var health_bar_gui = get_tree().get_first_node_in_group("HealthBarContainer")
 	health_bar_gui.bar.value = StatsManager.health
@@ -251,7 +269,28 @@ func load_timeline(slot: int = 0):
 				InventoryManager.slots[i].set_meta("item", item.duplicate())
 				InventoryManager._update_slot(InventoryManager.slots[i])
 		InventoryManager.refresh_inventory_highlights()
-		
+	
+	# Clear old persistent bullets
+	var old_bullets = get_tree().get_nodes_in_group("persistant_bullet")
+	for b in old_bullets:
+		if is_instance_valid(b):
+			b.queue_free()
+
+	# Load persistent bullets
+	if save_dict.has("persistant_bullets"):
+		var bullets_data: Array = save_dict["persistant_bullets"]
+		for data in bullets_data:
+			var item_def = InventoryManager.items[data.id]
+			var bullet = item_def.prefab.instantiate()
+			bullet.set_meta("item_data", data.duplicate())
+			var cell = Vector2i(data.cell_x, data.cell_y)
+			bullet.global_position = GridController.grid_offset + Vector2(
+				cell.x * GridController.CELL_SIZE + GridController.CELL_SIZE / 2,
+				cell.y * GridController.CELL_SIZE + GridController.CELL_SIZE / 2
+			)
+			add_child(bullet)
+			bullet.add_to_group("persistant_bullet")
+	
 	# Clear all existing towers
 	var towers = get_tree().get_nodes_in_group("tower")
 	for tower in towers:
@@ -283,9 +322,9 @@ func load_timeline(slot: int = 0):
 			tower.add_to_group("tower")
 	
 	# Walls
-	var old_walls = get_tree().get_nodes_in_group("placed_walls")
+	var old_walls = get_tree().get_nodes_in_group("walls")
 	for w in old_walls:
-		if is_instance_valid(w):
+		if is_instance_valid(w) and w.is_placed:
 			w.queue_free()
 
 	if save_dict.has("walls"):

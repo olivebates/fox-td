@@ -35,9 +35,9 @@ z_index = 100
 custom_minimum_size = Vector2(50, 30)
 layout_mode = 0
 offset_left = 54.0
-offset_top = 17.0
+offset_top = 15.0
 offset_right = 104.0
-offset_bottom = 47.0
+offset_bottom = 45.0
 
 [node name="GameOverBackground" type="ColorRect" parent="."]
 visible = false
@@ -114,7 +114,9 @@ color = Color(0.105882354, 0.11372549, 0.17254902, 1)
 [node name="ColorRect8" type="ColorRect" parent="Background"]
 z_index = -1000
 layout_mode = 0
-offset_right = 84.0
-offset_bottom = 120.0
+offset_left = -333.0
+offset_top = -30.0
+offset_right = -85.0
+offset_bottom = -16.0
 mouse_filter = 2
 color = Color(0.21176471, 0.24705882, 0.3764706, 1)

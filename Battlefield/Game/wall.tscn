@@ -1,12 +1,14 @@
-[gd_scene load_steps=3 format=3 uid="uid://71114a1asxv"]
+[gd_scene load_steps=4 format=3 uid="uid://71114a1asxv"]
 
 [ext_resource type="Texture2D" uid="uid://c3n6vabbm3ngv" path="res://Battlefield/Sprites/Scenery/wall_tile.png" id="1_71par"]
+[ext_resource type="Script" uid="uid://h53k4vv5cdsv" path="res://Battlefield/Game/wall.gd" id="1_xwbyd"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_xwbyd"]
 size = Vector2(8, 8)
 
 [node name="Wall" type="CharacterBody2D" groups=["grid_occupiers", "walls"]]
 z_index = -500
+script = ExtResource("1_xwbyd")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_xwbyd")

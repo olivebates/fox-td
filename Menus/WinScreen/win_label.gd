@@ -7,6 +7,8 @@ func _ready() -> void:
 	var color_rect = get_parent().get_node("ColorRect")
 	color_rect.gui_input.connect(_on_color_rect_gui_input)
 	TooltipManager.hide_tooltip()
+	
+	WaveSpawner.reset_wave_data()
 
 var gachascreen = preload("uid://cda7be4lkl7n8")
 

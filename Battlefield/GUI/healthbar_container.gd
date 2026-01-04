@@ -39,6 +39,7 @@ func _ready() -> void:
 	text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	text.add_theme_constant_override("outline_size", 1)
 	text.add_theme_font_size_override("font_size", 4)
+	text.add_theme_color_override("font_color", Color.WHITE)
 
 	# Red overlay setup (BAR-LOCAL SPACE)
 	red_overlay.anchor_left = 0
@@ -88,7 +89,7 @@ func _on_max_changed(new_max: float) -> void:
 	_update_red_overlay()
 
 func _update_text() -> void:
-	text.text = "%d / %d" % [
+	text.text = "🥩%d / %d" % [
 		int(StatsManager.health),
 		int(StatsManager.max_health)
 	]

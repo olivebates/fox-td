@@ -45,10 +45,13 @@ func _update_display() -> void:
 	var current_stats = InventoryManager.get_tower_stats(tower_id, rank, current_path_levels)
 	var next_stats = InventoryManager.get_tower_stats(tower_id, rank, next_path_levels)
 
-	var cost = InventoryManager.get_upgrade_cost(tower_id, rank, current_level + 1, rank)
+	# Calculate total upgrades this tower has bought
+	var total_upgrades = base_tower.path[0] + base_tower.path[1] + base_tower.path[2]
+	
+	var item_def = InventoryManager.items[tower_id]
+	var cost = InventoryManager.get_upgrade_cost(tower_id, rank, total_upgrades, item_def.rarity)
 	cost_text.text = "[font_size=7.5][color=cornflower_blue]Cost: " + str(int(cost)) + "[/color][/font_size]"
 
-	var item_def = InventoryManager.items[tower_id]
 	var path_enum = item_def.paths[path_id]
 
 	match path_enum:
@@ -71,19 +74,24 @@ func _update_display() -> void:
 		InventoryManager.PATH_ID.creature_health:
 			cost_text.append_text("\n[font_size=4][color=light_gray]Health: " + str(int(current_stats.creature_health)) + " -> [/color][color=lime]" + str(int(next_stats.creature_health)) + "[/color][/font_size]")
 
-func _on_mouse_entered() -> void:
-	var fake_item = {"id": tower_id, "rank": rank, "path": base_tower.path.duplicate()}
-	InventoryManager.show_tower_tooltip(fake_item, 0.0)
 
-func _on_mouse_exited() -> void:
-	TooltipManager.hide_tooltip()
+func _on_mouse_entered() -> void:pass
+	#var fake_item = {"id": tower_id, "rank": rank, "path": base_tower.path.duplicate()}
+	#InventoryManager.show_tower_tooltip(fake_item, 0.0)
+
+func _on_mouse_exited() -> void:pass
+	#TooltipManager.hide_tooltip()
 
 func _on_button_pressed() -> void:
-	get_viewport().set_input_as_handled()  # Prevent further input bubbling
+	get_viewport().set_input_as_handled()
 	if current_level >= rank:
 		return
-	var next_level = current_level + 1
-	var cost = InventoryManager.get_upgrade_cost(tower_id, rank, next_level, rank)
+	
+	# Calculate total upgrades this tower has bought
+	var total_upgrades = base_tower.path[0] + base_tower.path[1] + base_tower.path[2]
+	var item_def = InventoryManager.items[tower_id]
+	var cost = InventoryManager.get_upgrade_cost(tower_id, rank, total_upgrades, item_def.rarity)
+	
 	if StatsManager.spend_health(cost):
 		base_tower.path[path_id] += 1
 		current_level += 1
@@ -92,7 +100,6 @@ func _on_button_pressed() -> void:
 		get_parent().get_parent().queue_free()
 	else:
 		Utilities.spawn_floating_text("Not enough meat...", Vector2(0, 0), null)
-		# Do NOT queue_free here — keep UI open on failure
 
 func _draw() -> void:
 	var tower_rarity = InventoryManager.items[tower_id].rarity

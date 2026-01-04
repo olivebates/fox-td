@@ -3,7 +3,13 @@ extends Label
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	text = "You ran out of meat!\n\nUse the timeline to go back in time\n      v     v     v      "
+	text = "     
+
+
+
+You ran out of meat!
+
+Use the timeline to go back in time\n      v     v     v      "
 	add_theme_font_size_override("font_size", 8)
 	
 	var color_rect = get_parent().get_node("ColorRect")

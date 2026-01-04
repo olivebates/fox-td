@@ -12,4 +12,4 @@ func _ready() -> void:
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	if StatsManager:
-		text = "Level "+str(WaveSpawner.current_level)+" - (Wave "+str(WaveSpawner.current_wave)+" / "+str(WaveSpawner.max_waves)+")"
+		text = "Level "+str(WaveSpawner.current_level)+" - (Wave "+str(WaveSpawner.current_wave)+" / "+str(WaveSpawner.MAX_WAVES)+")"

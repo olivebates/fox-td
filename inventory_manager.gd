@@ -56,8 +56,8 @@ var items: Dictionary = {
 		"paths_increment": [1, 1, 1],
 		"unlocked": true,
 		"attack_speed": 1,
-		"damage": 2,
-		"radius": 16,
+		"damage": 1,
+		"radius": 16+4,
 		"rarity": 1,
 		"bullets": 1,
 		"dps_multiplier": 1,
@@ -73,13 +73,29 @@ var items: Dictionary = {
 		"unlocked": false,
 		"radius": 0,
 		"creatures": 1,
-		"creature_damage": 2,
+		"creature_damage": 1,
 		"creature_attack_speed": 1,
 		"creatures_hp": 5,
 		"creature_respawn_time": 25,
 		"rarity": 1,
 		"is_guard": true,
 		"description": "Continuously spits out bunnies!"
+	},
+	"Elephant": {
+		"name": "Elephant",
+		"texture": preload("uid://cqnbvccmrcuat"),
+		"prefab": preload("uid://dt4rxcdac07qe"),  # reuse base tower prefab or create new
+		"bullet": preload("uid://dky2mhn475xk0"),
+		"paths": [PATH_ID.bullets, PATH_ID.damage, PATH_ID.attack_speed],
+		"paths_increment": [1, 1, 1],
+		"unlocked": false,
+		"attack_speed": 1,        # slow fire rate
+		"damage": 2,
+		"radius": 8+4,                # used for targeting
+		"bullets": 1,
+		"rarity": 2,
+		"dps_multiplier": 1.0,
+		"description": "Melee attacker, can damage multiple enemies each hit."
 	},
 	"Hawk": {
 		"name": "Hawk",
@@ -91,7 +107,7 @@ var items: Dictionary = {
 		"unlocked": false,
 		"attack_speed": 1,
 		"damage": 1,
-		"radius": 76,
+		"radius": 72+4,
 		"bullets": 1,
 		"rarity": 2,
 		"dps_multiplier": 2.5,
@@ -107,45 +123,13 @@ var items: Dictionary = {
 		"unlocked": false,
 		"attack_speed": 1,
 		"damage": 1,
-		"radius": 20,
+		"radius": 16+4,
 		"bullets": 1,
 		"explosion_radius": 8,
 		"enemies_hit": 3,
-		"rarity": 3,
+		"rarity": 2,
 		"dps_multiplier": 2.8,
 		"description": "A duck that shoots exploding bullets!"
-	},
-	"Elephant": {
-		"name": "Elephant",
-		"texture": preload("uid://cqnbvccmrcuat"),
-		"prefab": preload("uid://dt4rxcdac07qe"),  # reuse base tower prefab or create new
-		"bullet": preload("uid://dky2mhn475xk0"),
-		"paths": [PATH_ID.bullets, PATH_ID.damage, PATH_ID.attack_speed],
-		"paths_increment": [1, 2, 1],
-		"unlocked": false,
-		"attack_speed": 1,        # slow fire rate
-		"damage": 3,
-		"radius": 8,                # used for targeting
-		"bullets": 1,
-		"rarity": 3,
-		"dps_multiplier": 1.0,
-		"description": "Melee attacker."
-	},
-	"Mouse": {
-		"name": "Mouse",
-		"texture": preload("uid://d32p5usdut0ad"),
-		"prefab": preload("uid://cq8akf1ulsky"),
-		"bullet": preload("uid://djhwllfo2eabv"),
-		"paths": [PATH_ID.bullets, PATH_ID.damage, PATH_ID.attack_speed],
-		"paths_increment": [1, 1, 1],
-		"unlocked": false,
-		"attack_speed": 1,
-		"damage": 2,
-		"radius": 0,
-		"bullets": 1,
-		"rarity": 4,
-		"dps_multiplier": 2,
-		"description": "Continuously spits out mousetraps!"
 	},
 	"Snail": {
 		"name": "Snail",
@@ -156,14 +140,47 @@ var items: Dictionary = {
 		"paths_increment": [1, 1, 1],
 		"unlocked": false,
 		"attack_speed": 1,
-		"damage": 2,
-		"radius": 20,
+		"damage": 1,
+		"radius": 16+4,
 		"bullets": 1,
-		"rarity": 5,
+		"rarity": 2,
 		"dps_multiplier": 3,
 		"description": "Shoots in all directions!"
 	},
+	"Mouse": {
+		"name": "Mouse",
+		"texture": preload("uid://d32p5usdut0ad"),
+		"prefab": preload("uid://cq8akf1ulsky"),
+		"bullet": preload("uid://djhwllfo2eabv"),
+		"paths": [PATH_ID.bullets, PATH_ID.damage, PATH_ID.attack_speed],
+		"paths_increment": [1, 1, 1],
+		"unlocked": false,
+		"attack_speed": 1,
+		"damage": 1,
+		"radius": 8+4,
+		"bullets": 1,
+		"rarity": 2,
+		"dps_multiplier": 2,
+		"description": "Continuously spits out mousetraps!"
+	},
+	"Porcupine": {
+		"name": "Porcupine",
+		"texture": preload("uid://dx1e5kbto0dbp"),
+		"prefab": preload("uid://cbo0btp4vmx8l"),
+		"bullet": preload("uid://dk341876vwr43"),
+		"paths": [PATH_ID.bullets, PATH_ID.damage, PATH_ID.attack_speed],
+		"paths_increment": [2, 1, 1],
+		"unlocked": true,
+		"attack_speed": 1,
+		"damage": 1,
+		"radius": 8+4,
+		"rarity": 2,
+		"bullets": 2,
+		"dps_multiplier": 1.0,
+		"description": "Spikes with multiple bullets!",
+	},
 }
+
 
 func get_tower_stats(id: String, rank: int, path_levels: Array) -> Dictionary:
 	var def = items[id]
@@ -171,7 +188,7 @@ func get_tower_stats(id: String, rank: int, path_levels: Array) -> Dictionary:
 	var inc = def.paths_increment
 	var rarity = def.rarity
 	# Rank multiplier - damage INCREASES with rank
-	var rank_mult = pow(2, rank - 1)
+	var rank_mult = pow(2, rank - 1) + (rank-1)*2
 	var upgrade_rank_mult = pow(2.0, rank )  - pow(1.3, rank )
 	if rank >= 7:
 		upgrade_rank_mult *= pow(1.1, rank - 6)
@@ -217,13 +234,13 @@ func show_tower_tooltip(item: Dictionary, cost: float) -> void:
 	var path_levels = item.get("path", [0, 0, 0])
 	var stats = get_tower_stats(item.id, item.rank, path_levels)
 	
-	var tooltip_text = "[color=cornflower_blue]Place Cost: " + str(int(cost)) + "[/color]\n"
+	var tooltip_text = "[color=pink]🥩 " + str(int(cost)) + "[/color]\n"
 	tooltip_text += "[color=gray]————————————————[/color]\n"
 	
 	if def.get("is_guard", false):
 		tooltip_text += "Creatures:  [color=cornflower_blue]" + str(int(stats.creature_count)) + "\n[/color]"
 		tooltip_text += "Damage:  [color=cornflower_blue]" + str(int(stats.creature_damage)) + "\n[/color]"
-		tooltip_text += "Attack Speed [color=cornflower_blue]: " + str(int(stats.creature_attack_speed)) + "/s[/color]\n"
+		tooltip_text += "Attack Speed: [color=cornflower_blue]: " + str(int(stats.creature_attack_speed)) + "/s[/color]\n"
 		tooltip_text += "Health:  [color=cornflower_blue]" + str(int(stats.creature_health)) + "\n[/color]"
 		tooltip_text += "Respawn:  [color=cornflower_blue]" + str(int(stats.creature_respawn_time)) + "s\n[/color]"
 	else:
@@ -258,10 +275,10 @@ func calculate_max_dps(id: String, rank: int) -> float:
 	
 	# Calculate total cost
 	var place_cost = get_placement_cost(id, 0, rank)
+	var total_upgrades_needed = 3 * max_upgrades
 	var upgrade_cost = 0.0
-	for i in 3:
-		for lvl in range(1, max_upgrades + 1):
-			upgrade_cost += get_upgrade_cost(id, rank, lvl, items[id].rarity)
+	for i in range(total_upgrades_needed):
+		upgrade_cost += get_upgrade_cost(id, rank, i, items[id].rarity)
 	
 	var total_cost = place_cost + upgrade_cost
 	return total_cost / max(dps, 0.001)
@@ -283,14 +300,23 @@ func get_placement_cost(id: String, tower_level: int, rank: int) -> float:
 	var rarity_factor := pow(1.35, items[id].rarity - 1)
 	return floor(base * rank_factor * rarity_factor / 10) * 10
 
-func get_upgrade_cost(id: String, rank: int, path_level: int, rarity) -> float:
-	var base := 40.0
+# In InventoryManager.gd, replace the get_upgrade_cost function:
+
+func get_upgrade_cost(id: String, rank: int, current_total_upgrades: int, rarity: int) -> float:
+	var base := 38.0
 	var rank_factor := pow(2.75, rank - 1)
 	if rank >= 5:
 		rank_factor *= pow(0.65, rank - 4)
-	var path_factor := pow(1.6, path_level - 1)
-	var rarity_factor := pow(1.3, items[id].rarity - 1)
-	return floor(base * rank_factor * path_factor * rarity_factor / 10) * 10
+	var rarity_factor := pow(1.3, rarity - 1)
+	
+	# Base cost for this rank/rarity
+	var base_cost := base * rank_factor * rarity_factor
+	
+	# Add flat increment per upgrade (equal to rank 1 base cost)
+	var rank_1_base := base * rarity_factor
+	var total_cost := base_cost + (current_total_upgrades * rank_1_base)
+	
+	return floor(total_cost / 10) * 10
 
 # Runtime state
 var slots: Array[Panel] = []
@@ -334,6 +360,8 @@ func register_inventory(grid: GridContainer, spawner_grid: GridContainer, previe
 	
 	for slot in slots:
 		slot.draw.connect(_draw_slot.bind(slot))
+		
+
 
 func print_all_tower_dps() -> void:
 	for id in items.keys():
@@ -345,7 +373,7 @@ func print_all_tower_dps() -> void:
 
 func give_all_towers() -> void:
 	var slot_index: int = 0
-	for id in InventoryManager.items.keys():
+	for id in items.keys():
 		if slot_index >= slots.size():
 			break
 		slots[slot_index].set_meta("item", {"id": id, "rank": 1})
@@ -363,10 +391,66 @@ func give_all_towers() -> void:
 			var dps = calculate_max_dps(item.id, item.rank)
 			print(items[item.id].name + " (Rank " + str(item.rank) + "): Max DPS = " + str(snapped(dps, 0.01)))
 
+func get_total_field_dps() -> float:
+	var total := 0.0
+	for tower in get_tree().get_nodes_in_group("tower"):
+		if !tower.has_meta("item_data"):
+			continue
+		var item = tower.get_meta("item_data")
+		var path = item.get("path", [0,0,0])
+		var stats = get_tower_stats(item.id, item.rank, path)
+
+		var def = items[item.id]
+		var dps := 0.0
+		if def.get("is_guard", false):
+			dps = stats.creature_damage * stats.creature_attack_speed * max(1, stats.creature_count)
+		else:
+			dps = stats.damage * stats.attack_speed * stats.bullets
+
+		if def.has("dps_multiplier"):
+			dps *= def.dps_multiplier
+
+		total += dps
+	return total
+
+func get_player_power_score() -> float:
+	var dps := InventoryManager.get_total_field_dps()
+	
+	# Add tower upgrade progress as a power factor
+	var total_upgrades := 0
+	var possible_upgrades := 0
+	for tower in get_tree().get_nodes_in_group("tower"):
+		if tower.has_meta("item_data"):
+			var item = tower.get_meta("item_data")
+			var path = item.get("path", [0, 0, 0])
+			var rank = item.rank
+			total_upgrades += path[0] + path[1] + path[2]
+			possible_upgrades += 3 * (rank - 1)  # max upgrades per tower
+	
+	var upgrade_progress := 0.0
+	if possible_upgrades > 0:
+		upgrade_progress = float(total_upgrades) / possible_upgrades
+	
+	# Upgrade progress contributes up to ~30% extra power
+	var upgrade_factor := 1.0 + 0.3 * upgrade_progress
+	
+	# Existing factors
+	var health_factor = clamp(StatsManager.health / max(StatsManager.max_health, 1.0), 0.5, 1.5)
+	var sustain := StatsManager.production_speed * 0.6
+	var kill_gain := StatsManager.kill_multiplier * 0.8
+	
+	var power := dps * upgrade_factor
+	power *= health_factor
+	power += sustain * 10.0
+	power += kill_gain * 15.0
+	
+	return max(1.0, power)
+
+
 func give_starter_towers():
 	slots[0].set_meta("item", {"id": "Fox", "rank": 1})
 	slots[1].set_meta("item", {"id": "Fox", "rank": 1})
-	slots[2].set_meta("item", {"id": "Elephant", "rank": 1})
+	#slots[2].set_meta("item", {"id": "Elephant", "rank": 1})
 	WaveSpawner.current_wave = 1
 	TimelineManager.save_timeline(0)
 	#slots[2].set_meta("item", {"id": "Fox", "rank": 1})
@@ -416,41 +500,54 @@ func _draw() -> void:
 
 # Add this function to InventoryManager.gd
 func _draw_slot(slot: Panel) -> void:
+	
+	
 	var item = slot.get_meta("item", {})
 	if item.is_empty():
 		return
-	var rank = int(item.get("rank", 0))
+	var rank = item.get("rank", 1)
 	var border_color = RANK_COLORS.get(rank, Color(1, 1, 1))
 	var base_color = border_color * 0.3
 	base_color.a = 1.0
 	var hovered = slot.get_meta("hovered", false)
 	var brighten = 1.3 if hovered else 1.0
 	var bg_color = base_color * brighten
+	
+	
 	slot.draw_rect(Rect2(0.5, 0.5, 7, 7), border_color, false, 1.0 + (0.5 if hovered else 0.0))
 	slot.draw_rect(Rect2(1, 1, 6, 6), bg_color, true)
+	
 	var tex = items.get(item.get("id", ""), {}).get("texture", null)
 	if tex:
 		slot.draw_texture(tex, Vector2(0, 0), Color(brighten, brighten, brighten))
+	
 	var rarity = items.get(item.get("id", ""), {}).get("rarity", 0)
 	for i in range(rarity):
 		var offset = Vector2(0.8 + i * 1.5, 8.2)
 		slot.draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -2.0), offset + Vector2(1.4, 0.2), offset + Vector2(-0.9, 0.2)]), Color(0.0, 0.0, 0.0, 1.0))
 		slot.draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -1.5), offset + Vector2(1, 0), offset + Vector2(-0.5, 0)]), Color(0.98, 0.98, 0.0, 1.0))
-
+		
 func _setup_slot_style(slot: Panel) -> void:
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.1, 0.1, 0.1)
+	var base = GridController.random_tint
+	style.bg_color = Color.from_hsv(GridController.hue, GridController.saturation, GridController.value - 0.7, 1.0)
+	style.border_width_top = 1
+	style.border_width_left = 1
+	style.border_color = Color.from_hsv(GridController.hue, GridController.saturation, GridController.value - 0.6, 1.0)
 	slot.add_theme_stylebox_override("panel", style)
 	slot.set_meta("style", style)
 
 func _update_slot(slot: Panel) -> void:
-	var style: StyleBoxFlat = slot.get_meta("style")
-	style.border_width_left = 0
-	style.border_width_top = 0
-	style.border_width_right = 0
-	style.border_width_bottom = 0
+	_setup_slot_style(slot)
+	var item = slot.get_meta("item", {})
+	if item.is_empty():
+		slot.get_meta("style").bg_color = Color(0.1, 0.1, 0.1)
+	else:
+		var rank = item.get("rank", 1)
+		var rank_color = RANK_COLORS.get(rank, Color(1, 1, 1))
+		slot.get_meta("style").bg_color = rank_color * 0.3
+		slot.get_meta("style").bg_color.a = 1.0
 	slot.queue_redraw()
-	_update_hover(slot)
 
 func _on_slot_input(event: InputEvent, slot: Panel) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and slot.has_meta("item"):
@@ -465,6 +562,11 @@ func _on_slot_input(event: InputEvent, slot: Panel) -> void:
 		refresh_inventory_highlights()
 		if grid_controller:
 			grid_controller.refresh_grid_highlights()
+
+func refresh_slot_styles() -> void:
+	for slot in slots:
+		_setup_slot_style(slot)
+		slot.queue_redraw()
 
 func refresh_inventory_highlights() -> void:
 	for slot in slots:

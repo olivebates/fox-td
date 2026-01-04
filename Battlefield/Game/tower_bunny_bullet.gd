@@ -144,7 +144,7 @@ func _physics_process(delta: float) -> void:
 	match state:
 		"patrolling":
 			var dir := wander_target - global_position
-			if dir.length() < 1.0:
+			if dir.length() < 2.0:
 				velocity = Vector2.ZERO
 				wait_timer += delta
 				if wait_timer >= wait_time:

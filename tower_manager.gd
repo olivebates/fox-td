@@ -4,9 +4,9 @@ extends Node
 
 var tower_inventory: Array[Dictionary] = []
 var squad_slots: Array[Dictionary] = []  # Size 18
-var SQUAD_SIZE: int = 18
-var BACKPACK_SIZE: int = 7*6
-var pull_cost_base = 40
+var SQUAD_SIZE: int = 21
+var BACKPACK_SIZE: int = 12*5
+var pull_cost_base = 10
 var pull_cost = pull_cost_base
 var cost_increase = 5
 func _ready() -> void:

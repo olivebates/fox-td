@@ -57,6 +57,10 @@ func _on_mouse_entered() -> void:
         "[font_size=2][color=dark_gray]Toggle to enable/disable fast mode[/color][/font_size]"
 	)
 
+func _process(delta: float) -> void:
+	if (get_tree().get_nodes_in_group("gacha_menu").size() != 0 and fast_mode):
+		_on_toggled(false)
+
 func _on_mouse_exited() -> void:
 	TooltipManager.hide_tooltip()
 

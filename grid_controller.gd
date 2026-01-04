@@ -185,6 +185,8 @@ func refresh_grid_highlights() -> void:
 			if tower != null:
 				tower.queue_redraw()
 
+
+
 func place_item(item: Dictionary, cell: Vector2i) -> bool:
 	if !is_valid_placement(cell):
 		return false
@@ -241,6 +243,7 @@ func start_tower_drag(tower: Node, offset: Vector2) -> void:
 
 
 func _process(_delta: float) -> void:
+	
 	if dragged_tower != null:
 		TooltipManager.hide_tooltip()
 		var mouse_pos = get_global_mouse_position()

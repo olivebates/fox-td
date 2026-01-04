@@ -42,8 +42,17 @@ func _gui_input(event: InputEvent) -> void:
 			position -= Vector2(1, 1)
 			$ColorRect.visible = true
 func _on_pressed() -> void:
-	var inventory_size := TowerManager.get_inventory_size(is_squad_inventory)
-	var offset := 1000 if is_squad_inventory else 0
+	# Sort squad inventory (offset 1000)
+	sort_inventory(true)
+	# Sort backpack inventory (offset 0)
+	sort_inventory(false)
+	
+	get_tree().call_group("backpack_inventory", "refresh_all_highlights")
+	get_tree().call_group("squad_inventory", "refresh_all_highlights")
+
+func sort_inventory(is_squad: bool) -> void:
+	var inventory_size := TowerManager.get_inventory_size(is_squad)
+	var offset := 1000 if is_squad else 0
 	var towers: Array[Dictionary] = []
 	
 	for i in inventory_size:
@@ -55,14 +64,10 @@ func _on_pressed() -> void:
 	towers.sort_custom(func(a, b):
 		if a.is_empty(): return false
 		if b.is_empty(): return true
-		
-		# Sort by rank first (highest rank first)
 		var rank_a = a.get("rank", 1)
 		var rank_b = b.get("rank", 1)
 		if rank_a != rank_b:
 			return rank_a > rank_b
-		
-		# Then sort by tower id alphabetically
 		var id_a = a.get("id", "")
 		var id_b = b.get("id", "")
 		return id_a < id_b
@@ -74,7 +79,3 @@ func _on_pressed() -> void:
 			TowerManager.set_tower_at(index, towers[i])
 		else:
 			TowerManager.set_tower_at(index, {})
-	
-	
-	get_tree().call_group("backpack_inventory", "refresh_all_highlights")
-	get_tree().call_group("squad_inventory", "refresh_all_highlights")

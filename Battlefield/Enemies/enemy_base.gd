@@ -147,9 +147,10 @@ func die():
 	var penalty = TimelineManager.wave_replay_counts.get(TimelineManager.current_wave_index, 0)
 	var money_gain = max(1, WaveSpawner.get_enemy_death_money() - penalty)
 	StatsManager.money += money_gain
-	Utilities.spawn_floating_text("+€"+str(int(money_gain)), global_position + Vector2(0, 8), get_tree().current_scene, false, Color.YELLOW)
+	Utilities.spawn_floating_text("🪙"+str(int(money_gain)), global_position + Vector2(0, 8), get_tree().current_scene, false, Color.YELLOW)
 	get_tree().call_group("health_manager", "gain_health_from_kill", WaveSpawner.get_enemy_death_health_gain())
 	if get_tree().get_nodes_in_group("enemy").size() == 1 and !WaveSpawner._is_spawning:
 		TimelineManager.save_timeline(WaveSpawner.current_wave)
 		WaveSpawner.current_wave += 1
+		WaveSpawner.wave_locked = false
 	queue_free()

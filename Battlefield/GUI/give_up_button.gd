@@ -9,11 +9,11 @@ func _process(delta: float) -> void:
 		visible = true
 
 func _ready() -> void:
-	text = "Leave"
+	text = "Back to Camp"
 	focus_mode = Control.FOCUS_NONE
 	disabled = false
 	pressed.connect(_on_pressed)
-	add_theme_font_size_override("font_size", 4)
+	add_theme_font_size_override("font_size", 2)
 	
 	# Remove corner rounding
 	add_theme_constant_override("corner_radius_top_left", 0)

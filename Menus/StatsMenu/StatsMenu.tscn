@@ -12,17 +12,18 @@ offset_bottom = -1.0
 
 [node name="StatsInterface" parent="." instance=ExtResource("1_2h34a")]
 layout_mode = 0
-offset_left = 33.0
-offset_top = 7.0
-offset_right = 33.0
-offset_bottom = 7.0
+offset_left = 31.0
+offset_top = 12.0
+offset_right = 31.0
+offset_bottom = 12.0
 
 [node name="GachaBackground" type="ColorRect" parent="."]
 z_index = -2
 layout_mode = 0
-offset_top = -3.0
-offset_right = 250.0
-offset_bottom = 141.0
+offset_left = -2.0
+offset_top = 2.0
+offset_right = 248.0
+offset_bottom = 146.0
 mouse_filter = 2
 color = Color(0.13333334, 0.14509805, 0.21960784, 1)
 script = ExtResource("2_jg4hl")
@@ -31,10 +32,10 @@ brightness_shift = 0.6
 [node name="GachaBackground3" type="ColorRect" parent="."]
 z_index = -2
 layout_mode = 0
-offset_left = 26.0
-offset_top = 3.0
-offset_right = 130.0
-offset_bottom = 111.0
+offset_left = 24.0
+offset_top = 8.0
+offset_right = 128.0
+offset_bottom = 116.0
 mouse_filter = 2
 color = Color(0.105882354, 0.11372549, 0.17254902, 1)
 script = ExtResource("2_jg4hl")
@@ -42,10 +43,10 @@ script = ExtResource("2_jg4hl")
 [node name="GachaBackground2" type="ColorRect" parent="."]
 z_index = -2
 layout_mode = 0
-offset_left = 23.0
-offset_top = 3.0
-offset_right = 128.0
-offset_bottom = 109.0
+offset_left = 21.0
+offset_top = 8.0
+offset_right = 126.0
+offset_bottom = 114.0
 mouse_filter = 2
 color = Color(0.21176471, 0.24705882, 0.3764706, 1)
 script = ExtResource("2_jg4hl")
@@ -54,10 +55,10 @@ brightness_shift = 0.3
 [node name="GachaBackground4" type="ColorRect" parent="."]
 z_index = -2
 layout_mode = 0
-offset_left = 148.0
-offset_top = 3.0
-offset_right = 210.0
-offset_bottom = 111.0
+offset_left = 146.0
+offset_top = 8.0
+offset_right = 208.0
+offset_bottom = 116.0
 mouse_filter = 2
 color = Color(0.105882354, 0.11372549, 0.17254902, 1)
 script = ExtResource("2_jg4hl")
@@ -65,10 +66,10 @@ script = ExtResource("2_jg4hl")
 [node name="GachaBackground5" type="ColorRect" parent="."]
 z_index = -2
 layout_mode = 0
-offset_left = 146.0
-offset_top = 3.0
-offset_right = 208.0
-offset_bottom = 109.0
+offset_left = 144.0
+offset_top = 8.0
+offset_right = 206.0
+offset_bottom = 114.0
 mouse_filter = 2
 color = Color(0.21176471, 0.24705882, 0.3764706, 1)
 script = ExtResource("2_jg4hl")

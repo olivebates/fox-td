@@ -177,22 +177,22 @@ func should_show_merge_hint() -> bool:
 var hint_label = null
 
 func _process(_delta: float) -> void:
-	if WaveSpawner.current_level == 2 and !hint_label and should_show_merge_hint():
-		hint_label = Label.new()
-		hint_label.text = "Merge two critters by draggin one atop the other! ^"
-		hint_label.position = Vector2(80, 50)
-		hint_label.add_theme_font_size_override("font_size", 24)
-		hint_label.add_theme_color_override("font_color", Color.WHITE)
-		hint_label.add_theme_font_size_override("font_size", 8)
-		hint_label.z_index = 800
-		var tween = create_tween()
-		tween.set_loops()
-		tween.tween_property(hint_label, "position:y", position.y -13, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		tween.tween_property(hint_label, "position:y", position.y -11, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		get_tree().get_first_node_in_group("gacha_menu").add_child(hint_label)
-	if hint_label and (WaveSpawner.current_level != 2 or !should_show_merge_hint()):
-		hint_label.queue_free()
-		hint_label = null
+	#if WaveSpawner.current_level == 2 and !hint_label and should_show_merge_hint():
+		#hint_label = Label.new()
+		#hint_label.text = "Merge two critters by draggin one atop the other! ^"
+		#hint_label.position = Vector2(80, 50)
+		#hint_label.add_theme_font_size_override("font_size", 24)
+		#hint_label.add_theme_color_override("font_color", Color.WHITE)
+		#hint_label.add_theme_font_size_override("font_size", 8)
+		#hint_label.z_index = 800
+		#var tween = create_tween()
+		#tween.set_loops()
+		#tween.tween_property(hint_label, "position:y", position.y -13, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		#tween.tween_property(hint_label, "position:y", position.y -11, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		#get_tree().get_first_node_in_group("gacha_menu").add_child(hint_label)
+	#if hint_label and (WaveSpawner.current_level != 2 or !should_show_merge_hint()):
+		#hint_label.queue_free()
+		#hint_label = null
 	if !dragged_tower.is_empty():
 		if drag_preview:
 			drag_preview.global_position = get_global_mouse_position() - Vector2(4, 4)

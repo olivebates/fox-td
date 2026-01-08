@@ -8,9 +8,10 @@ const SLOT_ROW_SCENE := preload("uid://d4efbo7ussulp")
 func _ready():
 	refresh()
 	set_process_input(true)
+	visible = Dev.dev
 
 func _input(event):
-	if event is InputEventKey and event.pressed and event.keycode == KEY_B:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_B and Dev.dev:
 		visible = !visible
 		if visible:
 			refresh()

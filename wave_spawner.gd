@@ -38,20 +38,24 @@ var smoothed_power := 1.0
 
 
 func get_wave_power(level: int, wave: int) -> float:
-	var base := 18.0  # was 10.0
+	var base := 24.0  # was 10.0
 	var level_scale := pow(1.3, level)  # stronger level scaling
 	var wave_scale := pow(1.13, wave - 1)  # was 1.12
 	var player_factor := pow(committed_wave_power / 20.0, 0.45)  # was 0.35
 	return base * level_scale * wave_scale * player_factor * WAVE_POWER_MULT /5
 
 func set_power_mult():
+	
 	BASE_WAVE_POWER_MULT = 1.6
 	WAVE_ACCELERATION = 0.14
-	MAX_WAVES = 6 + floor(current_level / 2) * 2
+	MAX_WAVES = 10 + floor(current_level / 2) * 2 if current_level > 1 else 6
 	COUNT_WEIGHT = 0.45
 	HEALTH_WEIGHT = 0.55
 	HEALTH_REWARD_FACTOR = 0.3
 	HEALTH_REWARD_MULTIPLIER = 0.8
+	
+	if (current_level == 1):
+		WAVE_ACCELERATION = 0.45
 
 var ENEMY_TYPES = {
 	"normal": {
@@ -258,6 +262,7 @@ func _ready():
 	#await get_tree().process_frame#TEST
 	#StatsManager.take_damage(99999)#TEST
 
+var level_cleared = false
 var winscreen = preload("uid://tv785ptmh83y")
 var hint_label = null
 var empty_towers_hint = null
@@ -269,11 +274,7 @@ func _process(delta: float) -> void:
 		
 	#max_waves = config.waves
 	if current_wave > MAX_WAVES and !_is_spawning and get_tree().get_nodes_in_group("enemy").size() == 0:
-		current_level += 1
-		current_wave = 1
-		StatsManager.new_map()
-		var g = winscreen.instantiate()
-		get_tree().root.add_child(g)
+		level_cleared = true
 
 	#Upgrade Towers hint
 	if current_level == 1 and current_wave == 3 and !hint_label and no_towers_upgraded() and get_tree().get_nodes_in_group("enemy").size() == 0 and !WaveSpawner._is_spawning:

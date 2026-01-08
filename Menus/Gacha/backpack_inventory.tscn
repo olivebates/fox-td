@@ -1,8 +1,9 @@
-[gd_scene load_steps=9 format=3 uid="uid://c6pj2nc73reyx"]
+[gd_scene load_steps=10 format=3 uid="uid://c6pj2nc73reyx"]
 
 [ext_resource type="Script" uid="uid://cdkxgccj2umkb" path="res://Menus/Gacha/backpack_inventory.gd" id="1_ef5b0"]
 [ext_resource type="Script" uid="uid://cgi8lrep6btat" path="res://Menus/Gacha/gacha_button.gd" id="2_6ydk1"]
 [ext_resource type="Script" uid="uid://wp8d1hcb7bk2" path="res://Menus/Gacha/backpack_title.gd" id="2_lhcbs"]
+[ext_resource type="Script" uid="uid://dl6i7i67u4ja8" path="res://Menus/Gacha/inv_arrow.gd" id="3_i65jy"]
 [ext_resource type="Script" uid="uid://mub3l2ptecvq" path="res://Menus/Gacha/backpack_sort.gd" id="3_n4df0"]
 [ext_resource type="Script" uid="uid://d2bwchj5f5dfd" path="res://Menus/Gacha/empty_squad.gd" id="4_111ie"]
 [ext_resource type="Script" uid="uid://kio18icqctb2" path="res://Menus/Gacha/auto_fill.gd" id="5_4h4ep"]
@@ -28,18 +29,29 @@ brightness_shift = 0.6
 [node name="SquadTitle" type="Label" parent="."]
 layout_mode = 0
 offset_left = 128.0
-offset_top = -6.0
+offset_top = -8.0
 offset_right = 177.0
-offset_bottom = 17.0
+offset_bottom = 15.0
 text = "Squad"
 script = ExtResource("2_lhcbs")
 
+[node name="InvArrow" type="Label" parent="."]
+layout_mode = 0
+offset_left = 110.0
+offset_top = 13.0
+offset_right = 159.0
+offset_bottom = 88.0
+text = "→
+→
+"
+script = ExtResource("3_i65jy")
+
 [node name="BackpackTitle" type="Label" parent="."]
 layout_mode = 0
-offset_left = 25.0
-offset_top = -6.0
-offset_right = 86.0
-offset_bottom = 17.0
+offset_left = 26.0
+offset_top = -8.0
+offset_right = 87.0
+offset_bottom = 15.0
 text = "Camp"
 script = ExtResource("2_lhcbs")
 

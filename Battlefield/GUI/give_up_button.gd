@@ -1,19 +1,18 @@
 # CreateObjectButton.gd
 extends Button
 
-@export var resource_path: String = "uid://cda7be4lkl7n8"
 var has_been_unlocked = false
 func _process(delta: float) -> void:
-	if has_been_unlocked or WaveSpawner.current_level >= 2:
+	if has_been_unlocked or WaveSpawner.current_wave > 6:
 		has_been_unlocked == true
 		visible = true
 
 func _ready() -> void:
-	text = "Back to Camp"
+	text = "Return to Camp"
 	focus_mode = Control.FOCUS_NONE
 	disabled = false
 	pressed.connect(_on_pressed)
-	add_theme_font_size_override("font_size", 2)
+	add_theme_font_size_override("font_size", 3)
 	
 	# Remove corner rounding
 	add_theme_constant_override("corner_radius_top_left", 0)
@@ -79,9 +78,17 @@ func _on_mouse_entered() -> void:
 func _on_mouse_exited() -> void:
 	TooltipManager.hide_tooltip()
 
+signal return_to_camp_pressed
 func _on_pressed() -> void:
-	var scene = load(resource_path)
-	if scene:
-		var instance = scene.instantiate()
-		get_tree().current_scene.add_child(instance)
+	return_to_camp_pressed.emit()
+	if (WaveSpawner.current_wave > WaveSpawner.MAX_WAVES):
+		WaveSpawner.current_level += 1
+		WaveSpawner.current_wave = 1
+		GridController.change_level_color()
+		WaveSpawner.reset_wave_data()
+		StatsManager.new_map()
+	else:
 		StatsManager.reset_current_map()
+	var inst = load("uid://cda7be4lkl7n8").instantiate()
+	get_tree().current_scene.add_child(inst)
+	TooltipManager.hide_tooltip()

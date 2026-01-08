@@ -83,7 +83,13 @@ func upgrade_stat(stat: String) -> bool:
 	#health_changed.emit(health, max_health)
 	return true
 
+var has_shown_start_tutorial = false
+
 func _process(delta: float) -> void:
+	if (WaveSpawner.current_level == 1 and WaveSpawner.current_wave > 6 and !has_shown_start_tutorial):
+		has_shown_start_tutorial = true
+		show_tutorial_end()
+	
 	update_persistant_upgrades()
 	
 	if is_paused:
@@ -209,7 +215,10 @@ func new_map():
 
 	GridController.walls_placed = 0
 
-	
+
+func show_tutorial_end():
+	var inst = load("uid://bd1wnetphuwc1").instantiate()
+	get_tree().current_scene.add_child(inst)
 	
 func take_damage(amount: float) -> void:
 	health -= amount
@@ -217,8 +226,10 @@ func take_damage(amount: float) -> void:
 	if health <= 0:
 		var i = load("uid://cw0bhvjm3ukdv").instantiate()
 		get_tree().root.add_child(i)
-		reset_current_map()
 		
+		var x = WaveSpawner.current_wave
+		reset_current_map()
+		WaveSpawner.current_wave = x
 		
 		
 		#WaveSpawner.generate_path()  # Regenerates path and clears tiles

@@ -8,7 +8,7 @@ var SQUAD_SIZE: int = 21
 var BACKPACK_SIZE: int = 12*5
 var pull_cost_base = 10
 var pull_cost = pull_cost_base
-var cost_increase = 5
+var cost_increase = 10
 func _ready() -> void:
 	tower_inventory.clear()
 	tower_inventory.resize(BACKPACK_SIZE)

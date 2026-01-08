@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://bx87mx84xlody"]
+
+[ext_resource type="PackedScene" uid="uid://b5rx4oimreycg" path="res://Menus/Challenges/challenges_button_maker.tscn" id="1_d70v6"]
+
+[node name="ChallengesMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+
+[node name="ChallengesButtonMaker" parent="." instance=ExtResource("1_d70v6")]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 15.0
+offset_right = 16.0
+offset_bottom = 15.0

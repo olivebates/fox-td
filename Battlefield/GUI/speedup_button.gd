@@ -7,9 +7,9 @@ func _ready() -> void:
 	focus_mode = Control.FOCUS_NONE
 	toggle_mode = true
 	toggled.connect(_on_toggled)
-	
+	custom_minimum_size = Vector2(10,10)
 	add_theme_font_size_override("font_size", 4)
-	text = "↣"
+	text = "»"
 	if x10:
 		text = "↠"
 	add_theme_color_override("font_outline_color", Color.BLACK)

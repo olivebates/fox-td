@@ -28,7 +28,7 @@ func _ready() -> void:
 
 	$Visuals/Label.add_theme_font_size_override("font_size", 3.5)
 	$Visuals/Label.add_theme_color_override("font_color", Color.BLACK)
-	$Visuals/Label.position = Vector2(-3.7, 0.5)
+	$Visuals/Label.position = Vector2(-3.7, -0.5)
 
 	$Visuals/Sprite2D2.modulate = Color(1.0, 0.2, 0.2)
 

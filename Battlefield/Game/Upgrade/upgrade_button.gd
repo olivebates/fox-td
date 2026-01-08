@@ -19,7 +19,7 @@ func _ready() -> void:
 	var path_enum = item_def.paths[path_id]
 	current_level = base_tower.path[path_id]
 	icon_text.text = InventoryManager.PATH_SYMBOLS[path_enum]
-	icon_text.position = Vector2(-4,-14)
+	icon_text.position = Vector2(-4,-28)
 	icon_text.add_theme_font_size_override("font_size", 40)
 
 	_update_display()

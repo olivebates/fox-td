@@ -27,16 +27,34 @@ offset_bottom = 40.0
 script = ExtResource("1_q7530")
 metadata/_edit_use_anchors_ = true
 
-[node name="GiveUpButton" type="Button" parent="."]
+[node name="GiveUpButton" type="Button" parent="." groups=["leave_button"]]
+visible = false
 layout_mode = 0
-offset_left = -7.0
-offset_top = -19.0
-offset_right = 35.0
-offset_bottom = -11.0
+offset_left = -1.0
+offset_top = 97.0
+offset_right = 31.0
+offset_bottom = 105.0
 script = ExtResource("9_syepm")
 
 [node name="ColorRect" type="ColorRect" parent="GiveUpButton"]
-visible = false
+z_index = -1
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+script = ExtResource("3_todsr")
+brightness_shift = 0.65
+is_button_shadow = true
+
+[node name="NextWaveButton" type="Button" parent="." groups=["next_wave_button"]]
+layout_mode = 0
+offset_left = -1.0
+offset_top = 85.0
+offset_right = 31.0
+offset_bottom = 93.0
+script = ExtResource("2_dyjck")
+
+[node name="ColorRect" type="ColorRect" parent="NextWaveButton"]
 z_index = -1
 layout_mode = 0
 offset_right = 40.0
@@ -87,7 +105,7 @@ is_button_shadow = true
 [node name="WallButton" type="Button" parent="VBoxContainer/SpawnButtons" groups=["occupier_highlight_button"]]
 z_index = 200
 layout_mode = 2
-text = "▣"
+text = "₪"
 script = ExtResource("5_r4j1y")
 
 [node name="ColorRect" type="ColorRect" parent="VBoxContainer/SpawnButtons/WallButton"]
@@ -132,6 +150,7 @@ brightness_shift = 0.65
 is_button_shadow = true
 
 [node name="SpeedupButton2" type="Button" parent="VBoxContainer/SpawnButtons"]
+visible = false
 layout_mode = 2
 script = ExtResource("14_qdse5")
 x10 = true
@@ -157,20 +176,6 @@ theme_override_constants/h_separation = 2
 theme_override_constants/v_separation = 2
 columns = 3
 metadata/_edit_use_anchors_ = true
-
-[node name="NextWaveButton" type="Button" parent="VBoxContainer" groups=["next_wave_button"]]
-layout_mode = 2
-script = ExtResource("2_dyjck")
-
-[node name="ColorRect" type="ColorRect" parent="VBoxContainer/NextWaveButton"]
-z_index = -1
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-mouse_filter = 2
-script = ExtResource("3_todsr")
-brightness_shift = 0.65
-is_button_shadow = true
 
 [node name="Pause" parent="VBoxContainer" instance=ExtResource("2_7bcsv")]
 visible = false
@@ -246,16 +251,16 @@ script = ExtResource("7_1n0ix")
 [node name="MoneyCounter" type="Label" parent="."]
 layout_mode = 0
 offset_left = -199.0
-offset_top = -18.0
+offset_top = -20.0
 offset_right = -174.0
-offset_bottom = 5.0
+offset_bottom = 3.0
 text = "3c"
 script = ExtResource("8_devaa")
 
 [node name="LevelShower" type="Label" parent="."]
 layout_mode = 0
 offset_left = -112.0
-offset_top = -20.0
+offset_top = -22.0
 offset_right = -72.0
-offset_bottom = 3.0
+offset_bottom = 1.0
 script = ExtResource("16_60ota")

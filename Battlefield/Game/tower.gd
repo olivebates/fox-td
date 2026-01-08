@@ -17,10 +17,16 @@ var tower_type
 var hold_timer: float = 0.0
 var holding: bool = false
 var upgrade_cost: float = 0.0
-@onready var cost_label = $UpgradeCost
 var rank
 var bullets_shot = 1
 var path = [0,0,0]
+
+var cooldown_time: float = 0.0
+var max_cooldown: float = 4.0
+
+func start_cooldown() -> void:
+	cooldown_time = max_cooldown
+	queue_redraw()
 
 func _ready() -> void:
 	if has_meta("item_data"):
@@ -113,6 +119,11 @@ func _draw() -> void:
 		var offset = Vector2(-2.8 + i * 1.5, 3.8)
 		draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -2.0), offset + Vector2(1.4, 0.2), offset + Vector2(-0.9, 0.2)]), Color(0, 0, 0, 1))
 		draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -1.5), offset + Vector2(1, 0), offset + Vector2(-0.5, 0)]), Color(0.98, 0.98, 0, 1))
+	
+	if cooldown_time > 0:
+		var ratio = cooldown_time / max_cooldown
+		#draw_circle(Vector2.ZERO, 10.0, Color(0, 0, 0, 0.5))  # adjust radius
+		draw_arc(Vector2.ZERO, 4.0, -TAU/4, -TAU/4 + ratio * TAU, 64, Color(0, 0, 0, 0.8), 4.0)  # clockwise fill
 
 func update_target() -> void:
 	current_target = null
@@ -133,10 +144,22 @@ func _process(delta: float) -> void:
 	attack_radius = stats.range
 	if holding:
 		hold_timer += delta
+		
+	if cooldown_time > 0:
+		cooldown_time -= delta
+		if cooldown_time <= 0:
+			cooldown_time = 0
+		var enemies = get_tree().get_nodes_in_group("enemy").size() > 0
+		if (WaveSpawner._is_spawning or enemies):
+			pass  # keep cooldown
+		else:
+			cooldown_time = 0
+		queue_redraw()
+		
 	if not get_tree().get_first_node_in_group("start_wave_button").is_paused:
 		_timer += delta
 	update_target()
-	if _timer >= 1.0 / fire_rate and current_target:
+	if _timer >= 1.0 / fire_rate and current_target and cooldown_time <= 0:
 		_timer = 0.0
 		fire(current_target)
 	queue_redraw()

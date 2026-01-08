@@ -1,0 +1,63 @@
+[gd_scene load_steps=2 format=3 uid="uid://bd1wnetphuwc1"]
+
+[ext_resource type="Script" uid="uid://bx5orru4yhxk7" path="res://Menus/WinScreen/first_win_label.gd" id="2_c7i8r"]
+
+[node name="FirstWinScreen" type="Control" groups=["lose_screen"]]
+z_index = 600
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="FirstWinLabel" type="Label" parent="."]
+z_index = 1
+layout_mode = 0
+offset_left = -8.0
+offset_top = 10.0
+offset_right = 32.0
+offset_bottom = 33.0
+horizontal_alignment = 1
+script = ExtResource("2_c7i8r")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 0
+offset_top = 9.0
+offset_right = 187.0
+offset_bottom = 142.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.81960785)
+
+[node name="ColorRect2" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 85.0
+offset_bottom = 9.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.81960785)
+
+[node name="ColorRect4" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 176.0
+offset_right = 187.0
+offset_bottom = 9.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.81960785)
+
+[node name="ColorRect3" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 187.0
+offset_right = 374.0
+offset_bottom = 113.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.81960785)
+
+[node name="ColorRect5" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 187.0
+offset_top = 129.0
+offset_right = 374.0
+offset_bottom = 242.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.81960785)

@@ -1,7 +1,7 @@
 extends Control
 
 @onready var bar: ProgressBar = $Bar
-@onready var text: Label = $Text
+@onready var text = $Text
 @onready var red_overlay: ColorRect = $Bar/RedOverlay
 @onready var prodSpeedLabel: Label = $ProdictionSpeed
 @onready var health_bar_gui = get_tree().get_first_node_in_group("HealthBarContainer")
@@ -9,6 +9,21 @@ var cost_preview_amount: float = 0.0
 
 func _update_prod_speed_text() -> void:
 	prodSpeedLabel.text = "Production: " + str(StatsManager.production_speed)
+
+func _draw() -> void:
+	if bar.size.x <= 0: return
+	var width := bar.size.x
+	var height := bar.size.y
+	var offset = Vector2(0, -16)
+	
+	# Top line
+	draw_line(Vector2(0, 0) +offset, Vector2(width, 0) +offset, Color.from_hsv(GridController.hue, GridController.saturation, GridController.value - 0.6, 1.0), 1.0)
+	# Bottom line
+	draw_line(Vector2(0, height) +offset, Vector2(width, height) +offset, Color.from_hsv(GridController.hue, GridController.saturation, GridController.value - 0.4, 1.0), 1.0)
+	# Left line
+	draw_line(Vector2(0, 0) +offset, Vector2(0, height) +offset, Color.from_hsv(GridController.hue, GridController.saturation, GridController.value - 0.6, 1.0), 1.0)
+	# Right line
+	draw_line(Vector2(width, 0) +offset, Vector2(width, height) +offset, Color.from_hsv(GridController.hue, GridController.saturation, GridController.value - 0.4, 1.0), 1.0)
 
 func _ready() -> void:
 	prodSpeedLabel.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -24,8 +39,9 @@ func _ready() -> void:
 	bar.add_theme_stylebox_override("background", bg_style)
 	# Fill style
 	var fill_style := StyleBoxFlat.new()
-	fill_style.bg_color = Color(0.2, 0.8, 0.2)
+	fill_style.bg_color = Color(0.624, 0.095, 0.172, 1.0)
 	bar.add_theme_stylebox_override("fill", fill_style)
+	
 
 	bar.show_percentage = false
 	bar.min_value = 0
@@ -119,9 +135,9 @@ func _update_red_overlay() -> void:
 
 	# Color logic
 	if bar.value - cost_preview_amount < 0.1:
-		red_overlay.color = Color(1.0, 0.0, 0.0, 1.0)
+		red_overlay.color = Color(0.424, 0.429, 0.0, 1.0)
 	else:
-		red_overlay.color = Color(1.0, 1.0, 0.0, 1.0)
+		red_overlay.color = Color(0.987, 0.53, 0.519, 1.0)
 
 	red_overlay.position = Vector2(end_px, 0)
 	red_overlay.size = Vector2(overlay_width, bar.size.y)

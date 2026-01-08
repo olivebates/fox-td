@@ -4,7 +4,7 @@ extends Button
 func _ready() -> void:
 	if visible:
 		get_tree().get_first_node_in_group("start_wave_button")._on_pressed() # Unpause the game
-	add_theme_font_size_override("font_size", 6)
+	add_theme_font_size_override("font_size", 4)
 	text = "Next Wave"
 	focus_mode = Control.FOCUS_NONE
 	disabled = true

@@ -18,6 +18,10 @@ func _ready() -> void:
 	variation = randf_range(0.82, 1.25)
 
 func _process(delta: float) -> void:
-	var base := GridController.random_tint
-	sprite.modulate = base * variation
-	sprite.modulate.a = 1.0
+	if !is_placed:
+		var base := GridController.random_tint
+		sprite.modulate = base * variation
+		sprite.modulate.a = 1.0
+	else:
+		var base := GridController.random_tint
+		sprite.modulate = base

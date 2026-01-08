@@ -17,31 +17,31 @@ func fire(target: Node2D) -> void:
 	if target == null:
 		return
 	
-	var volley_count: int = path[0] + 1
-	var delay_between_volleys: float = 0.15
+	if !has_meta("item_data"):
+		return
+	var item = get_meta("item_data")
+	var path_levels = item.get("path", [0,0,0])
+	var stats = InventoryManager.get_tower_stats(tower_type, item.rank, path_levels)
 	
+	var bullet_count = stats.bullets
+	var attack_speed = stats.attack_speed  # Use for fire rate elsewhere if needed
+	
+	# For omnidirectional towers like Snail/Porcupine
 	var directions = [
 		Vector2(1,0), Vector2(1,1), Vector2(0,1), Vector2(-1,1),
 		Vector2(-1,0), Vector2(-1,-1), Vector2(0,-1), Vector2(1,-1)
 	].map(func(d): return d.normalized())
 	
-	for v in range(volley_count):
-		for dir in directions:
-			var bullet = bullet_scene.instantiate()
-			bullet.global_position = global_position
-			bullet.velocity = dir * bullet.initial_speed
-			bullet.target = null
-			
-			if has_meta("item_data"):
-				var rank = get_meta("item_data").get("rank", 1)
-				bullet.damage = InventoryManager.get_damage_calculation(tower_type, rank, 0)
-			
-			get_tree().current_scene.add_child(bullet)
-		
-		if v == 0:  # Recoil only on first volley
-			var tween = create_tween()
-			tween.tween_property(sprite, "scale", Vector2(1.2, 1.2), 0.1)
-			tween.tween_property(sprite, "scale", Vector2(1, 1), 0.1)
-		
-		if v < volley_count - 1:
-			await get_tree().create_timer(delay_between_volleys).timeout
+	for i in bullet_count:
+		var dir = directions[i % directions.size()] if bullet_count <= 8 else directions[0].rotated(i * PI * 2 / bullet_count)
+		var bullet = bullet_scene.instantiate()
+		bullet.global_position = global_position
+		bullet.velocity = dir * bullet.initial_speed
+		bullet.target = null
+		bullet.damage = stats.damage
+		get_tree().current_scene.add_child(bullet)
+	
+	# Recoil effect
+	var tween = create_tween()
+	tween.tween_property(sprite, "scale", Vector2(1.2, 1.2), 0.1)
+	tween.tween_property(sprite, "scale", Vector2(1, 1), 0.1)

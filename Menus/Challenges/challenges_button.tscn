@@ -1,0 +1,30 @@
+[gd_scene load_steps=2 format=3 uid="uid://b7hfvyrgicdsb"]
+
+[ext_resource type="Script" uid="uid://uxhx2xu0irf1" path="res://Menus/Challenges/challenges_button.gd" id="1_j3twy"]
+
+[node name="ChallengesButton" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="TraitName" type="Label" parent="HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Value" type="Label" parent="HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Minus" type="Button" parent="HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("1_j3twy")
+
+[node name="Plus" type="Button" parent="HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("1_j3twy")

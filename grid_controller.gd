@@ -203,7 +203,9 @@ func place_item(item: Dictionary, cell: Vector2i) -> bool:
 	tower.set_meta("item_data", item.duplicate())
 	tower.global_position = grid_offset + Vector2(cell.x * CELL_SIZE + 4, cell.y * CELL_SIZE + 4)
 	add_child(tower)
-	grid[cell.y][cell.x] = tower  # Mark cell as occupied
+	tower.add_to_group("placed_towers")
+	grid[cell.y][cell.x] = tower
+	tower.start_cooldown()  # new line
 	return true
 
 func _on_tower_input_event(viewport: Viewport, event: InputEvent, shape_idx: int, tower: Node) -> void:
@@ -290,6 +292,7 @@ func _perform_tower_drop() -> void:
 		if place_cell != Vector2i(-1, -1) && get_grid_item_at_cell(place_cell) == null && is_valid_placement(place_cell, dragged_tower.get_meta("item_data")):
 			dragged_tower.global_position = grid_offset + Vector2(place_cell.x * CELL_SIZE + CELL_SIZE / 2, place_cell.y * CELL_SIZE + CELL_SIZE / 2)
 			grid[place_cell.y][place_cell.x] = dragged_tower
+			dragged_tower.start_cooldown()  # new line
 			success = true
 	if not success:
 		dragged_tower.global_position = grid_offset + Vector2(original_cell.x * CELL_SIZE + CELL_SIZE / 2, original_cell.y * CELL_SIZE + CELL_SIZE / 2)

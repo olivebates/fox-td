@@ -13,3 +13,5 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if StatsManager:
 		text = "Level "+str(WaveSpawner.current_level)+" - (Wave "+str(WaveSpawner.current_wave)+" / "+str(WaveSpawner.MAX_WAVES)+")"
+		if WaveSpawner.current_wave > WaveSpawner.MAX_WAVES:
+			text += (" Cleared!")

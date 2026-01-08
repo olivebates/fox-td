@@ -332,7 +332,14 @@ func load_timeline(slot: int = 0):
 		for data in walls_data:
 			var cell = Vector2i(data.cell_x, data.cell_y)
 			if cell != Vector2i(-1, -1):
-				GridController.place_wall_at_cell(cell)
+				var wall = load("uid://823ref1rao2h").instantiate()
+				wall.position = GridController.grid_offset + Vector2(
+					cell.x * GridController.CELL_SIZE + GridController.CELL_SIZE / 2,
+					cell.y * GridController.CELL_SIZE + GridController.CELL_SIZE / 2
+				)
+				wall.is_placed = true
+				add_child(wall)
+				wall.add_to_group("walls")
 	
 
 func delete_all_timeline_saves() -> void:

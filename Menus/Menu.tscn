@@ -52,8 +52,8 @@ is_button_shadow = true
 
 [node name="MoneyLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 47.0
-offset_top = 3.0
-offset_right = 48.0
-offset_bottom = 26.0
+offset_left = 38.0
+offset_top = -2.0
+offset_right = 39.0
+offset_bottom = 21.0
 script = ExtResource("4_lmla4")

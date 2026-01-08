@@ -20,6 +20,7 @@ shader_parameter/outer_radius = 1.0
 script = ExtResource("1_7fr83")
 
 [node name="LoadMenu" parent="." instance=ExtResource("2_lhke2")]
+visible = false
 z_index = 2002
 
 [node name="Camera2D" type="Camera2D" parent="."]

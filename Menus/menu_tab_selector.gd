@@ -2,6 +2,7 @@
 extends TabContainer
 
 func _ready() -> void:
+	StatsManager.reset_current_map()
 	# Font styling
 	add_theme_font_size_override("font_size", 4)
 	add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.5))

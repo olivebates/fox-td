@@ -16,6 +16,7 @@ This document summarizes the current project state and code layout so a new agen
   - `GUI` instance from `Battlefield/GUI/GUI.tscn`.
   - `Timeline` instance from `Battlefield/timeline/timeline.tscn`.
 - Menus: `Menus/Menu.tscn` with tabbed sections for stats, challenges, difficulty, gacha, win screen, etc.
+- New menu tab: `Menus/UpgradeMenu/upgrade_menu.tscn` in `menu_tab_selector.tscn` shows unlocked towers and meta-upgrade stats.
 
 ## Autoload singletons (global systems)
 Defined in `project.godot`:
@@ -65,6 +66,11 @@ Defined in `project.godot`:
   - Towers have `prefab`, `bullet`, `rarity`, `paths`, and per-rank stats.
   - Examples: Fox, Bunny Hole, Elephant, Hawk, Duck, Snail, Mouse, Porcupine.
 - Inventory drag/drop is custom drawn and uses GridController for placement.
+- Element colors:
+  - Towers roll 1-2 colors on pull (10% for 2 colors, 1% for 3 colors); stored on tower colors.
+  - Matching wave color deals 2x damage (handled in Battlefield/Game/bullet.gd).
+  - Small colored dots show tower colors (camp/inventory and placed towers); placed tower dots render from a ColorDots child in Battlefield/Game/tower.gd so they sit above the sprite while the border/background stay behind it.
+  - Camp merges keep the target tower's colors and store both originals for unmerge restore.
 - Costs:
   - Placement cost scales by rank and rarity.
   - Upgrade cost scales by rank and current upgrades.
@@ -83,14 +89,18 @@ Defined in `project.godot`:
   - Calculates wave power using player power score and difficulty multipliers.
   - Spawns types: normal, swarm, fast, boss.
   - Tracks waves, rewards, and hint text for early onboarding.
+  - Each wave is assigned a red/green/blue color and passed to enemies.
 - `Battlefield/Enemies/enemy_base.gd`:
   - Uses A* for pathing.
   - Deals damage on reaching the end.
   - Rewards money/meat on death.
+  - Enemies are tinted to their wave color.
 
 ### Upgrades
 - `upgrade_manager.gd` pauses the world and spawns upgrade UI.
 - Individual towers store path upgrades (3 upgrade paths per tower).
+- Meta upgrades: `Menus/UpgradeMenu/upgrade_menu.gd` adds an "Upgrade" camp tab (tab node is `Upgrade`) for per-tower stat upgrades that directly mutate `InventoryManager.items` and refresh live towers; list refreshes on gacha pulls.
+- Upgrade menu UX: stat rows show a tooltip with a short description and current level; range is displayed in tiles (floor(radius / 8)), attack speed shows `/s`, and range/respawn time rows are hidden for guard towers.
 
 ### Stats and economy
 - `StatsManager` uses "meat" as health and placement currency.
@@ -101,6 +111,7 @@ Defined in `project.godot`:
 - `tower_manager.gd` tracks backpack and squad slots, and pull cost scaling.
 - `gacha.gd` is mostly stubbed/commented; gacha UI exists under `Menus/Gacha/`.
 - Current gacha menu is used as a game-over screen and disables the game area.
+- `Menus/Gacha/start_new_game_button.gd` carries squad tower `colors`, `path`, and `merge_children` into the in-game inventory on start.
 
 ### UI and menus
 - `Battlefield/GUI/` includes health bar, wave controls, drag preview, and buttons.
@@ -108,6 +119,7 @@ Defined in `project.godot`:
 - `Menus/` includes difficulty, stats, challenges, gacha, win/lose, and load dialog.
 - `menu_tab_selector.gd` customizes tab styles and resets the map on menu open.
 - Difficulty menu uses the difficulty popup for trait adjustments and only shows the money gain label on the tab.
+- Wave preview tooltip shows next wave stats plus wave color (`Battlefield/GUI/next_wave_preview.gd`).
 
 ### Saving and timeline
 - `SaveManager`:

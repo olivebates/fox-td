@@ -66,6 +66,10 @@ func _update_slot(slot: Panel) -> void:
 	if tower.is_empty():
 		style.bg_color = Color(0.1, 0.1, 0.1)
 	else:
+		if not tower.has("colors"):
+			tower["colors"] = InventoryManager.roll_tower_colors()
+			tower["merge_children"] = tower.get("merge_children", [])
+			TowerManager.set_tower_at(real_index, tower)
 		var rank = tower.get("rank", 1)
 		var rank_color = InventoryManager.RANK_COLORS.get(rank, Color(1, 1, 1))
 		style.bg_color = rank_color * 0.3
@@ -99,16 +103,23 @@ func _on_slot_input(event: InputEvent, slot: Panel) -> void:
 			get_tree().call_group("squad_inventory", "refresh_all_highlights")
 
 func _perform_unmerge(real_index: int, tower: Dictionary, slot: Panel) -> void:
-	var lower = tower.duplicate()
-	lower.rank -= 1
-	TowerManager.set_tower_at(real_index, lower)
+	var lower_a: Dictionary = {}
+	var lower_b: Dictionary = {}
+	if tower.has("merge_children") and tower.merge_children.size() >= 2:
+		lower_a = tower.merge_children[0].duplicate(true)
+		lower_b = tower.merge_children[1].duplicate(true)
+	else:
+		lower_a = tower.duplicate(true)
+		lower_a.rank -= 1
+		lower_b = lower_a.duplicate(true)
+	TowerManager.set_tower_at(real_index, lower_a)
 	var inv_size = TowerManager.get_inventory_size(is_squad_inventory)
 	var offset = 1000 if is_squad_inventory else 0
 	var placed = false
 	for i in inv_size:
 		var idx = i + offset
 		if TowerManager.get_tower_at(idx).is_empty():
-			TowerManager.set_tower_at(idx, lower)
+			TowerManager.set_tower_at(idx, lower_b)
 			placed = true
 			break
 	_update_slot(slot)
@@ -225,8 +236,13 @@ func _perform_drop() -> void:
 			target_inv._update_slot(target_slot)
 			return_to_original = false
 		elif target_tower.id == dragged_tower.id && target_tower.get("rank", 1) == dragged_tower.get("rank", 1):
-			var updated = target_tower.duplicate()
+			var updated = target_tower.duplicate(true)
 			updated.rank += 1
+			updated.colors = target_tower.get("colors", [])
+			updated.merge_children = [
+				target_tower.duplicate(true),
+				dragged_tower.duplicate(true)
+			]
 			TowerManager.set_tower_at(target_real, updated)
 			target_inv._update_slot(target_slot)
 			show_tooltip(target_slot)
@@ -311,6 +327,13 @@ func _draw_slot(slot: Panel) -> void:
 	var tex = tower.type.texture
 	if tex:
 		slot.draw_texture(tex, Vector2(0, 0), modulate)
+	var colors: Array = tower.get("colors", [])
+	if colors.size() > 0:
+		var dot_pos = Vector2(1.2, 1.2)
+		for color_name in colors:
+			var dot_color = InventoryManager.get_color_value(color_name)
+			slot.draw_circle(dot_pos, 0.7, dot_color)
+			dot_pos.x += 1.7
 		
 
 	

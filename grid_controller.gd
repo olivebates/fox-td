@@ -191,6 +191,10 @@ func place_item(item: Dictionary, cell: Vector2i) -> bool:
 	if item.is_empty() or !item.has("id") or !InventoryManager.items.has(item.id):
 		Utilities.spawn_floating_text("Invalid tower data...", get_global_mouse_position(), null, false)
 		return false
+	if not item.has("colors"):
+		item["colors"] = InventoryManager.roll_tower_colors()
+	if not item.has("merge_children"):
+		item["merge_children"] = []
 	if !is_valid_placement(cell):
 		return false
 	var existing = get_grid_item_at_cell(cell)

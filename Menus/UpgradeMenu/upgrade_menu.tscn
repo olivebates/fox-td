@@ -1,0 +1,238 @@
+[gd_scene load_steps=3 format=3 uid="uid://c88y6swa7euy"]
+
+[ext_resource type="Script" uid="uid://c8v6w3tuv1k3x" path="res://Menus/UpgradeMenu/upgrade_menu.gd" id="1_2d5x0"]
+[ext_resource type="Script" uid="uid://hflmog8s660p" path="res://color_tinter.gd" id="2_4t0fd"]
+
+[node name="UpgradeMenu" type="Control" groups=["upgrade_menu"]]
+z_index = 400
+layout_mode = 3
+anchors_preset = 0
+offset_top = -1.0
+offset_bottom = -1.0
+script = ExtResource("1_2d5x0")
+
+[node name="Background" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = -2.0
+offset_top = 2.0
+offset_right = 248.0
+offset_bottom = 146.0
+mouse_filter = 2
+color = Color(0.13333334, 0.14509805, 0.21960784, 1)
+script = ExtResource("2_4t0fd")
+brightness_shift = 0.6
+
+[node name="UpgradesTitle" type="Label" parent="."]
+layout_mode = 0
+offset_left = 91.0
+offset_top = 11.0
+offset_right = 218.0
+offset_bottom = 45.0
+text = "Upgrade Towers"
+
+[node name="Layout" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 21.0
+offset_top = 21.0
+offset_right = 214.0
+offset_bottom = 129.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="LeftPanel" type="VBoxContainer" parent="Layout"]
+custom_minimum_size = Vector2(92, 0)
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="LeftTitle" type="Label" parent="Layout/LeftPanel"]
+layout_mode = 2
+text = "  "
+horizontal_alignment = 1
+
+[node name="LeftScroll" type="ScrollContainer" parent="Layout/LeftPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="TowerList" type="VBoxContainer" parent="Layout/LeftPanel/LeftScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="Layout"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+
+[node name="RightPanel" type="VBoxContainer" parent="Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+alignment = 2
+
+[node name="ImageCenter" type="CenterContainer" parent="Layout/RightPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="Layout/RightPanel/ImageCenter"]
+layout_mode = 2
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_bottom = 0
+
+[node name="TowerImage" type="TextureRect" parent="Layout/RightPanel/ImageCenter/MarginContainer"]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+
+[node name="TowerName" type="Label" parent="Layout/RightPanel"]
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="MarginContainer2" type="MarginContainer" parent="Layout/RightPanel"]
+layout_mode = 2
+theme_override_constants/margin_bottom = 4
+
+[node name="EmptyLabel" type="Label" parent="Layout/RightPanel"]
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="StatsScroll" type="ScrollContainer" parent="Layout/RightPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="StatsList" type="VBoxContainer" parent="Layout/RightPanel/StatsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 1
+
+[node name="GachaBackground13" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = -3.0
+offset_top = 2.0
+offset_right = 245.0
+offset_bottom = 4.0
+mouse_filter = 2
+color = Color(0.105882354, 0.11372549, 0.17254902, 1)
+script = ExtResource("2_4t0fd")
+
+[node name="GachaBackground3" type="ColorRect" parent="."]
+visible = false
+z_index = -2
+layout_mode = 0
+offset_left = -29.0
+offset_top = -12.0
+offset_right = 76.0
+offset_bottom = 94.0
+mouse_filter = 2
+color = Color(0.105882354, 0.11372549, 0.17254902, 1)
+script = ExtResource("2_4t0fd")
+
+[node name="GachaBackground9" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = 20.0
+offset_top = 22.0
+offset_right = 119.0
+offset_bottom = 114.0
+mouse_filter = 2
+color = Color(0.105882354, 0.11372549, 0.17254902, 1)
+script = ExtResource("2_4t0fd")
+
+[node name="GachaBackground2" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = 18.0
+offset_top = 20.0
+offset_right = 117.0
+offset_bottom = 112.0
+mouse_filter = 2
+color = Color(0.21176471, 0.24705882, 0.3764706, 1)
+script = ExtResource("2_4t0fd")
+brightness_shift = 0.3
+
+[node name="GachaBackground11" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = 124.0
+offset_top = 23.0
+offset_right = 223.0
+offset_bottom = 115.0
+mouse_filter = 2
+color = Color(0.105882354, 0.11372549, 0.17254902, 1)
+script = ExtResource("2_4t0fd")
+
+[node name="GachaBackground4" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = 122.0
+offset_top = 21.0
+offset_right = 221.0
+offset_bottom = 113.0
+mouse_filter = 2
+color = Color(0.21176471, 0.24705882, 0.3764706, 1)
+script = ExtResource("2_4t0fd")
+brightness_shift = 0.3
+
+[node name="GachaBackground10" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = 18.0
+offset_top = 15.0
+offset_right = 225.0
+offset_bottom = 27.0
+mouse_filter = 2
+color = Color(0.105882354, 0.11372549, 0.17254902, 1)
+script = ExtResource("2_4t0fd")
+
+[node name="GachaBackground12" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = 158.0
+offset_top = 29.0
+offset_right = 188.0
+offset_bottom = 57.0
+mouse_filter = 2
+color = Color(0.105882354, 0.11372549, 0.17254902, 1)
+script = ExtResource("2_4t0fd")
+
+[node name="GachaBackground15" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = 128.0
+offset_top = 63.0
+offset_right = 217.0
+offset_bottom = 108.0
+mouse_filter = 2
+color = Color(0.105882354, 0.11372549, 0.17254902, 1)
+script = ExtResource("2_4t0fd")
+
+[node name="GachaBackground14" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = 16.0
+offset_top = 13.0
+offset_right = 223.0
+offset_bottom = 26.0
+mouse_filter = 2
+color = Color(0.21176471, 0.24705882, 0.3764706, 1)
+script = ExtResource("2_4t0fd")
+brightness_shift = 0.4
+
+[node name="GachaBackground16" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = 128.0
+offset_top = 60.0
+offset_right = 216.0
+offset_bottom = 107.0
+mouse_filter = 2
+color = Color(0.21176471, 0.24705882, 0.3764706, 1)
+script = ExtResource("2_4t0fd")
+brightness_shift = 0.4

@@ -15,6 +15,12 @@ const RANK_COLORS = {
 	10: Color(1.0, 0.531, 0.986),
 	11: Color(0.565, 0.0, 0.18),
 }
+const ELEMENT_COLORS := {
+	"red": Color(1.0, 0.2, 0.2),
+	"green": Color(0.2, 0.9, 0.3),
+	"blue": Color(0.2, 0.6, 1.0)
+}
+const ELEMENT_COLOR_KEYS := ["red", "green", "blue"]
 var base_spawn_cost = 40.0
 @onready var HealthBarGUI = get_tree().get_first_node_in_group("HealthBarContainer")
 @onready var grid_controller: Node2D = get_node("/root/GridController")
@@ -252,6 +258,17 @@ func show_tower_tooltip(item: Dictionary, cost: float) -> void:
 			tooltip_text += "Explosion Size: [color=cornflower_blue]" + str(int(stats.explosion_radius/8)) + " tiles[/color]\n"
 			tooltip_text += "Max enemies hit: [color=cornflower_blue]" + str(int(stats.enemies_hit)) + "[/color]\n"
 	
+	var colors: Array = item.get("colors", [])
+	var color_names: Array[String] = []
+	for color_name in colors:
+		color_names.append(color_name.capitalize())
+	var colors_text = ", ".join(color_names)
+	if colors.size() > 0:
+		tooltip_text += "Colors: [color=cornflower_blue]" + colors_text + "[/color]\n"
+	var bonus_target = "matching wave color"
+	if colors.size() > 0:
+		bonus_target = colors_text + " waves"
+	tooltip_text += "[font_size=2][color=dark_gray]Color Bonus: x2 damage vs " + bonus_target + "[/color][/font_size]\n"
 	tooltip_text += "[color=gray]————————————————[/color]\n"
 	tooltip_text += "[font_size=2][color=dark_gray]" + def.get("description", "") + "[/color][/font_size]"
 	
@@ -448,8 +465,8 @@ func get_player_power_score() -> float:
 
 
 func give_starter_towers():
-	slots[0].set_meta("item", {"id": "Fox", "rank": 1})
-	slots[1].set_meta("item", {"id": "Fox", "rank": 1})
+	slots[0].set_meta("item", {"id": "Fox", "rank": 1, "colors": roll_tower_colors(), "merge_children": []})
+	slots[1].set_meta("item", {"id": "Fox", "rank": 1, "colors": roll_tower_colors(), "merge_children": []})
 	#slots[2].set_meta("item", {"id": "Elephant", "rank": 1})
 	WaveSpawner.current_wave = 1
 	TimelineManager.save_timeline(0)
@@ -476,6 +493,21 @@ func set_temp_drag_data(data: Dictionary) -> void:
 func clear_temp_drag_data() -> void:
 	temp_drag_data = {}
 
+func roll_tower_colors() -> Array[String]:
+	var roll = randf()
+	var colors: Array[String] = []
+	if roll < 0.01:
+		colors = ELEMENT_COLOR_KEYS.duplicate()
+	elif roll < 0.11:
+		var pool = ELEMENT_COLOR_KEYS.duplicate()
+		pool.shuffle()
+		colors = [pool[0], pool[1]]
+	else:
+		colors = [ELEMENT_COLOR_KEYS[randi() % ELEMENT_COLOR_KEYS.size()]]
+	return colors
+
+func get_color_value(color_name: String) -> Color:
+	return ELEMENT_COLORS.get(color_name, Color.WHITE)
 
 
 func _draw() -> void:
@@ -520,6 +552,13 @@ func _draw_slot(slot: Panel) -> void:
 	var tex = items.get(item.get("id", ""), {}).get("texture", null)
 	if tex:
 		slot.draw_texture(tex, Vector2(0, 0), Color(brighten, brighten, brighten))
+	var colors: Array = item.get("colors", [])
+	if colors.size() > 0:
+		var dot_pos = Vector2(1.2, 1.2)
+		for color_name in colors:
+			var dot_color = get_color_value(color_name)
+			slot.draw_circle(dot_pos, 0.7, dot_color)
+			dot_pos.x += 1.7
 	
 	var rarity = items.get(item.get("id", ""), {}).get("rarity", 0)
 	for i in range(rarity):
@@ -543,6 +582,10 @@ func _update_slot(slot: Panel) -> void:
 	if item.is_empty():
 		slot.get_meta("style").bg_color = Color(0.1, 0.1, 0.1)
 	else:
+		if not item.has("colors"):
+			item["colors"] = roll_tower_colors()
+			item["merge_children"] = item.get("merge_children", [])
+			slot.set_meta("item", item)
 		var rank = item.get("rank", 1)
 		var rank_color = RANK_COLORS.get(rank, Color(1, 1, 1))
 		slot.get_meta("style").bg_color = rank_color * 0.3
@@ -702,7 +745,7 @@ func _spawn_item(rank: int) -> bool:
 	var keys = items.keys()
 	if keys.is_empty(): return false
 	var id = keys[randi() % keys.size()]
-	var new_item = {"id": id, "rank": rank + 1}
+	var new_item = {"id": id, "rank": rank + 1, "colors": roll_tower_colors(), "merge_children": []}
 	var cost = get_placement_cost(id, 1, rank)
 	if not StatsManager.spend_health(cost): return false
 	for slot in slots:

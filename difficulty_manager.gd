@@ -132,16 +132,17 @@ func spawn_split_enemies(source_enemy: Node2D, split_count: int, split_health: i
 		var enemy := WaveSpawner.enemy_scene.instantiate()
 		enemy.position = source_enemy.position + Vector2(randf_range(-2.0, 2.0), randf_range(-2.0, 2.0))
 		enemy.target_position = source_enemy.target_position
-		parent.add_child(enemy)
-		enemy.add_to_group("enemy")
 		enemy.enemy_type = source_enemy.enemy_type
 		enemy.spawn_wave = wave
+		enemy.wave_color = source_enemy.wave_color
 		enemy.can_split = false
 		enemy.no_meat_reward = true
 		enemy.max_speed = source_enemy.max_speed
 		enemy.speed = source_enemy.speed
 		enemy.health = split_health
 		enemy.current_health = split_health
+		parent.add_child(enemy)
+		enemy.add_to_group("enemy")
 		enemy.tree_exited.connect(func():
 			if WaveSpawner.active_waves.has(wave):
 				WaveSpawner.active_waves[wave] -= 1

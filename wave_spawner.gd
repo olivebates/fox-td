@@ -36,14 +36,28 @@ var COUNT_WEIGHT = 0.3
 var HEALTH_WEIGHT = 0.7
 var smoothed_power := 1.0
 var _last_level_cached: int = -1
+const WAVE_COLORS := ["red", "green", "blue"]
 
 
 func get_wave_power(level: int, wave: int) -> float:
-	var base := 24.0  # was 10.0
+	return get_wave_power_with_mult_and_player(level, wave, WAVE_POWER_MULT, committed_wave_power)
+
+func get_wave_power_with_mult(level: int, wave: int, power_mult: float) -> float:
+	return get_wave_power_with_mult_and_player(level, wave, power_mult, committed_wave_power)
+
+func get_wave_power_with_mult_and_player(level: int, wave: int, power_mult: float, player_power: float) -> float:
+	var base := 75.0  # higher base to avoid too-easy early waves
 	var level_scale := pow(1.3, level)  # stronger level scaling
-	var wave_scale := pow(1.13, wave - 1)  # was 1.12
-	var player_factor := pow(committed_wave_power / 20.0, 0.45)  # was 0.35
-	return base * level_scale * wave_scale * player_factor * WAVE_POWER_MULT /5
+	var early_waves = min(wave - 1, 9)
+	var late_waves = max(0, wave - 10)
+	var wave_scale := pow(1.04, early_waves) * pow(1.02, late_waves)  # soften after wave 10
+	var player_factor = max(1.0, player_power) / 20.0  # linear tracking
+	return base * level_scale * wave_scale * player_factor * power_mult / 5
+
+func get_effective_player_power() -> float:
+	var field_power := InventoryManager.get_total_field_dps()
+	var roster_power := InventoryManager.get_player_power_score()
+	return (field_power * 0.7) + (roster_power * 0.3)
 
 func set_power_mult():
 	
@@ -64,28 +78,110 @@ var ENEMY_TYPES = {
 		"speed": 10.0,
 		"damage": 10,
 		"base_reward": 1.0,
-		"count_mult": 1.0
+		"count_mult": 1.0,
+		"min_wave": 1,
+		"label": "Normal",
+		"abilities": []
 	},
 	"swarm": {
 		"health": 1,
 		"speed": 8.0,
 		"damage": 5,
 		"base_reward": 0.5,
-		"count_mult": 1.4
+		"count_mult": 1.4,
+		"min_wave": 1,
+		"label": "Swarm",
+		"abilities": ["Smaller bodies, higher counts."]
 	},
 	"fast": {
 		"health": 0.6,
 		"speed": 25.0,
 		"damage": 10,
 		"base_reward": 0.75,
-		"count_mult": 1.5
+		"count_mult": 1.5,
+		"min_wave": 1,
+		"label": "Fast",
+		"abilities": ["Moves much faster than normal."]
+	},
+	"splitter": {
+		"health": 0.9,
+		"speed": 9.0,
+		"damage": 10,
+		"base_reward": 0.8,
+		"count_mult": 0.9,
+		"min_wave": 3,
+		"label": "Splitter",
+		"abilities": ["Splits into 2 swarmlings on death."]
+	},
+	"spirit_fox": {
+		"health": 0.8,
+		"speed": 12.0,
+		"damage": 10,
+		"base_reward": 0.9,
+		"count_mult": 0.95,
+		"min_wave": 4,
+		"label": "Spirit Fox",
+		"abilities": ["Phases out, becoming untargetable briefly."]
+	},
+	"regenerator": {
+		"health": 1.0,
+		"speed": 9.0,
+		"damage": 10,
+		"base_reward": 1.0,
+		"count_mult": 0.9,
+		"min_wave": 4,
+		"label": "Regenerator",
+		"abilities": ["Regenerates health over time."]
+	},
+	"revenant": {
+		"health": 1.1,
+		"speed": 8.0,
+		"damage": 12,
+		"base_reward": 1.1,
+		"count_mult": 0.8,
+		"min_wave": 5,
+		"label": "Revenant",
+		"abilities": ["Revives once at half health."]
+	},
+	"swarmling": {
+		"health": 0.4,
+		"speed": 14.0,
+		"damage": 6,
+		"base_reward": 0.3,
+		"count_mult": 2.0,
+		"min_wave": 2,
+		"label": "Swarmling",
+		"abilities": ["Tiny and fast, spawns in large numbers."]
+	},
+	"hardened": {
+		"health": 1.3,
+		"speed": 7.0,
+		"damage": 12,
+		"base_reward": 1.2,
+		"count_mult": 0.8,
+		"min_wave": 5,
+		"label": "Hardened",
+		"abilities": ["Takes reduced damage."]
+	},
+	"stalker": {
+		"health": 0.9,
+		"speed": 11.0,
+		"damage": 10,
+		"base_reward": 1.0,
+		"count_mult": 0.9,
+		"min_wave": 6,
+		"label": "Stalker",
+		"abilities": ["Periodically becomes untargetable."]
 	},
 	"boss": {
 		"health": 2.5,
 		"speed": 5.0,
 		"damage": 50,
 		"base_reward": 7.0,
-		"count_mult": 0.2
+		"count_mult": 0.2,
+		"min_wave": 1,
+		"label": "Boss",
+		"abilities": ["High health and damage."]
 	}
 }
 
@@ -96,28 +192,110 @@ func set_enemy_config():
 			"speed": 10.0,
 			"damage": 10,
 			"base_reward": 1.0,
-			"count_mult": 1.0
+			"count_mult": 1.0,
+			"min_wave": 1,
+			"label": "Normal",
+			"abilities": []
 		},
 		"swarm": {
 			"health": 0.6,
 			"speed": 8.0,
 			"damage": 5,
 			"base_reward": 0.5,
-			"count_mult": 1.4
+			"count_mult": 1.4,
+			"min_wave": 1,
+			"label": "Swarm",
+			"abilities": ["Smaller bodies, higher counts."]
 		},
 		"fast": {
 			"health": 0.6,
 			"speed": 25.0,
 			"damage": 10,
 			"base_reward": 0.75,
-			"count_mult": 1.0
+			"count_mult": 1.0,
+			"min_wave": 1,
+			"label": "Fast",
+			"abilities": ["Moves much faster than normal."]
+		},
+		"splitter": {
+			"health": 0.9,
+			"speed": 9.0,
+			"damage": 10,
+			"base_reward": 0.8,
+			"count_mult": 0.9,
+			"min_wave": 3,
+			"label": "Splitter",
+			"abilities": ["Splits into 2 swarmlings on death."]
+		},
+		"spirit_fox": {
+			"health": 0.8,
+			"speed": 12.0,
+			"damage": 10,
+			"base_reward": 0.9,
+			"count_mult": 0.95,
+			"min_wave": 4,
+			"label": "Spirit Fox",
+			"abilities": ["Phases out, becoming untargetable briefly."]
+		},
+		"regenerator": {
+			"health": 1.0,
+			"speed": 9.0,
+			"damage": 10,
+			"base_reward": 1.0,
+			"count_mult": 0.9,
+			"min_wave": 4,
+			"label": "Regenerator",
+			"abilities": ["Regenerates health over time."]
+		},
+		"revenant": {
+			"health": 1.1,
+			"speed": 8.0,
+			"damage": 12,
+			"base_reward": 1.1,
+			"count_mult": 0.8,
+			"min_wave": 5,
+			"label": "Revenant",
+			"abilities": ["Revives once at half health."]
+		},
+		"swarmling": {
+			"health": 0.4,
+			"speed": 14.0,
+			"damage": 6,
+			"base_reward": 0.3,
+			"count_mult": 2.0,
+			"min_wave": 2,
+			"label": "Swarmling",
+			"abilities": ["Tiny and fast, spawns in large numbers."]
+		},
+		"hardened": {
+			"health": 1.3,
+			"speed": 7.0,
+			"damage": 12,
+			"base_reward": 1.2,
+			"count_mult": 0.8,
+			"min_wave": 5,
+			"label": "Hardened",
+			"abilities": ["Takes reduced damage."]
+		},
+		"stalker": {
+			"health": 0.9,
+			"speed": 11.0,
+			"damage": 10,
+			"base_reward": 1.0,
+			"count_mult": 0.9,
+			"min_wave": 6,
+			"label": "Stalker",
+			"abilities": ["Periodically becomes untargetable."]
 		},
 		"boss": {
 			"health": 4.0,
 			"speed": 5.0,
 			"damage": 50,
 			"base_reward": 1.0,
-			"count_mult": 0.2
+			"count_mult": 0.2,
+			"min_wave": 1,
+			"label": "Boss",
+			"abilities": ["High health and damage."]
 		}
 	}
 
@@ -183,8 +361,96 @@ var current_level = 1
 	#}
 
 func get_smoothed_player_power() -> float:
-	smoothed_power = lerp(smoothed_power, InventoryManager.get_player_power_score(), 0.25)
+	smoothed_power = lerp(smoothed_power, get_effective_player_power(), 0.25)
 	return smoothed_power
+
+func _get_wave_seed(wave: int) -> int:
+	return current_level * 10000 + wave
+
+func get_wave_color(wave: int) -> String:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = _get_wave_seed(wave)
+	_pick_enemy_type_for_wave(rng, wave)
+	return WAVE_COLORS[rng.randi_range(0, WAVE_COLORS.size() - 1)]
+
+func _get_enemy_pool_for_wave(wave: int) -> Array[String]:
+	var keys: Array[String] = []
+	for key in ENEMY_TYPES.keys():
+		if key == "boss":
+			continue
+		var min_wave = int(ENEMY_TYPES[key].get("min_wave", 1))
+		if wave >= min_wave:
+			keys.append(key)
+	if keys.is_empty():
+		keys.append("normal")
+	return keys
+
+func _pick_enemy_type_for_wave(rng: RandomNumberGenerator, wave: int) -> String:
+	if wave % 9 == 0:
+		return "boss"
+	var keys := _get_enemy_pool_for_wave(wave)
+	return keys[rng.randi_range(0, keys.size() - 1)]
+
+func _build_wave_data(wave_seed: int, wave: int) -> Dictionary:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = wave_seed
+	var enemy_type = _pick_enemy_type_for_wave(rng, wave)
+	var wave_color = WAVE_COLORS[rng.randi_range(0, WAVE_COLORS.size() - 1)]
+	var type_data = ENEMY_TYPES[enemy_type]
+	var wave_power_mult := _calculate_wave_power_mult(wave)
+	var player_power := get_effective_player_power()
+	var power := get_wave_power_with_mult_and_player(current_level, wave, wave_power_mult, player_power)
+	var raw_count = round(pow(power, COUNT_WEIGHT))
+	var raw_health = round(pow(power, HEALTH_WEIGHT))
+	var count := ceil(raw_count * type_data.count_mult) as int
+	var health := (raw_health * type_data.health) as int
+	var base_reward = type_data.base_reward * HEALTH_REWARD_MULTIPLIER
+	var wave_base_reward = ceil(base_reward * (1.0 + wave * 0.1))
+	return {
+		"type": enemy_type,
+		"color": wave_color,
+		"health": health,
+		"count": count,
+		"power": power,
+		"base_reward": wave_base_reward
+	}
+
+func get_enemy_type_data(enemy_type: String) -> Dictionary:
+	return ENEMY_TYPES.get(enemy_type, {})
+
+func get_next_wave_index() -> int:
+	if _is_spawning or active_waves.has(current_wave):
+		return current_wave + 1
+	return current_wave
+
+func get_wave_preview(wave: int) -> Dictionary:
+	if wave <= 0:
+		return {}
+	if wave <= saved_wave_data.size():
+		var data = saved_wave_data[wave - 1]
+		if not data.has("color"):
+			data.color = get_wave_color(wave)
+		return data
+	var wave_seed = _get_wave_seed(wave)
+	var data = _build_wave_data(wave_seed, wave)
+	if not data.has("color"):
+		data.color = get_wave_color(wave)
+	return data
+
+func get_next_wave_preview() -> Dictionary:
+	var wave = get_next_wave_index()
+	if wave > MAX_WAVES:
+		return {}
+	return get_wave_preview(wave)
+
+func _calculate_wave_power_mult(wave: int) -> float:
+	var wave_power_mult := BASE_WAVE_POWER_MULT
+	wave_power_mult *= 1.0 + (current_level - 1) * 0.04
+	wave_power_mult *= 1.0 + (wave - 1) * WAVE_ACCELERATION
+	match difficulty:
+		Difficulty.EASY: wave_power_mult *= 0.75
+		Difficulty.HARD: wave_power_mult *= 1.15
+	return wave_power_mult
 
 
 func distribute_wave_power(power: float, type_data: Dictionary) -> Dictionary:
@@ -251,7 +517,7 @@ var path_node: Path2D
 var path_tiles_container: Node2D
 
 func _ready():
-	smoothed_power = InventoryManager.get_player_power_score()
+	smoothed_power = get_effective_player_power()
 	add_to_group("wave_spawner")
 	path_node = Path2D.new()
 	add_child(path_node)
@@ -371,12 +637,9 @@ func await_delay(delay: float) -> void:
 
 func get_enemy_type_for_wave(wave: int) -> String:
 	# Boss only if exactly every 9th wave (average of 8-10)
-	if wave % 9 == 0:
-		return "boss"
-	
-	var keys := ENEMY_TYPES.keys()
-	keys.erase("boss")
-	return keys[randi() % keys.size()]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = _get_wave_seed(wave)
+	return _pick_enemy_type_for_wave(rng, wave)
 
 
 
@@ -384,45 +647,23 @@ func get_enemy_type_for_wave(wave: int) -> String:
 func start_next_wave() -> void:
 	# Save seed and data for this wave if not already saved
 	if current_wave > wave_seeds.size():
-		var wave_seed = current_level * 10000 + current_wave
+		var wave_seed = _get_wave_seed(current_wave)
 		wave_seeds.append(wave_seed)
-		seed(wave_seed)
 		wave_locked = true
 		locked_base_wave_mult = BASE_WAVE_POWER_MULT
 		locked_wave_accel = WAVE_ACCELERATION
-		committed_wave_power = InventoryManager.get_player_power_score()
-		var wave_power_mult := BASE_WAVE_POWER_MULT
-		wave_power_mult *= 1.0 + (current_level - 1) * 0.04
-		wave_power_mult *= 1.0 + (current_wave - 1) * WAVE_ACCELERATION
-		match difficulty:
-			Difficulty.EASY: wave_power_mult *= 0.75
-			Difficulty.HARD: wave_power_mult *= 1.15
-		WAVE_POWER_MULT = wave_power_mult
-		var enemy_type = "boss" if current_wave % 9 == 0 else ["normal", "swarm", "fast"].pick_random()
-		var type_data = ENEMY_TYPES[enemy_type]
-		var power := get_wave_power(current_level, current_wave)
-		var raw_count = round(pow(power, COUNT_WEIGHT))
-		var raw_health = round(pow(power, HEALTH_WEIGHT))
-		var count := ceil(raw_count * type_data.count_mult) as int
-		var health := (raw_health * type_data.health) as int
-		var base_reward = type_data.base_reward * HEALTH_REWARD_MULTIPLIER
-		var wave_base_reward = ceil(base_reward * (1.0 + current_wave*0.1))
-		saved_wave_data.append({
-			"type": enemy_type,
-			"health": health,
-			"count": count,
-			"power": power,
-			"base_reward": wave_base_reward
-		})
-		
-		active_waves[current_wave] = count
+		committed_wave_power = get_effective_player_power()
+		WAVE_POWER_MULT = _calculate_wave_power_mult(current_wave)
+		var wave_data = _build_wave_data(wave_seed, current_wave)
+		saved_wave_data.append(wave_data)
+		current_wave_base_reward = wave_data.base_reward
+		active_waves[current_wave] = wave_data.count
 		wave_started.emit(current_wave)
-		_spawn_wave_async(current_wave, enemy_type, health, count)
+		_spawn_wave_async(current_wave, wave_data.type, wave_data.health, wave_data.count, wave_data.get("color", get_wave_color(current_wave)))
 		print("Level %d Wave %d | %s | Power: %.1f | Count: %d | Health: %d" %
-			[current_level, current_wave, enemy_type, power, count, health])
+			[current_level, current_wave, wave_data.type, wave_data.power, wave_data.count, wave_data.health])
 	else:
 		# Replay saved wave
-		seed(wave_seeds[current_wave - 1])
 		var data = saved_wave_data[current_wave - 1]
 		var enemy_type = data.type
 		var health = data.health
@@ -432,7 +673,8 @@ func start_next_wave() -> void:
 
 		active_waves[current_wave] = count
 		wave_started.emit(current_wave)
-		_spawn_wave_async(current_wave, enemy_type, health, count)
+		var wave_color = data.get("color", get_wave_color(current_wave))
+		_spawn_wave_async(current_wave, enemy_type, health, count, wave_color)
 		print("Level %d Wave %d | %s | Power: %.1f | Count: %d | Health: %d" %
 			[current_level, current_wave, enemy_type, power, count, health])
 
@@ -445,13 +687,13 @@ func reset_wave_data() -> void:
 	
 	
 
-func _spawn_wave_async(wave: int, enemy_type: String, health: int, count: int) -> void:
+func _spawn_wave_async(wave: int, enemy_type: String, health: int, count: int, wave_color: String) -> void:
 	_is_spawning = true
 	_remaining_enemies = count
 	var delay = max_wave_spawn_time / max(count - 1, 1)
 	
 	while _remaining_enemies > 0 and _is_spawning:
-		spawn_enemy(wave, enemy_type, health)
+		spawn_enemy(wave, enemy_type, health, wave_color)
 		_remaining_enemies -= 1
 		if _remaining_enemies > 0:
 			await await_delay(delay)
@@ -461,14 +703,12 @@ func _spawn_wave_async(wave: int, enemy_type: String, health: int, count: int) -
 
 
 	_is_spawning = false
-func spawn_enemy(wave: int, enemy_type: String, health: int) -> void:
+func spawn_enemy(wave: int, enemy_type: String, health: int, wave_color: String) -> void:
 	var enemy := enemy_scene.instantiate()
 	var type_data = ENEMY_TYPES[enemy_type]
 	
 	enemy.position = start_pos + Vector2(0, 4)
 	enemy.target_position = end_pos
-	add_child(enemy)
-	enemy.add_to_group("enemy")
 	
 	var power := get_wave_power(current_level, wave)
 	var adjusted_health = DifficultyManager.get_enemy_spawn_health(health)
@@ -478,6 +718,9 @@ func spawn_enemy(wave: int, enemy_type: String, health: int) -> void:
 	enemy.current_health = adjusted_health
 	enemy.enemy_type = enemy_type
 	enemy.spawn_wave = wave
+	enemy.wave_color = wave_color
+	add_child(enemy)
+	enemy.add_to_group("enemy")
 	
 	enemy.tree_exited.connect(func():
 		if active_waves.has(wave):

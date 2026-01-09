@@ -16,15 +16,21 @@ func _ready() -> void:
 		tower_inventory[i] = {}
 	
 	# Example: add test towers using updated function
-	tower_inventory[0] = _create_tower("Fox", 1)
+	var backpack_tower = _create_tower("Fox", 1)
+	backpack_tower["colors"] = ["red"]
+	tower_inventory[0] = backpack_tower
 	#add_all_towers_to_backpack()
 	squad_slots.clear()
 	squad_slots.resize(SQUAD_SIZE)
 	for i in SQUAD_SIZE:
 		squad_slots[i] = {}
 	
-	squad_slots[0] = _create_tower("Fox", 1)
-	squad_slots[1] = _create_tower("Fox", 1)
+	var squad_tower_a = _create_tower("Fox", 1)
+	squad_tower_a["colors"] = ["blue"]
+	squad_slots[0] = squad_tower_a
+	var squad_tower_b = _create_tower("Fox", 1)
+	squad_tower_b["colors"] = ["green"]
+	squad_slots[1] = squad_tower_b
 
 func add_all_towers_to_backpack() -> void:
 	var index = 1
@@ -64,7 +70,9 @@ func _create_tower(id: String, rank: int, path_levels: Array = [0, 0, 0]) -> Dic
 		"rank": rank,
 		"path": path_levels.duplicate(),
 		"power_level": dps,
-		"id": id
+		"id": id,
+		"colors": InventoryManager.roll_tower_colors(),
+		"merge_children": []
 	}
 
 func is_squad_index(index: int) -> bool:

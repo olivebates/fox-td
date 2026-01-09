@@ -84,7 +84,10 @@ func _on_pressed() -> void:
 			
 			var item = {
 				"id": tower_id,
-				"rank": rank
+				"rank": rank,
+				"path": squad_tower.get("path", [0, 0, 0]),
+				"colors": squad_tower.get("colors", InventoryManager.roll_tower_colors()),
+				"merge_children": squad_tower.get("merge_children", [])
 			}
 			
 			# Find empty slot in InventoryManager

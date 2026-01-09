@@ -2,7 +2,6 @@ extends BulletBase
 
 var start_position: Vector2
 var tile_size: float = 8.0
-var source_tower: tower_base = null
 
 func _ready() -> void:
 	super._ready()

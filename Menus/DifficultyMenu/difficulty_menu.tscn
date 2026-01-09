@@ -11,17 +11,19 @@ script = ExtResource("1_ynqq2")
 
 [node name="DifficultyPopup" parent="." instance=ExtResource("2_w6e20")]
 layout_mode = 0
+offset_left = 76.0
 offset_top = 16.0
+offset_right = 146.0
 offset_bottom = 25.0
 USE_FIXED_TRAITS = false
 ALWAYS_EXPANDED = true
 
 [node name="DifficultyTitle" type="Label" parent="."]
 layout_mode = 0
-offset_left = 53.0
-offset_top = 5.0
-offset_right = 200.0
-offset_bottom = 39.0
+offset_left = 79.0
+offset_top = 7.0
+offset_right = 226.0
+offset_bottom = 41.0
 text = "Difficulty Modifiers"
 
 [node name="TotalLabel" type="Label" parent="."]
@@ -78,10 +80,10 @@ script = ExtResource("2_8uren")
 [node name="GachaBackground9" type="ColorRect" parent="."]
 z_index = -2
 layout_mode = 0
-offset_left = -7.0
-offset_top = 23.0
-offset_right = 191.0
-offset_bottom = 115.0
+offset_left = 73.0
+offset_top = 19.0
+offset_right = 163.0
+offset_bottom = 117.0
 mouse_filter = 2
 color = Color(0.105882354, 0.11372549, 0.17254902, 1)
 script = ExtResource("2_8uren")
@@ -89,10 +91,10 @@ script = ExtResource("2_8uren")
 [node name="GachaBackground2" type="ColorRect" parent="."]
 z_index = -2
 layout_mode = 0
-offset_left = -9.0
-offset_top = 21.0
-offset_right = 189.0
-offset_bottom = 113.0
+offset_left = 71.0
+offset_top = 17.0
+offset_right = 161.0
+offset_bottom = 115.0
 mouse_filter = 2
 color = Color(0.21176471, 0.24705882, 0.3764706, 1)
 script = ExtResource("2_8uren")
@@ -101,10 +103,10 @@ brightness_shift = 0.3
 [node name="GachaBackground10" type="ColorRect" parent="."]
 z_index = -2
 layout_mode = 0
-offset_left = -9.0
-offset_top = 16.0
-offset_right = 193.0
-offset_bottom = 28.0
+offset_left = 72.0
+offset_top = 12.0
+offset_right = 165.0
+offset_bottom = 24.0
 mouse_filter = 2
 color = Color(0.105882354, 0.11372549, 0.17254902, 1)
 script = ExtResource("2_8uren")
@@ -112,10 +114,10 @@ script = ExtResource("2_8uren")
 [node name="GachaBackground14" type="ColorRect" parent="."]
 z_index = -2
 layout_mode = 0
-offset_left = -11.0
-offset_top = 14.0
-offset_right = 191.0
-offset_bottom = 27.0
+offset_left = 69.0
+offset_top = 10.0
+offset_right = 163.0
+offset_bottom = 23.0
 mouse_filter = 2
 color = Color(0.21176471, 0.24705882, 0.3764706, 1)
 script = ExtResource("2_8uren")

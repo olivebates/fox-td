@@ -80,6 +80,11 @@ func _on_pressed() -> void:
 		random_id = "Duck"
 	if (TowerManager.pull_cost == TowerManager.pull_cost_base + TowerManager.cost_increase*2):
 		random_id = "Hawk"
+	var was_unlocked := false
+	if InventoryManager.items.has(random_id):
+		was_unlocked = bool(InventoryManager.items[random_id].get("unlocked", false))
+		if !was_unlocked:
+			InventoryManager.items[random_id]["unlocked"] = true
 	var new_tower = TowerManager._create_tower(random_id, 1)
 	
 	var empty_index = -1
@@ -102,3 +107,6 @@ func _on_pressed() -> void:
 				child.queue_free()
 	
 	backpack_inventory._rebuild_slots()
+	var upgrade_menu = get_tree().get_first_node_in_group("upgrade_menu")
+	if upgrade_menu:
+		upgrade_menu.refresh_unlocked_towers()

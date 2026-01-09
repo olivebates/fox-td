@@ -1,6 +1,18 @@
 extends CharacterBody2D
 class_name tower_base
 
+class ColorDots:
+	extends Node2D
+	var colors: Array = []
+	func set_colors(new_colors: Array) -> void:
+		colors = new_colors.duplicate()
+		queue_redraw()
+	func _draw() -> void:
+		var dot_pos = Vector2(-2.8, -2.8)
+		for color_name in colors:
+			draw_circle(dot_pos, 0.6, InventoryManager.get_color_value(color_name))
+			dot_pos.x += 1.5
+
 @onready var sprite: Sprite2D = $Sprite2D
 var invManager = InventoryManager
 var _timer: float = 0.0
@@ -29,6 +41,8 @@ var _cached_stats: Dictionary = {}
 var _last_rank: int = -1
 var _last_path: Array = []
 var _last_tower_type = null
+var _last_colors: Array = []
+var color_dots: ColorDots = null
 
 func start_cooldown() -> void:
 	cooldown_time = max_cooldown
@@ -44,6 +58,13 @@ func _ready() -> void:
 		var item_def = invManager.items[tower_type]
 		bullet_scene = item_def.bullet
 		sprite.texture = item_def.texture
+	if has_node("ColorDots"):
+		color_dots = get_node("ColorDots")
+	else:
+		color_dots = ColorDots.new()
+		color_dots.name = "ColorDots"
+		color_dots.z_index = 1
+		add_child(color_dots)
 		
 		
 	#mouse_exited.connect(_on_mouse_exited)
@@ -121,6 +142,10 @@ func _draw() -> void:
 	var brighten = 1.5 if hovered else 1.0
 	draw_rect(Rect2(-3.2, -3.2, 6.5, 6.5), border_color, false, 1.0 + (0.5 if hovered else 0.0))
 	draw_rect(Rect2(-3, -3, 6, 6), base_color * brighten, true)
+	var colors: Array = data.get("colors", [])
+	if color_dots != null and colors != _last_colors:
+		color_dots.set_colors(colors)
+		_last_colors = colors.duplicate()
 	var rarity = invManager.items[data.id].rarity
 	for i in range(rarity):
 		var offset = Vector2(-2.8 + i * 1.5, 3.8)
@@ -187,6 +212,7 @@ func fire(target: Node2D) -> void:
 		var bullet = bullet_scene.instantiate()
 		bullet.target = target
 		bullet.damage = damage
+		bullet.source_tower = self
 		if stats.has("explosion_radius"):
 			if stats.explosion_radius != -1:
 				bullet.explosion_radius = int(stats.explosion_radius)

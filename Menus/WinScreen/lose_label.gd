@@ -32,11 +32,10 @@ func _process(delta: float) -> void:
 
                                                                             Return to camp here ⬇️"
 		else:
+			
 			text = "
-
-
               You ran out of meat!
-    
+			
 
                                                                             Return to camp here ⬇️ 
 ⬇️ Or use the timeline to rewind time ⬇️"

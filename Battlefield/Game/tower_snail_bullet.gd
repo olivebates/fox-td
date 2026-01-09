@@ -5,7 +5,6 @@ var max_distance_tiles = base_distance_tiles
 @export var distance_per_level: float = 4.0  # Matches +4 tiles per path[2] level from get_tower_radius
 var start_position: Vector2
 var tile_size: float = 8.0
-var source_tower: tower_base = null
 
 func _ready() -> void:
 	super._ready()

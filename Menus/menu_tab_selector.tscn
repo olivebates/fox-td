@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://dh1ffivuryhcu"]
+[gd_scene load_steps=6 format=3 uid="uid://dh1ffivuryhcu"]
 
 [ext_resource type="PackedScene" uid="uid://cgtxb5iesuex6" path="res://Menus/Gacha/gacha_menu.tscn" id="1_1trta"]
 [ext_resource type="Script" uid="uid://dlvk7rlx54l4v" path="res://Menus/menu_tab_selector.gd" id="1_rsbsd"]
 [ext_resource type="PackedScene" uid="uid://cc6babgiwuur6" path="res://Menus/StatsMenu/StatsMenu.tscn" id="2_blqk4"]
+[ext_resource type="PackedScene" uid="uid://d7n4k8p5ue9mq" path="res://Menus/UpgradeMenu/upgrade_menu.tscn" id="4_86trn"]
 [ext_resource type="PackedScene" uid="uid://c2nqv8b3u6r3p" path="res://Menus/DifficultyMenu/difficulty_menu.tscn" id="5_t5qm1"]
 
 [node name="MenuTabSelector" type="TabContainer"]
@@ -44,6 +45,22 @@ layout_mode = 2
 metadata/_tab_index = 1
 
 [node name="Difficulty" parent="Difficulty" instance=ExtResource("5_t5qm1")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 6.0
+offset_bottom = -25.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Upgrade" type="Control" parent="."]
+visible = false
+layout_mode = 2
+tab_title = "Upgrade"
+metadata/_tab_index = 2
+
+[node name="UpgradeMenu" parent="Upgrade" instance=ExtResource("4_86trn")]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

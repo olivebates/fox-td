@@ -9,12 +9,27 @@ class_name Enemy
 var current_health: int = 50
 var path: PackedVector2Array = []
 var path_index: int = 0
-var enemy_type: String = "normal"
+var enemy_type: String = "normal":
+	set = _set_enemy_type, get = _get_enemy_type
+var _enemy_type: String = "normal"
 var spawn_wave: int = 1
+var wave_color: String = "red":
+	set = _set_wave_color, get = _get_wave_color
+var _wave_color: String = "red"
 var can_split: bool = true
 var no_meat_reward: bool = false
 var revive_used: bool = false
 var regen_buffer: float = 0.0
+var type_regen_ratio: float = 0.0
+var type_damage_mult: float = 1.0
+var type_split_count: int = 0
+var type_split_health_ratio: float = 0.0
+var type_phase_cycle: float = 0.0
+var type_phase_duration: float = 0.0
+var type_phase_timer: float = 0.0
+var type_revive_ratio: float = 0.0
+var type_scale: float = 1.0
+var is_phased: bool = false
 
 var health_bg: ColorRect
 var health_fg: ColorRect
@@ -23,6 +38,45 @@ var start_position
 var current_damage = 1
 var cycles = 1
 var wobble_offset = Vector2.ZERO
+var base_tint: Color = Color.WHITE
+
+const TYPE_CONFIGS := {
+	"splitter": {
+		"split_count": 2,
+		"split_health_ratio": 0.35
+	},
+	"spirit_fox": {
+		"phase_cycle": 2.2,
+		"phase_duration": 0.7,
+		"base_alpha": 0.75
+	},
+	"regenerator": {
+		"regen_ratio": 0.06
+	},
+	"revenant": {
+		"revive_ratio": 0.5
+	},
+	"swarmling": {
+		"scale": 0.7
+	},
+	"hardened": {
+		"damage_mult": 0.7
+	},
+	"stalker": {
+		"phase_cycle": 3.5,
+		"phase_duration": 1.0,
+		"base_alpha": 0.85
+	}
+}
+
+
+func _set_enemy_type(value: String) -> void:
+	_enemy_type = value
+	if is_inside_tree():
+		_apply_type_modifiers()
+
+func _get_enemy_type() -> String:
+	return _enemy_type
 
 
 func _on_astar_updated() -> void:
@@ -36,7 +90,7 @@ func _ready() -> void:
 	$Visuals/Label.add_theme_color_override("font_color", Color.BLACK)
 	$Visuals/Label.position = Vector2(-3.7, -0.5)
 
-	$Visuals/Sprite2D2.modulate = Color(1.0, 0.2, 0.2)
+	_apply_wave_color()
 
 	start_position = position
 	add_to_group("enemies")
@@ -46,6 +100,7 @@ func _ready() -> void:
 	create_healthbar()
 	update_healthbar()
 	request_path()
+	_apply_type_modifiers()
 
 	# ONE wobble offset for everything
 	wobble_offset = Vector2(
@@ -54,6 +109,14 @@ func _ready() -> void:
 	)
 
 	$Visuals.position = wobble_offset
+
+func _set_wave_color(value: String) -> void:
+	_wave_color = value
+	if is_inside_tree():
+		_apply_wave_color()
+
+func _get_wave_color() -> String:
+	return _wave_color
 
 
 func request_path() -> void:
@@ -102,7 +165,8 @@ func _process(delta: float) -> void:
 	else:
 		global_position += dir.normalized() * speed * delta
 
-	var regen_per_second := DifficultyManager.get_enemy_regen_per_second(health)
+	_update_phasing(delta)
+	var regen_per_second := DifficultyManager.get_enemy_regen_per_second(health) + (float(health) * type_regen_ratio)
 	if regen_per_second > 0.0 and current_health < health:
 		regen_buffer += regen_per_second * delta
 		if regen_buffer >= 1.0:
@@ -134,9 +198,12 @@ func update_healthbar():
 	health_fg.size.x = 4.0 * (float(current_health) / health)
 
 func take_damage(amount: int):
+	if is_phased:
+		return
 	if DifficultyManager.should_enemy_dodge():
 		return
 	amount = DifficultyManager.apply_enemy_damage_taken(amount)
+	amount = int(max(1, ceil(float(amount) * type_damage_mult)))
 	if amount <= 0:
 		return
 	current_health -= amount
@@ -144,7 +211,7 @@ func take_damage(amount: int):
 	
 	var tw = create_tween()
 	tw.tween_property(sprite, "modulate", Color.RED, 0.1)
-	tw.tween_property(sprite, "modulate", Color.WHITE, 0.3)
+	tw.tween_property(sprite, "modulate", base_tint, 0.3)
 	
 	var health_ratio = float(current_health) / health
 	var green_blue = 0.2 + (0.8 - 0.2) * (1.0 - health_ratio)
@@ -188,6 +255,9 @@ func _grant_meat_reward() -> void:
 func _spawn_split_enemies() -> void:
 	if not can_split:
 		return
+	if enemy_type == "splitter" and type_split_count > 0 and type_split_health_ratio > 0.0:
+		_spawn_type_splits("swarmling", type_split_count, type_split_health_ratio)
+		return
 	var split_count := DifficultyManager.get_split_count()
 	if split_count <= 0:
 		return
@@ -197,6 +267,13 @@ func _spawn_split_enemies() -> void:
 func _try_revive() -> bool:
 	if revive_used:
 		return false
+	if enemy_type == "revenant":
+		_grant_meat_reward()
+		no_meat_reward = true
+		revive_used = true
+		current_health = max(1, int(round(float(health) * type_revive_ratio)))
+		update_healthbar()
+		return true
 	if not DifficultyManager.should_enemy_revive():
 		return false
 	_grant_meat_reward()
@@ -205,3 +282,113 @@ func _try_revive() -> bool:
 	current_health = max(1, int(round(float(health) * DifficultyManager.get_enemy_revive_health_ratio())))
 	update_healthbar()
 	return true
+
+func _apply_type_modifiers() -> void:
+	type_regen_ratio = 0.0
+	type_damage_mult = 1.0
+	type_split_count = 0
+	type_split_health_ratio = 0.0
+	type_phase_cycle = 0.0
+	type_phase_duration = 0.0
+	type_revive_ratio = 0.0
+	type_scale = 1.0
+	is_phased = false
+	_set_phased(false)
+
+	var config: Dictionary = TYPE_CONFIGS.get(enemy_type, {})
+	if config.has("regen_ratio"):
+		type_regen_ratio = float(config.regen_ratio)
+	if config.has("damage_mult"):
+		type_damage_mult = float(config.damage_mult)
+	if config.has("split_count"):
+		type_split_count = int(config.split_count)
+	if config.has("split_health_ratio"):
+		type_split_health_ratio = float(config.split_health_ratio)
+	if config.has("phase_cycle"):
+		type_phase_cycle = float(config.phase_cycle)
+	if config.has("phase_duration"):
+		type_phase_duration = float(config.phase_duration)
+	if config.has("revive_ratio"):
+		type_revive_ratio = float(config.revive_ratio)
+	if config.has("scale"):
+		type_scale = float(config.scale)
+
+	if $Visuals:
+		$Visuals.scale = Vector2(type_scale, type_scale)
+		if config.has("base_alpha"):
+			var alpha := float(config.base_alpha)
+			$Visuals.modulate = Color(1.0, 1.0, 1.0, alpha)
+		else:
+			$Visuals.modulate = Color(1.0, 1.0, 1.0, 1.0)
+
+func _apply_wave_color() -> void:
+	base_tint = InventoryManager.get_color_value(_wave_color)
+	if $Visuals/Sprite2D:
+		$Visuals/Sprite2D.modulate = base_tint
+	if $Visuals/Sprite2D2:
+		$Visuals/Sprite2D2.modulate = base_tint.darkened(0.2)
+
+func _update_phasing(delta: float) -> void:
+	if type_phase_cycle <= 0.0:
+		return
+	type_phase_timer += delta
+	if not is_phased and type_phase_timer >= type_phase_cycle:
+		type_phase_timer = 0.0
+		_set_phased(true)
+	elif is_phased and type_phase_timer >= type_phase_duration:
+		type_phase_timer = 0.0
+		_set_phased(false)
+
+func _set_phased(value: bool) -> void:
+	is_phased = value
+	if is_phased:
+		if is_in_group("enemies"):
+			remove_from_group("enemies")
+		if $Visuals:
+			var current = $Visuals.modulate
+			$Visuals.modulate = Color(current.r, current.g, current.b, 0.4)
+	else:
+		if not is_in_group("enemies"):
+			add_to_group("enemies")
+		if $Visuals:
+			var config: Dictionary = TYPE_CONFIGS.get(enemy_type, {})
+			var alpha := 1.0
+			if config.has("base_alpha"):
+				alpha = float(config.base_alpha)
+			$Visuals.modulate = Color(1.0, 1.0, 1.0, alpha)
+
+func _spawn_type_splits(split_type: String, split_count: int, split_health_ratio: float) -> void:
+	if split_count <= 0 or split_health_ratio <= 0.0:
+		return
+	var parent = get_parent()
+	if parent == null:
+		return
+	var wave = spawn_wave
+	if not WaveSpawner.active_waves.has(wave):
+		WaveSpawner.active_waves[wave] = 0
+	WaveSpawner.active_waves[wave] += split_count
+	for i in split_count:
+		var enemy := WaveSpawner.enemy_scene.instantiate()
+		var split_health = max(1, int(round(float(health) * split_health_ratio)))
+		enemy.enemy_type = split_type
+		enemy.spawn_wave = wave
+		enemy.wave_color = wave_color
+		enemy.can_split = false
+		enemy.no_meat_reward = true
+		enemy.max_speed = max_speed
+		enemy.speed = speed
+		enemy.health = split_health
+		enemy.current_health = split_health
+		enemy.position = position + Vector2(randf_range(-2.0, 2.0), randf_range(-2.0, 2.0))
+		enemy.target_position = target_position
+		parent.add_child(enemy)
+		enemy.add_to_group("enemy")
+		enemy.tree_exited.connect(func():
+			if WaveSpawner.active_waves.has(wave):
+				WaveSpawner.active_waves[wave] -= 1
+				if WaveSpawner.active_waves[wave] <= 0:
+					WaveSpawner.active_waves.erase(wave)
+					WaveSpawner.wave_completed.emit(wave)
+					var button = get_tree().get_first_node_in_group("start_wave_button")
+					if button: button.disabled = false
+		)

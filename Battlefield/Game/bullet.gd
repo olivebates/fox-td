@@ -10,6 +10,7 @@ extends Area2D
 var velocity: Vector2 = Vector2.ZERO
 var target: Node2D = null
 var has_hit: bool = false  # Track if already hit
+var source_tower: Node2D = null
 
 func _ready() -> void:
 	monitoring = true
@@ -69,7 +70,21 @@ func _on_body_entered(body: Node2D) -> void:
 		on_hit()
 
 func apply_damage(enemy: Node2D) -> void:
-	enemy.take_damage(damage)
+	var mult = _get_color_match_multiplier(enemy)
+	var final_damage = int(max(1.0, round(float(damage) * mult)))
+	enemy.take_damage(final_damage)
+
+func _get_color_match_multiplier(enemy: Node2D) -> float:
+	if source_tower == null or !is_instance_valid(source_tower):
+		return 1.0
+	if !source_tower.has_meta("item_data"):
+		return 1.0
+	var data = source_tower.get_meta("item_data")
+	var colors: Array = data.get("colors", [])
+	var enemy_color = enemy.get("wave_color")
+	if enemy_color != null and colors.has(enemy_color):
+		return 2.0
+	return 1.0
 
 func on_hit() -> void:
 	queue_free()

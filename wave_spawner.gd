@@ -35,6 +35,7 @@ var HEALTH_REWARD_MULTIPLIER = 1.0
 var COUNT_WEIGHT = 0.3
 var HEALTH_WEIGHT = 0.7
 var smoothed_power := 1.0
+var _last_level_cached: int = -1
 
 
 func get_wave_power(level: int, wave: int) -> float:
@@ -256,6 +257,9 @@ func _ready():
 	add_child(path_node)
 	path_tiles_container = Node2D.new()
 	add_child(path_tiles_container)
+	set_power_mult()
+	set_enemy_config()
+	_last_level_cached = current_level
 	await get_tree().process_frame
 	StatsManager.new_map()
 	
@@ -267,9 +271,27 @@ var winscreen = preload("uid://tv785ptmh83y")
 var hint_label = null
 var empty_towers_hint = null
 var place_towers_hint = null
+
+func _is_valid_hint(label: Label) -> bool:
+	return label != null and is_instance_valid(label)
+
+func _clear_hint(label: Label) -> void:
+	if label != null and is_instance_valid(label):
+		label.queue_free()
+
+func clear_hints() -> void:
+	_clear_hint(hint_label)
+	_clear_hint(empty_towers_hint)
+	_clear_hint(place_towers_hint)
+	hint_label = null
+	empty_towers_hint = null
+	place_towers_hint = null
+
 func _process(delta: float) -> void:
-	set_power_mult()
-	set_enemy_config()
+	if current_level != _last_level_cached:
+		_last_level_cached = current_level
+		set_power_mult()
+		set_enemy_config()
 	#var config = get_level_config(current_level)
 		
 	#max_waves = config.waves
@@ -277,7 +299,7 @@ func _process(delta: float) -> void:
 		level_cleared = true
 
 	#Upgrade Towers hint
-	if current_level == 1 and current_wave == 3 and !hint_label and no_towers_upgraded() and get_tree().get_nodes_in_group("enemy").size() == 0 and !WaveSpawner._is_spawning:
+	if current_level == 1 and current_wave == 3 and !_is_valid_hint(hint_label) and no_towers_upgraded() and get_tree().get_nodes_in_group("enemy").size() == 0 and !WaveSpawner._is_spawning:
 		hint_label = Label.new()
 		hint_label.text = "Click critters to upgrade them!"
 		hint_label.position = Vector2(60, 60)
@@ -287,16 +309,18 @@ func _process(delta: float) -> void:
 		hint_label.add_theme_color_override("font_outline_color", Color.BLACK)
 		hint_label.add_theme_constant_override("outline_size", 1)
 		var tween = create_tween()
+		tween.bind_node(hint_label)
 		tween.set_loops()
 		tween.tween_property(hint_label, "position:y", 82, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		tween.tween_property(hint_label, "position:y", 80, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		get_tree().current_scene.add_child(hint_label)
 	
-	if hint_label and (!no_towers_upgraded() or current_wave == 0):
+	if _is_valid_hint(hint_label) and (!no_towers_upgraded() or current_wave == 0):
 		hint_label.queue_free()
+		hint_label = null
 		
 	#Place Towers hint
-	if current_level == 1 and get_tree().get_nodes_in_group("tower").size() == 0 and empty_towers_hint == null and WaveSpawner._is_spawning:
+	if current_level == 1 and get_tree().get_nodes_in_group("tower").size() == 0 and !_is_valid_hint(empty_towers_hint) and WaveSpawner._is_spawning:
 		empty_towers_hint = Label.new()
 		empty_towers_hint.text = "Drag a critter onto the field! :)"
 		empty_towers_hint.position = Vector2(60, 80)
@@ -305,16 +329,17 @@ func _process(delta: float) -> void:
 		empty_towers_hint.add_theme_color_override("font_outline_color", Color.BLACK)
 		empty_towers_hint.add_theme_constant_override("outline_size", 1)
 		var tween = create_tween()
+		tween.bind_node(empty_towers_hint)
 		tween.set_loops()
 		tween.tween_property(empty_towers_hint, "position:y", 82, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		tween.tween_property(empty_towers_hint, "position:y", 80, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		get_tree().current_scene.add_child(empty_towers_hint)
 	
-	if empty_towers_hint and get_tree().get_nodes_in_group("tower").size() > 0:
+	if _is_valid_hint(empty_towers_hint) and get_tree().get_nodes_in_group("tower").size() > 0:
 		empty_towers_hint.queue_free()
 		empty_towers_hint = null
 	
-	if current_level == 1 and current_wave == 2 and get_tree().get_nodes_in_group("tower").size() <= 1 and place_towers_hint == null:
+	if current_level == 1 and current_wave == 2 and get_tree().get_nodes_in_group("tower").size() <= 1 and !_is_valid_hint(place_towers_hint):
 		place_towers_hint = Label.new()
 		place_towers_hint.text = "Drag another critter onto the field! :)"
 		place_towers_hint.position = Vector2(60, 80)
@@ -323,12 +348,13 @@ func _process(delta: float) -> void:
 		place_towers_hint.add_theme_color_override("font_outline_color", Color.BLACK)
 		place_towers_hint.add_theme_constant_override("outline_size", 1)
 		var tween = create_tween()
+		tween.bind_node(place_towers_hint)
 		tween.set_loops()
 		tween.tween_property(place_towers_hint, "position:y", 82, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		tween.tween_property(place_towers_hint, "position:y", 80, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		get_tree().current_scene.add_child(place_towers_hint)
 	
-	if place_towers_hint and (current_wave != 2 or get_tree().get_nodes_in_group("tower").size() > 1):
+	if _is_valid_hint(place_towers_hint) and (current_wave != 2 or get_tree().get_nodes_in_group("tower").size() > 1):
 		place_towers_hint.queue_free()
 		place_towers_hint = null
 	
@@ -445,10 +471,13 @@ func spawn_enemy(wave: int, enemy_type: String, health: int) -> void:
 	enemy.add_to_group("enemy")
 	
 	var power := get_wave_power(current_level, wave)
-	enemy.max_speed = base_speed + pow(power, 0.25)
-	enemy.speed = type_data.speed
-	enemy.health = health
-	enemy.current_health = health
+	var adjusted_health = DifficultyManager.get_enemy_spawn_health(health)
+	enemy.max_speed = DifficultyManager.get_enemy_spawn_max_speed(base_speed + pow(power, 0.25))
+	enemy.speed = DifficultyManager.get_enemy_spawn_speed(type_data.speed)
+	enemy.health = adjusted_health
+	enemy.current_health = adjusted_health
+	enemy.enemy_type = enemy_type
+	enemy.spawn_wave = wave
 	
 	enemy.tree_exited.connect(func():
 		if active_waves.has(wave):

@@ -1,3 +1,3 @@
 extends Node
 
-var dev = false
+var dev = true

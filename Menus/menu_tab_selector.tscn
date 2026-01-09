@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://cgtxb5iesuex6" path="res://Menus/Gacha/gacha_menu.tscn" id="1_1trta"]
 [ext_resource type="Script" uid="uid://dlvk7rlx54l4v" path="res://Menus/menu_tab_selector.gd" id="1_rsbsd"]
 [ext_resource type="PackedScene" uid="uid://cc6babgiwuur6" path="res://Menus/StatsMenu/StatsMenu.tscn" id="2_blqk4"]
-[ext_resource type="PackedScene" uid="uid://bx87mx84xlody" path="res://Menus/Challenges/ChallengesMenu.tscn" id="4_rsbsd"]
+[ext_resource type="PackedScene" uid="uid://c2nqv8b3u6r3p" path="res://Menus/DifficultyMenu/difficulty_menu.tscn" id="5_t5qm1"]
 
 [node name="MenuTabSelector" type="TabContainer"]
 anchors_preset = 15
@@ -32,21 +32,23 @@ offset_bottom = -25.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Camp2" parent="Camp" instance=ExtResource("1_1trta")]
+[node name="Stats" parent="Camp" instance=ExtResource("2_blqk4")]
 visible = false
+layout_mode = 0
+offset_top = 0.0
+offset_bottom = 0.0
+
+[node name="Difficulty" type="Control" parent="."]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="Difficulty" parent="Difficulty" instance=ExtResource("5_t5qm1")]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 31.0
-offset_bottom = 0.0
+offset_top = 6.0
+offset_bottom = -25.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="Stats" parent="Camp" instance=ExtResource("2_blqk4")]
-visible = false
-layout_mode = 0
-
-[node name="ChallengesMenu" parent="Camp" instance=ExtResource("4_rsbsd")]
-visible = false
-layout_mode = 0

@@ -1,0 +1,122 @@
+[gd_scene load_steps=4 format=3 uid="uid://c2nqv8b3u6r3p"]
+
+[ext_resource type="Script" uid="uid://c1gniulysrjws" path="res://Menus/DifficultyMenu/difficulty_menu.gd" id="1_ynqq2"]
+[ext_resource type="Script" uid="uid://hflmog8s660p" path="res://color_tinter.gd" id="2_8uren"]
+[ext_resource type="PackedScene" uid="uid://ca5b22w8po58j" path="res://Battlefield/GUI/difficulty_popup.tscn" id="2_w6e20"]
+
+[node name="DifficultyMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_ynqq2")
+
+[node name="DifficultyPopup" parent="." instance=ExtResource("2_w6e20")]
+layout_mode = 0
+offset_top = 16.0
+offset_bottom = 25.0
+USE_FIXED_TRAITS = false
+ALWAYS_EXPANDED = true
+
+[node name="DifficultyTitle" type="Label" parent="."]
+layout_mode = 0
+offset_left = 53.0
+offset_top = 5.0
+offset_right = 200.0
+offset_bottom = 39.0
+text = "Difficulty Modifiers"
+
+[node name="TotalLabel" type="Label" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 20.0
+offset_top = 112.0
+offset_right = 160.0
+offset_bottom = 127.0
+text = "Money Gain: x1.0"
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 8.0
+offset_bottom = 8.0
+
+[node name="GachaBackground" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = -5.0
+offset_top = 3.0
+offset_right = 245.0
+offset_bottom = 147.0
+mouse_filter = 2
+color = Color(0.13333334, 0.14509805, 0.21960784, 1)
+script = ExtResource("2_8uren")
+brightness_shift = 0.6
+
+[node name="GachaBackground13" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = -30.0
+offset_top = 3.0
+offset_right = 218.0
+offset_bottom = 5.0
+mouse_filter = 2
+color = Color(0.105882354, 0.11372549, 0.17254902, 1)
+script = ExtResource("2_8uren")
+
+[node name="GachaBackground3" type="ColorRect" parent="."]
+visible = false
+z_index = -2
+layout_mode = 0
+offset_left = -29.0
+offset_top = -12.0
+offset_right = 76.0
+offset_bottom = 94.0
+mouse_filter = 2
+color = Color(0.105882354, 0.11372549, 0.17254902, 1)
+script = ExtResource("2_8uren")
+
+[node name="GachaBackground9" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = -7.0
+offset_top = 23.0
+offset_right = 191.0
+offset_bottom = 115.0
+mouse_filter = 2
+color = Color(0.105882354, 0.11372549, 0.17254902, 1)
+script = ExtResource("2_8uren")
+
+[node name="GachaBackground2" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = -9.0
+offset_top = 21.0
+offset_right = 189.0
+offset_bottom = 113.0
+mouse_filter = 2
+color = Color(0.21176471, 0.24705882, 0.3764706, 1)
+script = ExtResource("2_8uren")
+brightness_shift = 0.3
+
+[node name="GachaBackground10" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = -9.0
+offset_top = 16.0
+offset_right = 193.0
+offset_bottom = 28.0
+mouse_filter = 2
+color = Color(0.105882354, 0.11372549, 0.17254902, 1)
+script = ExtResource("2_8uren")
+
+[node name="GachaBackground14" type="ColorRect" parent="."]
+z_index = -2
+layout_mode = 0
+offset_left = -11.0
+offset_top = 14.0
+offset_right = 191.0
+offset_bottom = 27.0
+mouse_filter = 2
+color = Color(0.21176471, 0.24705882, 0.3764706, 1)
+script = ExtResource("2_8uren")
+brightness_shift = 0.4

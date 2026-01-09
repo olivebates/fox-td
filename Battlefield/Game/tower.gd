@@ -23,10 +23,17 @@ var path = [0,0,0]
 
 var cooldown_time: float = 0.0
 var max_cooldown: float = 4.0
+const TARGET_UPDATE_INTERVAL := 0.1
+var _target_update_accum: float = 0.0
+var _cached_stats: Dictionary = {}
+var _last_rank: int = -1
+var _last_path: Array = []
+var _last_tower_type = null
 
 func start_cooldown() -> void:
 	cooldown_time = max_cooldown
-	queue_redraw()
+	if draw_radius or cooldown_time > 0:
+		queue_redraw()
 
 func _ready() -> void:
 	if has_meta("item_data"):
@@ -138,10 +145,14 @@ func update_target() -> void:
 func _process(delta: float) -> void:
 	if not has_meta("item_data"): return
 	var data = get_meta("item_data")
-	var stats = InventoryManager.get_tower_stats(tower_type, data.rank, path)
-	bullets_shot = stats.bullets
-	fire_rate = stats.attack_speed
-	attack_radius = stats.range
+	if data.rank != _last_rank or path != _last_path or tower_type != _last_tower_type:
+		_cached_stats = InventoryManager.get_tower_stats(tower_type, data.rank, path)
+		_last_rank = data.rank
+		_last_path = path.duplicate()
+		_last_tower_type = tower_type
+	bullets_shot = _cached_stats.bullets
+	fire_rate = _cached_stats.attack_speed
+	attack_radius = _cached_stats.range
 	if holding:
 		hold_timer += delta
 		
@@ -154,11 +165,14 @@ func _process(delta: float) -> void:
 			pass  # keep cooldown
 		else:
 			cooldown_time = 0
-		queue_redraw()
 		
-	if not get_tree().get_first_node_in_group("start_wave_button").is_paused:
+	var start_button = get_tree().get_first_node_in_group("start_wave_button")
+	if start_button == null or !start_button.is_paused:
 		_timer += delta
-	update_target()
+	_target_update_accum += delta
+	if _target_update_accum >= TARGET_UPDATE_INTERVAL:
+		_target_update_accum = 0.0
+		update_target()
 	if _timer >= 1.0 / fire_rate and current_target and cooldown_time <= 0:
 		_timer = 0.0
 		fire(current_target)

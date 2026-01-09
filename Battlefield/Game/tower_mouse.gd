@@ -21,7 +21,8 @@ func _process(delta: float) -> void:
 		
 		# Removed: fire_rate *= pow(1.07, rank - 1)  # Not in general stats; add if Mouse-specific
 		
-	if not get_tree().get_first_node_in_group("start_wave_button").is_paused:
+	var start_button = get_tree().get_first_node_in_group("start_wave_button")
+	if start_button == null or !start_button.is_paused:
 		_timer += delta
 	
 	if _timer >= 1.0 / max(fire_rate, 0.001):

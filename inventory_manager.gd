@@ -552,7 +552,9 @@ func _update_slot(slot: Panel) -> void:
 func _on_slot_input(event: InputEvent, slot: Panel) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and slot.has_meta("item"):
 		HealthBarGUI.show_cost_preview(0.0)
-		var item = slot.get_meta("item")
+		var item = slot.get_meta("item", {})
+		if item.is_empty():
+			return
 		dragged_item = item.duplicate()
 		drag_preview_item = dragged_item.duplicate()
 		original_slot = slot
@@ -634,6 +636,12 @@ func get_current_dragged_data(exclude_tower: Node = null) -> Dictionary:
 
 func _perform_drop() -> void:
 	var mouse_pos = get_global_mouse_position()
+	if dragged_item.is_empty():
+		dragged_item = {}
+		original_slot = null
+		drag_preview.visible = false
+		potential_cell = Vector2i(-1, -1)
+		return
 	var target = get_closest_slot(mouse_pos, 8.0, false)
 	var return_to_original = true
 	if target and target != original_slot:

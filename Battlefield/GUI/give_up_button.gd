@@ -2,9 +2,18 @@
 extends Button
 
 var has_been_unlocked = false
+const UNLOCK_CHECK_INTERVAL := 0.2
+var _unlock_accum: float = 0.0
+const RETURN_TO_CAMP_SCENE := preload("uid://cda7be4lkl7n8")
 func _process(delta: float) -> void:
-	if has_been_unlocked or WaveSpawner.current_wave > 6:
-		has_been_unlocked == true
+	if has_been_unlocked:
+		return
+	_unlock_accum += delta
+	if _unlock_accum < UNLOCK_CHECK_INTERVAL:
+		return
+	_unlock_accum = 0.0
+	if WaveSpawner.current_wave > 6:
+		has_been_unlocked = true
 		visible = true
 
 func _ready() -> void:
@@ -89,6 +98,6 @@ func _on_pressed() -> void:
 		StatsManager.new_map()
 	else:
 		StatsManager.reset_current_map()
-	var inst = load("uid://cda7be4lkl7n8").instantiate()
+	var inst = RETURN_TO_CAMP_SCENE.instantiate()
 	get_tree().current_scene.add_child(inst)
 	TooltipManager.hide_tooltip()

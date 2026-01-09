@@ -11,6 +11,9 @@ var walls_placed: int = 0
 
 var start_pos: Vector2
 var goal_pos: Vector2
+var _last_hover_cell: Vector2i = Vector2i(-999, -999)
+var _last_walls_placed: int = -1
+var _last_preview_cost: float = -1.0
 
 @onready var health_bar_gui = get_tree().get_first_node_in_group("HealthBarContainer")
 @onready var wave_spawner = get_tree().get_first_node_in_group("wave_spawner")
@@ -82,6 +85,11 @@ func _on_toggled(pressed: bool) -> void:
 	highlight_mode = pressed
 	GridController.highlight_mode = pressed
 	GridController.queue_redraw()
+	if not pressed:
+		health_bar_gui.hide_cost_preview()
+		_last_hover_cell = Vector2i(-999, -999)
+		_last_walls_placed = -1
+		_last_preview_cost = -1.0
 	
 	var base = StyleBoxFlat.new()
 	base.border_width_left = 0
@@ -125,6 +133,11 @@ func _on_toggled(pressed: bool) -> void:
 func _process(_delta: float) -> void:
 	if highlight_mode:
 		var cell = GridController.get_cell_from_pos(get_global_mouse_position())
+		if cell == _last_hover_cell and _last_walls_placed == GridController.walls_placed:
+			return
+		_last_hover_cell = cell
+		_last_walls_placed = GridController.walls_placed
+		var preview_cost := 0.0
 		if cell != Vector2i(-1, -1):
 			# Check if placement would be valid (no existing wall + path remains open)
 			var can_place := true
@@ -133,10 +146,8 @@ func _process(_delta: float) -> void:
 					can_place = false
 					break
 			if can_place:
-				var current_cost: float = GridController.wall_cost + (GridController.walls_placed * GridController.cost_increment)
-				health_bar_gui.show_cost_preview(current_cost)
-			else:
-				health_bar_gui.show_cost_preview(0.0)
-		else:
-			health_bar_gui.show_cost_preview(0.0)
+				preview_cost = GridController.wall_cost + (GridController.walls_placed * GridController.cost_increment)
+		if preview_cost != _last_preview_cost:
+			_last_preview_cost = preview_cost
+			health_bar_gui.show_cost_preview(preview_cost)
 		queue_redraw()

@@ -188,14 +188,21 @@ func refresh_grid_highlights() -> void:
 
 
 func place_item(item: Dictionary, cell: Vector2i) -> bool:
+	if item.is_empty() or !item.has("id") or !InventoryManager.items.has(item.id):
+		Utilities.spawn_floating_text("Invalid tower data...", get_global_mouse_position(), null, false)
+		return false
 	if !is_valid_placement(cell):
 		return false
 	var existing = get_grid_item_at_cell(cell)
 	if existing:
 		return false
 	var item_def = InventoryManager.items[item.id]
+	if item_def.get("prefab", null) == null:
+		Utilities.spawn_floating_text("Missing tower prefab...", get_global_mouse_position(), null, false)
+		return false
 	var tower_level = item_def.get("tower_level", 0)
-	var cost = InventoryManager.get_placement_cost(item.id, tower_level, item.rank)
+	var rank = item.get("rank", 1)
+	var cost = InventoryManager.get_placement_cost(item.id, tower_level, rank)
 	if !StatsManager.spend_health(cost):
 		Utilities.spawn_floating_text("Not enough meat...", Vector2.ZERO, null)
 		return false
@@ -227,6 +234,8 @@ func change_level_color() -> void:
 
 func start_tower_drag(tower: Node, offset: Vector2) -> void:
 	if dragged_tower != null: return
+	if tower == null or !is_instance_valid(tower):
+		return
 	HealthBarGUI.show_cost_preview(0.0)
 	dragged_tower = tower
 	dragged_offset = offset
@@ -247,6 +256,11 @@ func start_tower_drag(tower: Node, offset: Vector2) -> void:
 func _process(_delta: float) -> void:
 	
 	if dragged_tower != null:
+		if !is_instance_valid(dragged_tower):
+			dragged_tower = null
+			original_cell = Vector2i(-1, -1)
+			potential_cell = Vector2i(-1, -1)
+			return
 		TooltipManager.hide_tooltip()
 		var mouse_pos = get_global_mouse_position()
 		dragged_tower.global_position = mouse_pos + dragged_offset
@@ -269,27 +283,69 @@ func _process(_delta: float) -> void:
 
 
 func get_nearest_valid_cell(base_cell: Vector2i) -> Vector2i:
+	update_buildables()
 	if base_cell.x < 0 or base_cell.x >= WIDTH or base_cell.y < 0 or base_cell.y >= HEIGHT:
-		base_cell = Vector2i(clampi(base_cell.x, 0, WIDTH-1), clampi(base_cell.y, 0, HEIGHT-1))
-	if is_valid_placement(base_cell):
+		base_cell = Vector2i(clampi(base_cell.x, 0, WIDTH - 1), clampi(base_cell.y, 0, HEIGHT - 1))
+	if _is_cell_valid(base_cell):
 		return base_cell
-	var best: Vector2i = Vector2i(-1, -1)
-	var best_dist: float = INF
-	for y in range(HEIGHT):
-		for x in range(WIDTH):
-			var cell = Vector2i(x, y)
-			if is_valid_placement(cell):
-				var dist = base_cell.distance_squared_to(cell)
+	var best := Vector2i(-1, -1)
+	var best_dist := INF
+	var max_radius = max(WIDTH, HEIGHT)
+	for radius in range(1, max_radius + 1):
+		var min_x = max(base_cell.x - radius, 0)
+		var max_x = min(base_cell.x + radius, WIDTH - 1)
+		var min_y = max(base_cell.y - radius, 0)
+		var max_y = min(base_cell.y + radius, HEIGHT - 1)
+		for x in range(min_x, max_x + 1):
+			var top_cell := Vector2i(x, min_y)
+			if _is_cell_valid(top_cell):
+				var dist := base_cell.distance_squared_to(top_cell)
 				if dist < best_dist:
 					best_dist = dist
-					best = cell
+					best = top_cell
+			if min_y != max_y:
+				var bottom_cell := Vector2i(x, max_y)
+				if _is_cell_valid(bottom_cell):
+					var dist_bottom := base_cell.distance_squared_to(bottom_cell)
+					if dist_bottom < best_dist:
+						best_dist = dist_bottom
+						best = bottom_cell
+		for y in range(min_y + 1, max_y):
+			var left_cell := Vector2i(min_x, y)
+			if _is_cell_valid(left_cell):
+				var dist_left := base_cell.distance_squared_to(left_cell)
+				if dist_left < best_dist:
+					best_dist = dist_left
+					best = left_cell
+			if min_x != max_x:
+				var right_cell := Vector2i(max_x, y)
+				if _is_cell_valid(right_cell):
+					var dist_right := base_cell.distance_squared_to(right_cell)
+					if dist_right < best_dist:
+						best_dist = dist_right
+						best = right_cell
+		if best != Vector2i(-1, -1) and best_dist <= float(radius * radius):
+			return best
 	return best
+
+func _is_cell_valid(cell: Vector2i) -> bool:
+	if cell.x < 0 or cell.x >= WIDTH or cell.y < 0 or cell.y >= HEIGHT:
+		return false
+	return grid[cell.y][cell.x] == null and buildable_grid[cell.y][cell.x]
 
 func _perform_tower_drop() -> void:
 	var success = false
+	if dragged_tower == null or !is_instance_valid(dragged_tower):
+		dragged_tower = null
+		original_cell = Vector2i(-1, -1)
+		potential_cell = Vector2i(-1, -1)
+		return
+	var dragged_data: Dictionary = {}
+	if dragged_tower != null and is_instance_valid(dragged_tower) and dragged_tower.has_meta("item_data"):
+		dragged_data = dragged_tower.get_meta("item_data")
 	if potential_cell != Vector2i(-1, -1):
 		var place_cell = get_nearest_valid_cell(potential_cell)
-		if place_cell != Vector2i(-1, -1) && get_grid_item_at_cell(place_cell) == null && is_valid_placement(place_cell, dragged_tower.get_meta("item_data")):
+		if place_cell != Vector2i(-1, -1) && get_grid_item_at_cell(place_cell) == null && is_valid_placement(place_cell, dragged_data):
 			dragged_tower.global_position = grid_offset + Vector2(place_cell.x * CELL_SIZE + CELL_SIZE / 2, place_cell.y * CELL_SIZE + CELL_SIZE / 2)
 			grid[place_cell.y][place_cell.x] = dragged_tower
 			dragged_tower.start_cooldown()  # new line
@@ -372,7 +428,10 @@ func _draw() -> void:
 	if dragged_tower != null and potential_cell != Vector2i(-1, -1):
 		var nearest_cell = get_nearest_valid_cell(potential_cell)
 		var cell_pos = grid_offset + Vector2(nearest_cell.x * CELL_SIZE, nearest_cell.y * CELL_SIZE)
-		var valid = nearest_cell != Vector2i(-1, -1) && get_grid_item_at_cell(nearest_cell) == null && is_valid_placement(nearest_cell, dragged_tower.get_meta("item_data"))
+		var dragged_data: Dictionary = {}
+		if dragged_tower != null and is_instance_valid(dragged_tower) and dragged_tower.has_meta("item_data"):
+			dragged_data = dragged_tower.get_meta("item_data")
+		var valid = nearest_cell != Vector2i(-1, -1) && get_grid_item_at_cell(nearest_cell) == null && is_valid_placement(nearest_cell, dragged_data)
 		var fill_color = Color(0, 1, 0, 0.3) if valid else Color(1, 0, 0, 0.3)
 		draw_rect(Rect2(cell_pos, Vector2(CELL_SIZE, CELL_SIZE)), fill_color, true)
 	

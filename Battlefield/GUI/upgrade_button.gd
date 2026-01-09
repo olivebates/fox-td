@@ -123,7 +123,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			grid_controller.refresh_grid_highlights()
 
 func _attempt_upgrade(tower: Node) -> void:
+	if tower == null or !is_instance_valid(tower) or !tower.has_meta("item_data"):
+		return
 	var data = tower.get_meta("item_data")
+	if !data.has("id") or !InventoryManager.items.has(data.id):
+		return
 	var id: String = data.id  # tower_type replaced with id
 	var rank: int = data.rank
 	var rarity: int = InventoryManager.items[id].rarity

@@ -64,8 +64,7 @@ func _on_pressed() -> void:
 		node.queue_free()
 		
 	GridController.change_level_color()
-	if WaveSpawner.hint_label:
-		WaveSpawner.hint_label.queue_free()
+	WaveSpawner.clear_hints()
 	
 	get_tree().get_first_node_in_group("game_area").visible = true
 	InventoryManager.clear_inventory()

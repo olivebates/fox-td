@@ -9,6 +9,12 @@ class_name Enemy
 var current_health: int = 50
 var path: PackedVector2Array = []
 var path_index: int = 0
+var enemy_type: String = "normal"
+var spawn_wave: int = 1
+var can_split: bool = true
+var no_meat_reward: bool = false
+var revive_used: bool = false
+var regen_buffer: float = 0.0
 
 var health_bg: ColorRect
 var health_fg: ColorRect
@@ -95,8 +101,15 @@ func _process(delta: float) -> void:
 		path_index += 1
 	else:
 		global_position += dir.normalized() * speed * delta
-	
-	
+
+	var regen_per_second := DifficultyManager.get_enemy_regen_per_second(health)
+	if regen_per_second > 0.0 and current_health < health:
+		regen_buffer += regen_per_second * delta
+		if regen_buffer >= 1.0:
+			var regen_points := int(floor(regen_buffer))
+			regen_buffer -= regen_points
+			current_health = min(health, current_health + regen_points)
+
 	update_healthbar()
 
 func create_healthbar():
@@ -121,6 +134,11 @@ func update_healthbar():
 	health_fg.size.x = 4.0 * (float(current_health) / health)
 
 func take_damage(amount: int):
+	if DifficultyManager.should_enemy_dodge():
+		return
+	amount = DifficultyManager.apply_enemy_damage_taken(amount)
+	if amount <= 0:
+		return
 	current_health -= amount
 	update_healthbar()
 	
@@ -144,13 +162,46 @@ func take_damage(amount: int):
 		die()
 
 func die():
+	if _try_revive():
+		return
 	var penalty = TimelineManager.wave_replay_counts.get(TimelineManager.current_wave_index, 0)
 	var money_gain = max(1, WaveSpawner.get_enemy_death_money() - penalty)
+	var money_mult := DifficultyManager.get_money_multiplier()
+	money_gain = max(1, int(round(money_gain * money_mult)))
 	StatsManager.money += money_gain
 	Utilities.spawn_floating_text("🪙"+str(int(money_gain)), global_position + Vector2(0, 8), get_tree().current_scene, false, Color.YELLOW)
-	get_tree().call_group("health_manager", "gain_health_from_kill", WaveSpawner.get_enemy_death_health_gain())
+	_grant_meat_reward()
+	_spawn_split_enemies()
 	if get_tree().get_nodes_in_group("enemy").size() == 1 and !WaveSpawner._is_spawning:
 		TimelineManager.save_timeline(WaveSpawner.current_wave)
 		WaveSpawner.current_wave += 1
 		WaveSpawner.wave_locked = false
 	queue_free()
+
+func _grant_meat_reward() -> void:
+	if no_meat_reward:
+		return
+	var base_reward = WaveSpawner.get_enemy_death_health_gain()
+	var reward = DifficultyManager.apply_meat_gain(base_reward)
+	get_tree().call_group("health_manager", "gain_health_from_kill", reward)
+
+func _spawn_split_enemies() -> void:
+	if not can_split:
+		return
+	var split_count := DifficultyManager.get_split_count()
+	if split_count <= 0:
+		return
+	var split_health := DifficultyManager.get_split_spawn_health(health)
+	DifficultyManager.spawn_split_enemies(self, split_count, split_health)
+
+func _try_revive() -> bool:
+	if revive_used:
+		return false
+	if not DifficultyManager.should_enemy_revive():
+		return false
+	_grant_meat_reward()
+	no_meat_reward = true
+	revive_used = true
+	current_health = max(1, int(round(float(health) * DifficultyManager.get_enemy_revive_health_ratio())))
+	update_healthbar()
+	return true

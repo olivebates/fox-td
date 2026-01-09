@@ -1,9 +1,10 @@
-[gd_scene load_steps=18 format=3 uid="uid://baklm1pqc3pmt"]
+[gd_scene load_steps=19 format=3 uid="uid://baklm1pqc3pmt"]
 
 [ext_resource type="Script" uid="uid://xi1db20durn0" path="res://Battlefield/GUI/GUI.gd" id="1_q7530"]
 [ext_resource type="Script" uid="uid://cidutxx7swaph" path="res://Battlefield/GUI/drag_preview.gd" id="2_3yf0u"]
 [ext_resource type="PackedScene" uid="uid://cqha2gy70dtyi" path="res://Battlefield/GUI/pause.tscn" id="2_7bcsv"]
 [ext_resource type="Script" uid="uid://duq08sumqlin5" path="res://Battlefield/GUI/next_wave_button.gd" id="2_dyjck"]
+[ext_resource type="PackedScene" uid="uid://ca5b22w8po58j" path="res://Battlefield/GUI/difficulty_popup.tscn" id="2_syepm"]
 [ext_resource type="Script" uid="uid://dtv1a1tqussd1" path="res://Battlefield/GUI/upgrade_button.gd" id="3_111fc"]
 [ext_resource type="Script" uid="uid://bj8lwo7q73o8" path="res://Battlefield/GUI/spawn_button.gd" id="3_nnufs"]
 [ext_resource type="Script" uid="uid://hflmog8s660p" path="res://color_tinter.gd" id="3_todsr"]
@@ -26,6 +27,13 @@ offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("1_q7530")
 metadata/_edit_use_anchors_ = true
+
+[node name="DifficultyPopup" parent="." instance=ExtResource("2_syepm")]
+layout_mode = 0
+offset_left = -183.0
+offset_top = -21.0
+offset_right = -113.0
+offset_bottom = -12.0
 
 [node name="GiveUpButton" type="Button" parent="." groups=["leave_button"]]
 visible = false

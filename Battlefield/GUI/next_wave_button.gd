@@ -1,6 +1,9 @@
 # NextWaveButton.gd
 extends Button
 
+const POLL_INTERVAL := 0.15
+var _poll_timer: float = 0.0
+
 func _ready() -> void:
 	if visible:
 		get_tree().get_first_node_in_group("start_wave_button")._on_pressed() # Unpause the game
@@ -75,7 +78,13 @@ func _on_mouse_exited() -> void:
 	TooltipManager.hide_tooltip()
 
 func _process(delta: float) -> void:
-	disabled = get_tree().get_nodes_in_group("enemy").size() > 0 or WaveSpawner._is_spawning
+	_poll_timer += delta
+	if _poll_timer < POLL_INTERVAL:
+		return
+	_poll_timer = 0.0
+	var should_disable := get_tree().get_nodes_in_group("enemy").size() > 0 or WaveSpawner._is_spawning
+	if disabled != should_disable:
+		disabled = should_disable
 
 func _on_pressed() -> void:
 	if !disabled:

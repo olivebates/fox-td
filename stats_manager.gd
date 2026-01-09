@@ -43,8 +43,10 @@ var persistent_upgrade_data = {
 
 func update_persistant_upgrades():
 	#max_health = base_max_health * pow(2, level-1)
-	starting_health = (base_max_health / 2) + (persistent_upgrade_data["start_meat"].level * persistent_upgrade_data["start_meat"].increment)
-	production_speed = (bonuses["production"]*(level-1)) + base_production_speed + persistent_upgrade_data["meat_production"].level*persistent_upgrade_data["meat_production"].increment
+	var base_starting = (base_max_health / 2) + (persistent_upgrade_data["start_meat"].level * persistent_upgrade_data["start_meat"].increment)
+	starting_health = base_starting * DifficultyManager.get_starting_meat_multiplier()
+	var base_production = (bonuses["production"]*(level-1)) + base_production_speed + persistent_upgrade_data["meat_production"].level*persistent_upgrade_data["meat_production"].increment
+	production_speed = base_production * DifficultyManager.get_production_speed_multiplier()
 	kill_multiplier = (bonuses["multiplier"]*(level-1)) + base_kill_multiplier + persistent_upgrade_data["kill_multiplier"].level*persistent_upgrade_data["kill_multiplier"].increment
 
 func get_current_value(stat: String) -> float:
@@ -135,9 +137,6 @@ func reset_current_map():
 	#WaveSpawner.is_spawning = false
 	#WaveSpawner.enemies_to_spawn = 0
 	get_tree().call_group("start_wave_button", "set_disabled", false)
-	var enemies = get_tree().get_nodes_in_group("enemy")
-	for node in enemies:
-		node.queue_free()
 
 	var towers = get_tree().get_nodes_in_group("tower")
 	for node in towers:
@@ -176,8 +175,6 @@ func new_map():
 		i.queue_free()
 		
 	WaveSpawner.generate_path()
-	AStarManager._update_grid()
-	GridController.update_buildables()
 
 		
 	#get_tree().get_first_node_in_group("start_first_wave_button").on_death()
@@ -185,9 +182,6 @@ func new_map():
 	#WaveSpawner.is_spawning = false
 	#WaveSpawner.enemies_to_spawn = 0
 	get_tree().call_group("start_wave_button", "set_disabled", false)
-	var enemies = get_tree().get_nodes_in_group("enemy")
-	for node in enemies:
-		node.queue_free()
 
 
 	var towers = get_tree().get_nodes_in_group("tower")

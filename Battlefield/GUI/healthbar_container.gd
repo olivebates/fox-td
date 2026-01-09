@@ -95,6 +95,7 @@ func _on_health_changed(current: float, max_val: float) -> void:
 	bar.max_value = max_val
 	_update_text()
 	_update_red_overlay()
+	queue_redraw()
 
 func _on_max_changed(new_max: float) -> void:
 	if new_max != StatsManager.base_max_health:
@@ -103,6 +104,7 @@ func _on_max_changed(new_max: float) -> void:
 	bar.max_value = new_max
 	_update_text()
 	_update_red_overlay()
+	queue_redraw()
 
 func _update_text() -> void:
 	text.text = "🥩%d / %d" % [
@@ -113,10 +115,12 @@ func _update_text() -> void:
 func show_cost_preview(amount: float) -> void:
 	cost_preview_amount = amount
 	_update_red_overlay()
+	queue_redraw()
 
 func hide_cost_preview() -> void:
 	cost_preview_amount = 0.0
 	_update_red_overlay()
+	queue_redraw()
 
 func _update_red_overlay() -> void:
 	if cost_preview_amount <= 0.0 or bar.max_value <= 0:
@@ -143,10 +147,6 @@ func _update_red_overlay() -> void:
 	red_overlay.size = Vector2(overlay_width, bar.size.y)
 
 
-func _process(delta: float) -> void:
-	bar.max_value = StatsManager.max_health
-	bar.value = StatsManager.health
-	queue_redraw()
 # Level number
 #func _draw() -> void:
 	#if bar.size.x <= 0: return

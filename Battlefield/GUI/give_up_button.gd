@@ -12,7 +12,7 @@ func _process(delta: float) -> void:
 	if _unlock_accum < UNLOCK_CHECK_INTERVAL:
 		return
 	_unlock_accum = 0.0
-	if WaveSpawner.current_wave > 6:
+	if WaveSpawner.current_wave > 6 or WaveSpawner.current_level > 1:
 		has_been_unlocked = true
 		visible = true
 

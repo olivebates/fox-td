@@ -47,7 +47,7 @@ const TYPE_CONFIGS := {
 	},
 	"spirit_fox": {
 		"phase_cycle": 2.2,
-		"phase_duration": 0.7,
+		"phase_duration": 2.0,
 		"base_alpha": 0.75
 	},
 	"regenerator": {
@@ -64,7 +64,7 @@ const TYPE_CONFIGS := {
 	},
 	"stalker": {
 		"phase_cycle": 3.5,
-		"phase_duration": 1.0,
+		"phase_duration": 2.0,
 		"base_alpha": 0.85
 	}
 }
@@ -308,6 +308,8 @@ func _apply_type_modifiers() -> void:
 		type_phase_cycle = float(config.phase_cycle)
 	if config.has("phase_duration"):
 		type_phase_duration = float(config.phase_duration)
+	if type_phase_cycle > 0.0:
+		type_phase_timer = randf_range(0.0, type_phase_cycle)
 	if config.has("revive_ratio"):
 		type_revive_ratio = float(config.revive_ratio)
 	if config.has("scale"):

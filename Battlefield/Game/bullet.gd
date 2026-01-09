@@ -45,7 +45,7 @@ func _physics_process(delta: float) -> void:
 	if has_hit:  # Stop moving after hit
 		return
 	
-	if target and is_instance_valid(target):
+	if target and is_instance_valid(target) and target.is_in_group("enemies"):
 		pass
 	else:
 		target = find_closest_enemy()

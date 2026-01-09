@@ -4,9 +4,11 @@ extends Control
 @onready var grid: GridContainer = %Inventory
 @onready var spawner_grid: GridContainer = %SpawnButtons
 @onready var drag_preview: Control = %DragPreview
+@onready var sell_overlay: ColorRect = %SellOverlay
+@onready var sell_label: Label = %SellLabel
 
 func _ready() -> void:
-	InventoryManager.register_inventory(grid, spawner_grid, drag_preview)
+	InventoryManager.register_inventory(grid, spawner_grid, drag_preview, sell_overlay, sell_label)
 #
 #func _input(event: InputEvent) -> void:
 	#if event is InputEventKey and event.pressed and event.keycode == KEY_R:

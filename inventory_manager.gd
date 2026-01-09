@@ -229,7 +229,19 @@ func get_tower_stats(id: String, rank: int, path_levels: Array) -> Dictionary:
 			PATH_ID.creature_attack_speed: stats.creature_attack_speed += bonus
 			PATH_ID.creature_health:stats.creature_health += (rank - 1) * 2
 			PATH_ID.creature_respawn_time: stats.creature_respawn_time -= 0
-	
+	var damage_mult = StatsManager.get_global_damage_multiplier()
+	var speed_mult = StatsManager.get_global_attack_speed_multiplier()
+	var range_mult = StatsManager.get_global_range_multiplier()
+	if stats.damage != -1:
+		stats.damage *= damage_mult
+	if stats.creature_damage != -1:
+		stats.creature_damage *= damage_mult
+	if stats.attack_speed != -1:
+		stats.attack_speed *= speed_mult
+	if stats.creature_attack_speed != -1:
+		stats.creature_attack_speed *= speed_mult
+	if stats.range != -1:
+		stats.range *= range_mult
 	return stats
 
 
@@ -315,7 +327,9 @@ func get_placement_cost(id: String, tower_level: int, rank: int) -> float:
 	if rank >= 5:
 		rank_factor *= pow(0.65, rank - 4)  # Even stronger discount
 	var rarity_factor := pow(1.35, items[id].rarity - 1)
-	return floor(base * rank_factor * rarity_factor / 10) * 10
+	var cost = base * rank_factor * rarity_factor
+	cost *= StatsManager.get_tower_placement_cost_multiplier()
+	return max(1, floor(cost / 10) * 10)
 
 # In InventoryManager.gd, replace the get_upgrade_cost function:
 
@@ -342,6 +356,10 @@ var original_slot: Panel = null
 var drag_preview: Control = null
 var drag_preview_item: Dictionary = {}
 var potential_cell: Vector2i = Vector2i(-1, -1)
+var inventory_grid: GridContainer = null
+var sell_overlay: ColorRect = null
+var sell_label: Label = null
+const SELL_REFUND_RATIO := 0.4
 
 
 func get_merge_cost(current_rank: int) -> float:
@@ -349,7 +367,16 @@ func get_merge_cost(current_rank: int) -> float:
 	return base_spawn_cost #* pow(3.0, float(new_rank - 1)) / 3.0
 
 
-func register_inventory(grid: GridContainer, spawner_grid: GridContainer, preview: Control) -> void:
+func register_inventory(grid: GridContainer, spawner_grid: GridContainer, preview: Control, overlay: ColorRect = null, overlay_label: Label = null) -> void:
+	inventory_grid = grid
+	sell_overlay = overlay
+	sell_label = overlay_label
+	if sell_overlay:
+		sell_overlay.visible = false
+	if sell_label:
+		sell_label.add_theme_font_size_override("font_size", 4)
+		sell_label.add_theme_color_override("font_outline_color", Color.BLACK)
+		sell_label.add_theme_constant_override("outline_size", 1)
 	slots.clear()
 	for i in 21:
 		var slot = Panel.new()
@@ -656,6 +683,8 @@ func _update_hover(slot: Panel) -> void:
 func _process(_delta: float) -> void:
 	var preview_cost: float = 0.0
 	if !dragged_item.is_empty():
+		if grid_controller:
+			grid_controller.queue_redraw()
 		var item_def = items[dragged_item.id]
 		var tower_level = item_def.get("tower_level", 0)
 		var cost = get_placement_cost(dragged_item.id, tower_level, dragged_item.rank)
@@ -717,6 +746,7 @@ func refresh_all_highlights() -> void:
 		slot.queue_redraw()
 	if grid_controller:
 		grid_controller.refresh_grid_highlights()
+	hide_sell_overlay()
 
 func _get_slot_under_mouse() -> Panel:
 	var pos = get_global_mouse_position()
@@ -740,6 +770,33 @@ func get_closest_slot(global_pos: Vector2, max_dist: float = 8.0, empty_only: bo
 	if closest and min_dist_sq <= max_dist_sq:
 		return closest
 	return null
+
+func is_pos_over_inventory(global_pos: Vector2) -> bool:
+	if inventory_grid == null:
+		return false
+	return inventory_grid.get_global_rect().has_point(global_pos)
+
+func get_tower_sell_value(item_data: Dictionary) -> int:
+	if item_data.is_empty() or !item_data.has("id"):
+		return 0
+	var item_def = items.get(item_data.id, {})
+	var tower_level = item_def.get("tower_level", 0)
+	var rank = item_data.get("rank", 1)
+	var cost = get_placement_cost(item_data.id, tower_level, rank)
+	return int(floor(cost * SELL_REFUND_RATIO))
+
+func show_sell_overlay(sell_amount: int) -> void:
+	if sell_overlay == null or sell_label == null or inventory_grid == null:
+		return
+	var rect = inventory_grid.get_global_rect()
+	sell_overlay.global_position = rect.position
+	sell_overlay.size = rect.size
+	sell_overlay.visible = true
+	sell_label.text = "Sell for " + str(sell_amount) + " meat"
+
+func hide_sell_overlay() -> void:
+	if sell_overlay:
+		sell_overlay.visible = false
 
 func _spawn_item(rank: int) -> bool:
 	var keys = items.keys()

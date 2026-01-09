@@ -234,7 +234,7 @@ func die():
 	var penalty = TimelineManager.wave_replay_counts.get(TimelineManager.current_wave_index, 0)
 	var money_gain = max(1, WaveSpawner.get_enemy_death_money() - penalty)
 	var money_mult := DifficultyManager.get_money_multiplier()
-	money_gain = max(1, int(round(money_gain * money_mult)))
+	money_gain = max(1, int(round(money_gain * money_mult * StatsManager.get_money_kill_multiplier())))
 	StatsManager.money += money_gain
 	Utilities.spawn_floating_text("🪙"+str(int(money_gain)), global_position + Vector2(0, 8), get_tree().current_scene, false, Color.YELLOW)
 	_grant_meat_reward()

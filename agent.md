@@ -2,6 +2,10 @@
 
 This document summarizes the current project state and code layout so a new agent can quickly understand the whole codebase and how the game fits together.
 
+## Local coding rule
+- Use `=` for variable declarations; do not use `:=`.
+- For highlight overlays, always clip to the buildable grid bounds and avoid drawing outside the grid.
+
 ## Project intent
 - Game: tower defense with gacha mechanics.
 - Goal: fast, fun, and addictive from the start.
@@ -16,7 +20,7 @@ This document summarizes the current project state and code layout so a new agen
   - `GUI` instance from `Battlefield/GUI/GUI.tscn`.
   - `Timeline` instance from `Battlefield/timeline/timeline.tscn`.
 - Menus: `Menus/Menu.tscn` with tabbed sections for stats, challenges, difficulty, gacha, win screen, etc.
-- New menu tab: `Menus/UpgradeMenu/upgrade_menu.tscn` in `menu_tab_selector.tscn` shows unlocked towers and meta-upgrade stats.
+- Menu tabs: `Menus/UpgradeMenu/upgrade_menu.tscn` handles per-tower upgrades; a separate `Stats` tab (StatsMenu UI) shows persistent upgrades grouped by Economy/Combat.
 
 ## Autoload singletons (global systems)
 Defined in `project.godot`:
@@ -82,6 +86,8 @@ Defined in `project.godot`:
 - Buildable tiles come from scene nodes in group `grid_buildable`.
 - Walls can be placed if they do not block the path (checked via `AStarManager`).
 - Towers are draggable and can be repositioned.
+- Path generation now uses multiple pattern pools (zigzag/wander/detour), supports branching paths that rejoin the main route, and varies path width (up to 5 tiles).
+- Path tiles can be 8x8 or 16x16 depending on level, with the entrance always 16x16 to avoid spawn pinching.
 
 ### Waves and enemies
 - `wave_spawner.gd`:
@@ -95,17 +101,23 @@ Defined in `project.godot`:
   - Deals damage on reaching the end.
   - Rewards money/meat on death.
   - Enemies are tinted to their wave color.
+  - Phasing enemies (spirit_fox, stalker) phase out for 2s and randomize their phase timer on spawn.
+  - Phased enemies leave the `enemies` group so bullets will retarget.
 
 ### Upgrades
 - `upgrade_manager.gd` pauses the world and spawns upgrade UI.
 - Individual towers store path upgrades (3 upgrade paths per tower).
 - Meta upgrades: `Menus/UpgradeMenu/upgrade_menu.gd` adds an "Upgrade" camp tab (tab node is `Upgrade`) for per-tower stat upgrades that directly mutate `InventoryManager.items` and refresh live towers; list refreshes on gacha pulls.
+- Meta upgrades UI: `Menus/StatsMenu/stats_increase_button_container.gd` builds two columns (Economy/Combat) and renders each row as label + button with coin cost; global tower damage/attack speed/range base costs are 2000 and tower move cooldown reduction is 5% per level.
 - Upgrade menu UX: stat rows show a tooltip with a short description and current level; range is displayed in tiles (floor(radius / 8)), attack speed shows `/s`, and range/respawn time rows are hidden for guard towers.
 
 ### Stats and economy
 - `StatsManager` uses "meat" as health and placement currency.
-- Production and kill multipliers increase over time and via persistent upgrades.
-- Money is used for gacha and meta progression (currently stored and saved).
+- Production and kill multipliers increase over time and via persistent upgrades; persistent upgrades have per-stat base costs that double each level.
+- Money is used for gacha and meta progression (currently stored and saved); UI uses a coin emoji (🪙) via `StatsManager.get_coin_symbol()`.
+- Free pulls are granted per win via `WaveSpawner.level_completed`.
+- Tower move cooldown, wall placement cost, and tower placement cost discounts cap at 50%.
+- Dragging a placed tower onto the inventory sells it for 40% of placement cost in meat and shows a "Sell for X meat" overlay.
 
 ### Gacha and inventory meta
 - `tower_manager.gd` tracks backpack and squad slots, and pull cost scaling.
@@ -119,7 +131,7 @@ Defined in `project.godot`:
 - `Menus/` includes difficulty, stats, challenges, gacha, win/lose, and load dialog.
 - `menu_tab_selector.gd` customizes tab styles and resets the map on menu open.
 - Difficulty menu uses the difficulty popup for trait adjustments and only shows the money gain label on the tab.
-- Wave preview tooltip shows next wave stats plus wave color (`Battlefield/GUI/next_wave_preview.gd`).
+- Next wave indicator shows the current wave's enemy type, tints to the wave color, and only advances after the wave completes (`Battlefield/GUI/next_wave_preview.gd`).
 
 ### Saving and timeline
 - `SaveManager`:

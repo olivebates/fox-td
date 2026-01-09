@@ -19,24 +19,24 @@ var current_wave_base_reward: float = 0.0
 
 var committed_wave_power: float = 1.0
 var wave_locked: bool = false
-var locked_base_wave_mult := 1.0
-var locked_wave_accel := 1.0
+var locked_base_wave_mult = 1.0
+var locked_wave_accel = 1.0
 var wave_seeds: Array[int] = []
 var saved_wave_data: Array[Dictionary] = []
 
 enum Difficulty { EASY, NORMAL, HARD }
-@export var difficulty := Difficulty.NORMAL
-@export var BASE_WAVE_POWER_MULT := 1.0
-var WAVE_POWER_MULT := 1.0
-var WAVE_ACCELERATION := 1.0
+@export var difficulty = Difficulty.NORMAL
+@export var BASE_WAVE_POWER_MULT = 1.0
+var WAVE_POWER_MULT = 1.0
+var WAVE_ACCELERATION = 1.0
 var MAX_WAVES = 1
 var HEALTH_REWARD_FACTOR = 0.35
 var HEALTH_REWARD_MULTIPLIER = 1.0
 var COUNT_WEIGHT = 0.3
 var HEALTH_WEIGHT = 0.7
-var smoothed_power := 1.0
+var smoothed_power = 1.0
 var _last_level_cached: int = -1
-const WAVE_COLORS := ["red", "green", "blue"]
+const WAVE_COLORS = ["red", "green", "blue"]
 
 
 func get_wave_power(level: int, wave: int) -> float:
@@ -46,17 +46,17 @@ func get_wave_power_with_mult(level: int, wave: int, power_mult: float) -> float
 	return get_wave_power_with_mult_and_player(level, wave, power_mult, committed_wave_power)
 
 func get_wave_power_with_mult_and_player(level: int, wave: int, power_mult: float, player_power: float) -> float:
-	var base := 75.0  # higher base to avoid too-easy early waves
-	var level_scale := pow(1.3, level)  # stronger level scaling
+	var base = 75.0  # higher base to avoid too-easy early waves
+	var level_scale = pow(1.3, level)  # stronger level scaling
 	var early_waves = min(wave - 1, 9)
 	var late_waves = max(0, wave - 10)
-	var wave_scale := pow(1.04, early_waves) * pow(1.02, late_waves)  # soften after wave 10
+	var wave_scale = pow(1.04, early_waves) * pow(1.02, late_waves)  # soften after wave 10
 	var player_factor = max(1.0, player_power) / 20.0  # linear tracking
 	return base * level_scale * wave_scale * player_factor * power_mult / 5
 
 func get_effective_player_power() -> float:
-	var field_power := InventoryManager.get_total_field_dps()
-	var roster_power := InventoryManager.get_player_power_score()
+	var field_power = InventoryManager.get_total_field_dps()
+	var roster_power = InventoryManager.get_player_power_score()
 	return (field_power * 0.7) + (roster_power * 0.3)
 
 func set_power_mult():
@@ -347,10 +347,10 @@ var current_level = 1
 		##return { base_health = 3.0, wave_growth = 1.4, waves = 14 }
 #
 	## Procedural scaling after level 4
-	#var lvl := level - 3
+	#var lvl = level - 3
 #
-	#var base_health := 3.0 * pow(1.35, lvl)
-	#var wave_growth := (1.12 + lvl * 0.008 + (0.002 + current_wave * 0.012)/pow(current_wave, 0.7))/pow(current_wave, 0.02)
+	#var base_health = 3.0 * pow(1.35, lvl)
+	#var wave_growth = (1.12 + lvl * 0.008 + (0.002 + current_wave * 0.012)/pow(current_wave, 0.7))/pow(current_wave, 0.02)
 	#var waves = 12 + floor(lvl/3) * 2
 
 
@@ -368,7 +368,7 @@ func _get_wave_seed(wave: int) -> int:
 	return current_level * 10000 + wave
 
 func get_wave_color(wave: int) -> String:
-	var rng := RandomNumberGenerator.new()
+	var rng = RandomNumberGenerator.new()
 	rng.seed = _get_wave_seed(wave)
 	_pick_enemy_type_for_wave(rng, wave)
 	return WAVE_COLORS[rng.randi_range(0, WAVE_COLORS.size() - 1)]
@@ -388,22 +388,22 @@ func _get_enemy_pool_for_wave(wave: int) -> Array[String]:
 func _pick_enemy_type_for_wave(rng: RandomNumberGenerator, wave: int) -> String:
 	if wave % 9 == 0:
 		return "boss"
-	var keys := _get_enemy_pool_for_wave(wave)
+	var keys = _get_enemy_pool_for_wave(wave)
 	return keys[rng.randi_range(0, keys.size() - 1)]
 
 func _build_wave_data(wave_seed: int, wave: int) -> Dictionary:
-	var rng := RandomNumberGenerator.new()
+	var rng = RandomNumberGenerator.new()
 	rng.seed = wave_seed
 	var enemy_type = _pick_enemy_type_for_wave(rng, wave)
 	var wave_color = WAVE_COLORS[rng.randi_range(0, WAVE_COLORS.size() - 1)]
 	var type_data = ENEMY_TYPES[enemy_type]
-	var wave_power_mult := _calculate_wave_power_mult(wave)
-	var player_power := get_effective_player_power()
-	var power := get_wave_power_with_mult_and_player(current_level, wave, wave_power_mult, player_power)
+	var wave_power_mult = _calculate_wave_power_mult(wave)
+	var player_power = get_effective_player_power()
+	var power = get_wave_power_with_mult_and_player(current_level, wave, wave_power_mult, player_power)
 	var raw_count = round(pow(power, COUNT_WEIGHT))
 	var raw_health = round(pow(power, HEALTH_WEIGHT))
-	var count := ceil(raw_count * type_data.count_mult) as int
-	var health := (raw_health * type_data.health) as int
+	var count = ceil(raw_count * type_data.count_mult) as int
+	var health = (raw_health * type_data.health) as int
 	var base_reward = type_data.base_reward * HEALTH_REWARD_MULTIPLIER
 	var wave_base_reward = ceil(base_reward * (1.0 + wave * 0.1))
 	return {
@@ -444,7 +444,7 @@ func get_next_wave_preview() -> Dictionary:
 	return get_wave_preview(wave)
 
 func _calculate_wave_power_mult(wave: int) -> float:
-	var wave_power_mult := BASE_WAVE_POWER_MULT
+	var wave_power_mult = BASE_WAVE_POWER_MULT
 	wave_power_mult *= 1.0 + (current_level - 1) * 0.04
 	wave_power_mult *= 1.0 + (wave - 1) * WAVE_ACCELERATION
 	match difficulty:
@@ -456,8 +456,8 @@ func _calculate_wave_power_mult(wave: int) -> float:
 func distribute_wave_power(power: float, type_data: Dictionary) -> Dictionary:
 	# How much of the power budget goes to quantity vs durability
 
-	var count := int(max(1, round(pow(power, COUNT_WEIGHT))))
-	var health := int(max(1, round(pow(power, HEALTH_WEIGHT))))
+	var count = int(max(1, round(pow(power, COUNT_WEIGHT))))
+	var health = int(max(1, round(pow(power, HEALTH_WEIGHT))))
 
 	# Apply enemy-type modifiers AFTER distribution
 	count = int(ceil(count * type_data.count_mult))
@@ -506,15 +506,20 @@ var  MAX_Y: int = 7
 var  BORDER_Y_MIN: int = 0
 var  BORDER_Y_MAX: int = 8
 
-var active_waves := {} # wave_number -> remaining_enemies
+var active_waves = {} # wave_number -> remaining_enemies
 var current_wave: int = 1
 var spawn_delay: float = 1.0
 
 signal wave_completed(wave: int)
 signal wave_started(wave: int)
+signal level_completed(level: int)
 
 var path_node: Path2D
 var path_tiles_container: Node2D
+
+const BASE_PATH_GRID_SIZE = 16
+const _MIN_BENDS = 3
+const _MAX_STRAIGHT_RUN = 4
 
 func _ready():
 	smoothed_power = get_effective_player_power()
@@ -561,8 +566,9 @@ func _process(delta: float) -> void:
 	#var config = get_level_config(current_level)
 		
 	#max_waves = config.waves
-	if current_wave > MAX_WAVES and !_is_spawning and get_tree().get_nodes_in_group("enemy").size() == 0:
+	if !level_cleared and current_wave > MAX_WAVES and !_is_spawning and get_tree().get_nodes_in_group("enemy").size() == 0:
 		level_cleared = true
+		level_completed.emit(current_level)
 
 	#Upgrade Towers hint
 	if current_level == 1 and current_wave == 3 and !_is_valid_hint(hint_label) and no_towers_upgraded() and get_tree().get_nodes_in_group("enemy").size() == 0 and !WaveSpawner._is_spawning:
@@ -623,6 +629,11 @@ func _process(delta: float) -> void:
 	if _is_valid_hint(place_towers_hint) and (current_wave != 2 or get_tree().get_nodes_in_group("tower").size() > 1):
 		place_towers_hint.queue_free()
 		place_towers_hint = null
+
+
+func _input(event: InputEvent) -> void:
+	if Dev.dev and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_P:
+		generate_path(true)
 	
 
 func set_game_paused(p: bool) -> void:
@@ -637,7 +648,7 @@ func await_delay(delay: float) -> void:
 
 func get_enemy_type_for_wave(wave: int) -> String:
 	# Boss only if exactly every 9th wave (average of 8-10)
-	var rng := RandomNumberGenerator.new()
+	var rng = RandomNumberGenerator.new()
 	rng.seed = _get_wave_seed(wave)
 	return _pick_enemy_type_for_wave(rng, wave)
 
@@ -704,13 +715,13 @@ func _spawn_wave_async(wave: int, enemy_type: String, health: int, count: int, w
 
 	_is_spawning = false
 func spawn_enemy(wave: int, enemy_type: String, health: int, wave_color: String) -> void:
-	var enemy := enemy_scene.instantiate()
+	var enemy = enemy_scene.instantiate()
 	var type_data = ENEMY_TYPES[enemy_type]
 	
 	enemy.position = start_pos + Vector2(0, 4)
 	enemy.target_position = end_pos
 	
-	var power := get_wave_power(current_level, wave)
+	var power = get_wave_power(current_level, wave)
 	var adjusted_health = DifficultyManager.get_enemy_spawn_health(health)
 	enemy.max_speed = DifficultyManager.get_enemy_spawn_max_speed(base_speed + pow(power, 0.25))
 	enemy.speed = DifficultyManager.get_enemy_spawn_speed(type_data.speed)
@@ -734,97 +745,486 @@ func spawn_enemy(wave: int, enemy_type: String, health: int, wave_color: String)
 	)
 
 
-func generate_path():
-	
-	seed(WaveSpawner.current_level+6 + WaveSpawner.current_level*2-2)
+func _pick_path_bounds(level: int, scale: int) -> Dictionary:
+	var size_mode = _pick_size_mode(level)
+	return _build_bounds_for_size_mode(size_mode, scale)
+
+func _pick_path_bounds_any(scale: int) -> Dictionary:
+	var modes = ["small", "large", "mixed"]
+	return _build_bounds_for_size_mode(modes[randi_range(0, modes.size() - 1)], scale)
+
+func _build_bounds_for_size_mode(size_mode: String, scale: int) -> Dictionary:
+	var base_min_x = MIN_X * scale
+	var base_max_x = MAX_X * scale
+	var base_min_y = MIN_Y * scale
+	var base_max_y = MAX_Y * scale
+	var base_width = base_max_x - base_min_x + 1
+	var base_height = base_max_y - base_min_y + 1
+	var small_width = min(6 * scale, base_width)
+	var small_height = min(5 * scale, base_height)
+	var small_min_x = base_min_x + int(floor((base_width - small_width) / 2.0))
+	var small_min_y = base_min_y + int(floor((base_height - small_height) / 2.0))
+	var small_max_x = small_min_x + small_width - 1
+	var small_max_y = small_min_y + small_height - 1
+
+	var min_x = base_min_x
+	var max_x = base_max_x
+	var min_y = base_min_y
+	var max_y = base_max_y
+	if size_mode == "small":
+		min_x = small_min_x
+		max_x = small_max_x
+		min_y = small_min_y
+		max_y = small_max_y
+
+	return {
+		"min_x": min_x,
+		"max_x": max_x,
+		"min_y": min_y,
+		"max_y": max_y,
+		"border_y_min": BORDER_Y_MIN * scale,
+		"border_y_max": BORDER_Y_MAX * scale,
+		"size_mode": size_mode,
+		"small_min_x": small_min_x,
+		"small_max_x": small_max_x,
+		"small_min_y": small_min_y,
+		"small_max_y": small_max_y,
+		"switch_y": small_max_y
+	}
+
+
+func _pick_path_tile_size(level: int, force_all_pools: bool) -> int:
+	if force_all_pools:
+		return 8 if randf() < 0.5 else 16
+	var t = clamp((level - 1) / 12.0, 0.0, 1.0)
+	var small_weight = lerp(0.1, 0.35, t)
+	if randf() < small_weight:
+		return 8
+	return 16
+
+
+func _pick_size_mode(level: int) -> String:
+	var t = clamp((level - 1) / 12.0, 0.0, 1.0)
+	var small_weight = lerp(0.55, 0.25, t)
+	var large_weight = lerp(0.25, 0.45, t)
+	var mixed_weight = 1.0 - small_weight - large_weight
+	var roll = randf()
+	if roll < small_weight:
+		return "small"
+	if roll < small_weight + large_weight:
+		return "large"
+	return "mixed"
+
+
+func _pick_path_pattern(level: int) -> String:
+	var t = clamp((level - 1) / 12.0, 0.0, 1.0)
+	var simple_weight = lerp(0.6, 0.3, t)
+	var medium_weight = lerp(0.3, 0.3, t)
+	var complex_weight = 1.0 - simple_weight - medium_weight
+
+	var roll = randf()
+	if roll < simple_weight:
+		return "zigzag"
+	if roll < simple_weight + medium_weight:
+		return "wander"
+	return "detour"
+
+
+func _pick_path_pattern_any() -> String:
+	var patterns = ["zigzag", "wander", "detour"]
+	return patterns[randi_range(0, patterns.size() - 1)]
+
+
+func _get_x_bounds_for_y(bounds: Dictionary, y: int) -> Vector2i:
+	if bounds["size_mode"] == "mixed" and y <= bounds["switch_y"]:
+		return Vector2i(bounds["small_min_x"], bounds["small_max_x"])
+	return Vector2i(bounds["min_x"], bounds["max_x"])
+
+
+func _pick_x_away(bounds: Dictionary, y: int, avoid: int) -> int:
+	var x_bounds = _get_x_bounds_for_y(bounds, y)
+	var x = randi_range(x_bounds.x, x_bounds.y)
+	var tries = 0
+	while x == avoid and tries < 8:
+		x = randi_range(x_bounds.x, x_bounds.y)
+		tries += 1
+	if x == avoid:
+		if x == x_bounds.x:
+			x = min(x_bounds.x + 1, x_bounds.y)
+		else:
+			x = max(x_bounds.x, x_bounds.y - 1)
+	return x
+
+
+func _append_line(path: Array[Vector2i], target: Vector2i) -> void:
+	var current = path[path.size() - 1]
+	while current != target:
+		if current.x != target.x:
+			current.x += signi(target.x - current.x)
+		elif current.y != target.y:
+			current.y += signi(target.y - current.y)
+		path.append(current)
+
+
+func _build_vertical_connector(from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	if from_cell.x != to_cell.x:
+		return cells
+	var step = signi(to_cell.y - from_cell.y)
+	if step == 0:
+		return cells
+	var y = from_cell.y + step
+	while y != to_cell.y:
+		cells.append(Vector2i(from_cell.x, y))
+		y += step
+	return cells
+
+
+func _build_zigzag_path(start: Vector2i, end: Vector2i, bounds: Dictionary, force_extra_bend = false) -> Array[Vector2i]:
+	var path: Array[Vector2i] = [start]
+	var height = end.y - start.y
+	if height < 4:
+		return [] as Array[Vector2i]
+
+	var y1 = clampi(start.y + max(1, int(height * 0.33)), bounds["min_y"], bounds["max_y"] - 2)
+	var y2 = clampi(start.y + max(2, int(height * 0.66)), y1 + 1, bounds["max_y"] - 1)
+	if force_extra_bend:
+		y1 = clampi(start.y + 1, bounds["min_y"], bounds["max_y"] - 3)
+		y2 = clampi(start.y + max(2, int(height * 0.5)), y1 + 1, bounds["max_y"] - 2)
+
+	var x1 = _pick_x_away(bounds, y1, start.x)
+	var x2 = _pick_x_away(bounds, y2, x1)
+
+	_append_line(path, Vector2i(start.x, y1))
+	_append_line(path, Vector2i(x1, y1))
+	_append_line(path, Vector2i(x1, y2))
+	_append_line(path, Vector2i(x2, y2))
+	_append_line(path, Vector2i(x2, end.y))
+	_append_line(path, Vector2i(end.x, end.y))
+	return path
+
+
+func _build_detour_path(start: Vector2i, end: Vector2i, bounds: Dictionary) -> Array[Vector2i]:
+	var path: Array[Vector2i] = [start]
+	var height = end.y - start.y
+	if height < 4:
+		return [] as Array[Vector2i]
+
+	var mid_y = clampi(start.y + int(height * 0.45), bounds["min_y"], bounds["max_y"] - 2)
+	var detour_y = clampi(mid_y + max(1, int(height * 0.2)), mid_y + 1, bounds["max_y"] - 1)
+	var detour_x = _pick_x_away(bounds, mid_y, start.x)
+
+	_append_line(path, Vector2i(start.x, mid_y))
+	_append_line(path, Vector2i(detour_x, mid_y))
+	_append_line(path, Vector2i(detour_x, detour_y))
+	_append_line(path, Vector2i(end.x, detour_y))
+	_append_line(path, Vector2i(end.x, end.y))
+	return path
+
+
+func _build_wander_path(start: Vector2i, end: Vector2i, bounds: Dictionary) -> Array[Vector2i]:
+	var path: Array[Vector2i] = [start]
+	var visited = {start: true}
+	var current = start
+	var steps = 0
+	var MAX_STEPS = 320
+	var DIRS = [Vector2i(0,1), Vector2i(-1,0), Vector2i(1,0), Vector2i(0,-1)]
+	var base_weights = [25.0, 10.0, 10.0, 4.0]
+	var noise = FastNoiseLite.new()
+	noise.seed = randi()
+	var last_dir = Vector2i.ZERO
+	var run_len = 0
+
+	while steps < MAX_STEPS and current != end:
+		steps += 1
+		var possible: Array[Vector2i] = []
+		var weights: Array[float] = []
+		var horiz_dir = signi(end.x - current.x)
+		var n = noise.get_noise_2d(current.x * 20.0, current.y * 20.0 + steps)
+
+		for i in 4:
+			var dir = DIRS[i]
+			var nxt = current + dir
+			var x_bounds = _get_x_bounds_for_y(bounds, nxt.y)
+			if nxt.x >= x_bounds.x && nxt.x <= x_bounds.y \
+			   && nxt.y >= bounds["min_y"] && nxt.y <= bounds["max_y"] \
+			   && !visited.has(nxt):
+				var w = base_weights[i]
+				if i == 1 or i == 2:
+					if (i == 1 && horiz_dir < 0) || (i == 2 && horiz_dir > 0):
+						w += 12.0
+				if dir == last_dir and run_len >= _MAX_STRAIGHT_RUN:
+					w *= 0.2
+				w += n * 15.0
+				possible.append(dir)
+				weights.append(max(w, 1.0))
+		if possible.is_empty():
+			break
+
+		var total = 0.0
+		for w in weights:
+			total += w
+		var roll = randf() * total
+		var cum = 0.0
+		var chosen = 0
+		for i in weights.size():
+			cum += weights[i]
+			if roll < cum:
+				chosen = i
+				break
+
+		var chosen_dir = possible[chosen]
+		if chosen_dir == last_dir:
+			run_len += 1
+		else:
+			run_len = 1
+			last_dir = chosen_dir
+
+		current += chosen_dir
+		path.append(current)
+		visited[current] = true
+
+	if current == end:
+		return path
+	return [] as Array[Vector2i]
+
+
+func _count_bends(path: Array[Vector2i]) -> int:
+	if path.size() < 3:
+		return 0
+	var bends = 0
+	var last_dir = Vector2i.ZERO
+	for i in range(1, path.size()):
+		var dir = path[i] - path[i - 1]
+		if last_dir != Vector2i.ZERO and dir != last_dir:
+			bends += 1
+		last_dir = dir
+	return bends
+
+
+func _is_in_bounds(cell: Vector2i, bounds: Dictionary) -> bool:
+	if cell.y < bounds["min_y"] or cell.y > bounds["max_y"]:
+		return false
+	var x_bounds = _get_x_bounds_for_y(bounds, cell.y)
+	return cell.x >= x_bounds.x and cell.x <= x_bounds.y
+
+
+func _buildable_overlaps_path(world_pos: Vector2, path_cells: Array[Vector2i]) -> bool:
+	for path_cell in path_cells:
+		var path_pos = Vector2(path_cell) * grid_size + Vector2(grid_size / 2.0, grid_size / 2.0)
+		if abs(world_pos.x - path_pos.x) < (grid_size + buildable_grid_size) / 2.0 && \
+		   abs(world_pos.y - path_pos.y) < (grid_size + buildable_grid_size) / 2.0:
+			return true
+	return false
+
+
+func _apply_path_width(path_cells: Array[Vector2i], bounds: Dictionary, level: int) -> Array[Vector2i]:
+	var t = clamp((level - 1) / 10.0, 0.0, 1.0)
+	var widen_chance = lerp(0.45, 0.85, t)
+	if grid_size <= 8:
+		widen_chance = 1.0
+	if randf() > widen_chance or path_cells.size() < 8:
+		return path_cells
+
+	var widened = path_cells.duplicate()
+	var segments = 1
+	if randf() < lerp(0.4, 0.7, t):
+		segments = 2
+	if randf() < lerp(0.2, 0.45, t):
+		segments = 3
+	if grid_size <= 8:
+		segments = max(2, segments)
+	for s in range(segments):
+		var start_idx = int(path_cells.size() * randf_range(0.1, 0.6))
+		var seg_len = int(path_cells.size() * randf_range(0.15, 0.35))
+		var end_idx = min(path_cells.size() - 1, start_idx + seg_len)
+		var side = -1 if randf() < 0.5 else 1
+		var width_target = randi_range(2, 5)
+		if grid_size <= 8:
+			width_target = randi_range(3, 5)
+		var add_other_side = randf() < 0.35
+		for i in range(start_idx, end_idx):
+			if i == 0:
+				continue
+			var prev = path_cells[i - 1]
+			var cur = path_cells[i]
+			var dir = cur - prev
+			var axis = Vector2i.ZERO
+			if dir.x != 0:
+				axis = Vector2i(0, side)
+			elif dir.y != 0:
+				axis = Vector2i(side, 0)
+			for w in range(1, width_target):
+				var extra = cur + axis * w
+				if _is_in_bounds(extra, bounds) and !widened.has(extra):
+					widened.append(extra)
+				if add_other_side:
+					var extra_other = cur - axis * w
+					if _is_in_bounds(extra_other, bounds) and !widened.has(extra_other):
+						widened.append(extra_other)
+	return widened
+
+
+func _apply_branching(path_cells: Array[Vector2i], bounds: Dictionary, level: int, force_all_pools: bool) -> Array[Vector2i]:
+	if path_cells.size() < 10:
+		return []
+	var t = clamp((level - 1) / 12.0, 0.0, 1.0)
+	var branch_chance = lerp(0.85, 0.98, t)
+	if force_all_pools:
+		branch_chance = 0.95
+	if randf() > branch_chance:
+		return []
+
+	var branches = 2
+	if randf() < lerp(0.7, 0.9, t):
+		branches = 3
+	if randf() < lerp(0.35, 0.6, t):
+		branches = 4
+	if randf() < lerp(0.2, 0.4, t):
+		branches = 5
+
+	var extra: Array[Vector2i] = []
+	var used_spans = []
+	var attempts = 0
+	while extra.size() < branches and attempts < branches * 4:
+		attempts += 1
+		var start_idx = randi_range(2, int(path_cells.size() * 0.4))
+		var end_idx = randi_range(start_idx + 3, int(path_cells.size() * 0.75))
+		var span_ok = true
+		for span in used_spans:
+			if start_idx <= span[1] and end_idx >= span[0]:
+				span_ok = false
+				break
+		if not span_ok:
+			continue
+		used_spans.append([start_idx, end_idx])
+		var branch = _build_branch_path(path_cells[start_idx], path_cells[end_idx], bounds)
+		for cell in branch:
+			if not extra.has(cell):
+				extra.append(cell)
+	return extra
+
+
+func _build_branch_path(start: Vector2i, end: Vector2i, bounds: Dictionary) -> Array[Vector2i]:
+	var path: Array[Vector2i] = [start]
+	var height = end.y - start.y
+	if height < 2:
+		return []
+	var detour_y = clampi(start.y + randi_range(1, max(1, int(height * 0.6))), bounds["min_y"], bounds["max_y"])
+	var branch_x = _pick_x_away(bounds, detour_y, start.x)
+	_append_line(path, Vector2i(start.x, detour_y))
+	_append_line(path, Vector2i(branch_x, detour_y))
+	_append_line(path, Vector2i(branch_x, end.y))
+	_append_line(path, Vector2i(end.x, end.y))
+	return path
+
+
+func _prune_dead_ends(path_cells: Array[Vector2i], main_cells: Array[Vector2i]) -> Array[Vector2i]:
+	var cells: Dictionary = {}
+	for cell in path_cells:
+		cells[cell] = true
+	var main_set: Dictionary = {}
+	for cell in main_cells:
+		main_set[cell] = true
+
+	var changed = true
+	while changed:
+		changed = false
+		var to_remove: Array[Vector2i] = []
+		for cell in cells.keys():
+			if main_set.has(cell):
+				continue
+			var neighbors = 0
+			var dirs = [Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 0), Vector2i(-1, 0)]
+			for dir in dirs:
+				if cells.has(cell + dir):
+					neighbors += 1
+			if neighbors <= 1:
+				to_remove.append(cell)
+		if to_remove.size() > 0:
+			changed = true
+			for cell in to_remove:
+				cells.erase(cell)
+
+	var pruned: Array[Vector2i] = []
+	for cell in cells.keys():
+		pruned.append(cell)
+	return pruned
+
+
+func generate_path(force_all_pools = false):
+
+	if force_all_pools:
+		randomize()
+	else:
+		seed(WaveSpawner.current_level + 6 + WaveSpawner.current_level * 2 - 2)
 	for child in get_children():
 		if child != path_node and child != path_tiles_container:
 			child.queue_free()
 	for child in path_tiles_container.get_children():
 		child.queue_free()
-	
-	var curve := Curve2D.new()
-	var entry_x: int = randi_range(MIN_X, MAX_X)
-	var exit_x: int = randi_range(MIN_X, MAX_X)
-	var entry_cell := Vector2i(entry_x, BORDER_Y_MIN)
-	var exit_cell := Vector2i(exit_x, BORDER_Y_MAX)
-	var internal_start := Vector2i(entry_x, MIN_Y)
-	var internal_end := Vector2i(exit_x, MAX_Y)
+
+	grid_size = _pick_path_tile_size(current_level, force_all_pools)
+	var scale = int(round(float(BASE_PATH_GRID_SIZE) / float(grid_size)))
+
+	var curve = Curve2D.new()
+	var bounds = _pick_path_bounds_any(scale) if force_all_pools else _pick_path_bounds(current_level, scale)
+	var entry_min_x = bounds["min_x"]
+	var entry_max_x = bounds["max_x"]
+	if bounds["size_mode"] == "mixed":
+		entry_min_x = bounds["small_min_x"]
+		entry_max_x = bounds["small_max_x"]
+	var entry_x: int = randi_range(entry_min_x, entry_max_x)
+	var exit_x: int = randi_range(bounds["min_x"], bounds["max_x"])
+	var entry_cell = Vector2i(entry_x, bounds["border_y_min"])
+	var exit_cell = Vector2i(exit_x, bounds["border_y_max"])
+	var internal_start = Vector2i(entry_x, bounds["min_y"])
+	var internal_end = Vector2i(exit_x, bounds["max_y"])
 	var internal_path_cells: Array[Vector2i] = []
-	var found := false
-	var MAX_ATTEMPTS := 100
-	var attempts := 0
-	
+	var found = false
+	var MAX_ATTEMPTS = 120
+	var attempts = 0
+
 	while not found and attempts < MAX_ATTEMPTS:
 		attempts += 1
-		internal_path_cells = [internal_start]
-		var visited := {internal_start: true}
-		var current := internal_start
-		var steps := 0
-		var MAX_STEPS := 300
-		var DIRS := [Vector2i(0,1), Vector2i(-1,0), Vector2i(1,0), Vector2i(0,-1)]
-		var base_weights := [25.0, 10.0, 10.0, 4.0]
-		var noise := FastNoiseLite.new()
-		noise.seed = randi()
-		
-		while steps < MAX_STEPS and current != internal_end:
-			steps += 1
-			var possible: Array[Vector2i] = []
-			var weights: Array[float] = []
-			var horiz_dir := signi(internal_end.x - current.x)
-			var n := noise.get_noise_2d(current.x * 20.0, current.y * 20.0 + steps)
-			for i in 4:
-				var dir = DIRS[i]
-				var nxt = current + dir
-				if nxt.x >= MIN_X && nxt.x <= MAX_X \
-				   && nxt.y >= MIN_Y && nxt.y <= MAX_Y \
-				   && !visited.has(nxt):
-					var w = base_weights[i]
-					if i == 1 or i == 2:
-						if (i == 1 && horiz_dir < 0) || (i == 2 && horiz_dir > 0):
-							w += 12.0
-					w += n * 15.0
-					possible.append(dir)
-					weights.append(max(w, 1.0))
-			if possible.is_empty(): break
-			var total := 0.0
-			for w in weights: total += w
-			var roll := randf() * total
-			var cum := 0.0
-			var chosen := 0
-			for i in weights.size():
-				cum += weights[i]
-				if roll < cum:
-					chosen = i
-					break
-			current += possible[chosen]
-			internal_path_cells.append(current)
-			visited[current] = true
-			if current == internal_end:
-				found = true
-	
+		var pattern = _pick_path_pattern_any() if force_all_pools else _pick_path_pattern(current_level)
+		if pattern == "zigzag":
+			internal_path_cells = _build_zigzag_path(internal_start, internal_end, bounds)
+		elif pattern == "detour":
+			internal_path_cells = _build_detour_path(internal_start, internal_end, bounds)
+		else:
+			internal_path_cells = _build_wander_path(internal_start, internal_end, bounds)
+
+		if internal_path_cells.is_empty():
+			continue
+		if _count_bends(internal_path_cells) < _MIN_BENDS:
+			continue
+		found = true
+
 	if not found:
-		internal_path_cells = []
-		var cx := entry_x
-		for y in range(MIN_Y, MAX_Y + 1):
-			internal_path_cells.append(Vector2i(cx, y))
-		var horiz_dir := signi(exit_x - cx)
-		if horiz_dir != 0:
-			cx += horiz_dir
-			while cx != exit_x:
-				internal_path_cells.append(Vector2i(cx, MAX_Y))
-				cx += horiz_dir
-	
-	var full_path_cells := [entry_cell]
+		internal_path_cells = _build_zigzag_path(internal_start, internal_end, bounds, true)
+
+	var full_path_cells: Array[Vector2i] = [entry_cell]
+	full_path_cells.append_array(_build_vertical_connector(entry_cell, internal_start))
 	full_path_cells.append_array(internal_path_cells)
+	full_path_cells.append_array(_build_vertical_connector(internal_end, exit_cell))
 	full_path_cells.append(exit_cell)
+
+	var main_path_cells = full_path_cells.duplicate()
+	var branch_cells = _apply_branching(internal_path_cells, bounds, current_level, force_all_pools)
+	for cell in branch_cells:
+		if not full_path_cells.has(cell):
+			full_path_cells.append(cell)
+
+	full_path_cells = _apply_path_width(full_path_cells, bounds, current_level)
+	full_path_cells = _prune_dead_ends(full_path_cells, main_path_cells)
 	
-	var off_top := Vector2(entry_x * grid_size + grid_size / 2.0, -8.0)
+	var off_top = Vector2(entry_x * grid_size + grid_size / 2.0, -8.0)
 	curve.add_point(off_top)
 	curve.add_point(Vector2(entry_cell) * grid_size + Vector2(grid_size / 2.0, grid_size / 2.0))
 	for cell in internal_path_cells:
 		curve.add_point(Vector2(cell) * grid_size + Vector2(grid_size / 2.0, grid_size / 2.0))
-	var exit_point := Vector2(exit_cell) * grid_size + Vector2(grid_size / 2.0, grid_size / 2.0)
+	var exit_point = Vector2(exit_cell) * grid_size + Vector2(grid_size / 2.0, grid_size / 2.0)
 	curve.add_point(exit_point)
 	path_node.curve = curve
 	
@@ -832,35 +1232,40 @@ func generate_path():
 	end_pos.x = exit_point.x
 	end_pos.y = exit_point.y
 	
-	var tile_scene := ResourceLoader.load(path_tile_uid) as PackedScene
+	var tile_scene = ResourceLoader.load(path_tile_uid) as PackedScene
 	if tile_scene:
 		for cell in full_path_cells:
-			var pos := Vector2(cell) * grid_size + Vector2(grid_size / 2.0, grid_size / 2.0)
-			var tile := tile_scene.instantiate()
+			var pos = Vector2(cell) * grid_size + Vector2(grid_size / 2.0, grid_size / 2.0)
+			var tile = tile_scene.instantiate()
+			if tile.has_method("apply_cell_size"):
+				var tile_size = grid_size
+				if cell == entry_cell:
+					tile_size = BASE_PATH_GRID_SIZE
+				tile.apply_cell_size(tile_size)
 			tile.position = pos
 			path_tiles_container.add_child(tile)
 	else:
 		push_error("Invalid path_tile_uid")
 	
-	var buildable_scene := ResourceLoader.load(path_buildable_uid) as PackedScene
+	var buildable_scene = ResourceLoader.load(path_buildable_uid) as PackedScene
 	if buildable_scene:
-		var buildable_min_x := 1
-		var buildable_max_x := 22
-		var buildable_min_y := 1
-		var buildable_max_y := 15
+		var buildable_min_x = 1
+		var buildable_max_x = 22
+		var buildable_min_y = 1
+		var buildable_max_y = 15
 		for bx in range(buildable_min_x, buildable_max_x + 1):
 			for by in range(buildable_min_y, buildable_max_y + 1):
-				var world_pos := Vector2(bx * buildable_grid_size + buildable_grid_size / 2.0,
+				var world_pos = Vector2(bx * buildable_grid_size + buildable_grid_size / 2.0,
 										 by * buildable_grid_size + buildable_grid_size / 2.0)
-				var overlaps_path := false
+				var overlaps_path = false
 				for path_cell in full_path_cells:
-					var path_pos := Vector2(path_cell) * grid_size + Vector2(grid_size / 2.0, grid_size / 2.0)
+					var path_pos = Vector2(path_cell) * grid_size + Vector2(grid_size / 2.0, grid_size / 2.0)
 					if abs(world_pos.x - path_pos.x) < (grid_size + buildable_grid_size) / 2.0 && \
 					   abs(world_pos.y - path_pos.y) < (grid_size + buildable_grid_size) / 2.0:
 						overlaps_path = true
 						break
 				if not overlaps_path:
-					var buildable := buildable_scene.instantiate()
+					var buildable = buildable_scene.instantiate()
 					buildable.position = world_pos
 					add_child(buildable)
 	else:
@@ -868,19 +1273,26 @@ func generate_path():
 	
 	await get_tree().process_frame
 	if special_scene:
-		var buildables := get_tree().get_nodes_in_group("grid_buildable")
-		var positions := buildables.map(func(b): return Vector2(b.position.x / buildable_grid_size, b.position.y / buildable_grid_size).round())
+		var buildables = get_tree().get_nodes_in_group("grid_buildable")
+		var positions = buildables.map(func(b): return Vector2(b.position.x / buildable_grid_size, b.position.y / buildable_grid_size).round())
+		var safe_positions: Dictionary = {}
+		for i in buildables.size():
+			if not _buildable_overlaps_path(buildables[i].position, full_path_cells):
+				safe_positions[positions[i]] = true
 		
-		var clusters: int = randi_range(8, 14)
+		var cluster_min = 12 + int(floor(current_level * 0.35))
+		var cluster_max = 20 + int(floor(current_level * 0.5))
+		var clusters = randi_range(cluster_min, cluster_max)
 		var special_grid: Dictionary = {}
 		
 		for i in clusters:
 			seed(i+current_level)
 			var size: int = randi_range(5, 15)
-			if buildables.is_empty(): break
-			var start_idx: int = randi() % buildables.size()
-			var queue: Array[Vector2] = [positions[start_idx]]
-			special_grid[positions[start_idx]] = true
+			if safe_positions.is_empty(): break
+			var safe_list = safe_positions.keys()
+			var start_pos = safe_list[randi() % safe_list.size()]
+			var queue: Array[Vector2] = [start_pos]
+			special_grid[start_pos] = true
 			var placed: int = 1
 			
 			while placed < size and not queue.is_empty():
@@ -889,8 +1301,7 @@ func generate_path():
 				dirs.shuffle()
 				for d in dirs:
 					var nxt: Vector2 = Vector2(cur) + Vector2(d)
-					var idx: int = positions.find(nxt)
-					if idx != -1 and not special_grid.has(nxt):
+					if safe_positions.has(nxt) and not special_grid.has(nxt):
 						special_grid[nxt] = true
 						queue.append(nxt)
 						placed += 1

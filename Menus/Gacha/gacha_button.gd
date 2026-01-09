@@ -1,4 +1,4 @@
-# GachaButton.gd
+﻿# GachaButton.gd
 extends Button
 
 @onready var backpack_inventory = get_tree().get_first_node_in_group("backpack_inventory")
@@ -6,8 +6,6 @@ var hint_flag = false
 var original_pos = position
 
 func _ready() -> void:
-
-	
 	focus_mode = Control.FOCUS_NONE
 	add_theme_font_size_override("font_size", 4)
 	add_theme_color_override("font_outline_color", Color.BLACK)
@@ -32,7 +30,7 @@ func _ready() -> void:
 	add_theme_stylebox_override("pressed", style_pressed)
 	add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	
-	text = "Pull New Critter (🪙" + str(TowerManager.pull_cost) + ")"
+	_update_button_text()
 	pressed.connect(_on_pressed)
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
@@ -41,7 +39,7 @@ func _ready() -> void:
 func _on_mouse_entered() -> void:
 	TooltipManager.show_tooltip(
 		"Pull Towers!",
-        "[font_size=2][color=dark_gray]Costs 🪙 to create a new critter in your camp!\nDrag critters from the Camp to the Squad to use them![/color][/font_size]"
+		"[font_size=2][color=dark_gray]Costs " + StatsManager.get_coin_symbol() + " to create a new critter in your camp!\nDrag critters from the Camp to the Squad to use them![/color][/font_size]"
 	)
 
 func _on_mouse_exited() -> void:
@@ -57,13 +55,18 @@ func _gui_input(event: InputEvent) -> void:
 			$ColorRect.visible = true
 
 func _on_pressed() -> void:
-		
-	if StatsManager.money < TowerManager.pull_cost:
-		Utilities.spawn_floating_text("Not enough 🪙...", Vector2.ZERO, null)
-		return
-	StatsManager.money -= TowerManager.pull_cost
+	var use_free_pull = StatsManager.free_pulls_remaining > 0
+	var cost = 0
+	if !use_free_pull:
+		cost = StatsManager.get_gacha_pull_cost(TowerManager.pull_cost)
+		if StatsManager.money < cost:
+			Utilities.spawn_floating_text("Not enough " + StatsManager.get_coin_symbol() + "...", Vector2.ZERO, null)
+			return
+		StatsManager.money -= cost
+	else:
+		StatsManager.free_pulls_remaining -= 1
 	TowerManager.pull_cost += TowerManager.cost_increase
-	text = "Pull New Critter (🪙" + str(TowerManager.pull_cost) + ")"
+	_update_button_text()
 
 	var rarity: int = 1 if randf() < 0.6 else 2
 	var possible: Array[String] = []
@@ -110,3 +113,13 @@ func _on_pressed() -> void:
 	var upgrade_menu = get_tree().get_first_node_in_group("upgrade_menu")
 	if upgrade_menu:
 		upgrade_menu.refresh_unlocked_towers()
+
+func _process(_delta: float) -> void:
+	_update_button_text()
+
+func _update_button_text() -> void:
+	if StatsManager.free_pulls_remaining > 0:
+		text = "Pull New Critter (Free x" + str(StatsManager.free_pulls_remaining) + ")"
+	else:
+		var cost = StatsManager.get_gacha_pull_cost(TowerManager.pull_cost)
+		text = "Pull New Critter (" + StatsManager.get_coin_symbol() + str(cost) + ")"

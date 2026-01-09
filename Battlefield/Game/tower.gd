@@ -34,7 +34,8 @@ var bullets_shot = 1
 var path = [0,0,0]
 
 var cooldown_time: float = 0.0
-var max_cooldown: float = 4.0
+const BASE_MOVE_COOLDOWN := 4.0
+var max_cooldown: float = BASE_MOVE_COOLDOWN
 const TARGET_UPDATE_INTERVAL := 0.1
 var _target_update_accum: float = 0.0
 var _cached_stats: Dictionary = {}
@@ -45,6 +46,7 @@ var _last_colors: Array = []
 var color_dots: ColorDots = null
 
 func start_cooldown() -> void:
+	max_cooldown = BASE_MOVE_COOLDOWN * StatsManager.get_tower_move_cooldown_multiplier()
 	cooldown_time = max_cooldown
 	if draw_radius or cooldown_time > 0:
 		queue_redraw()

@@ -6,8 +6,15 @@
 layout_mode = 3
 anchors_preset = 0
 
-[node name="StatsIncreaseButtonContainer" type="GridContainer" parent="."]
+[node name="StatsIncreaseButtonContainer" type="HBoxContainer" parent="."]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
+theme_override_constants/separation = 18
 script = ExtResource("1_0wskj")
+
+[node name="LeftColumn" type="VBoxContainer" parent="StatsIncreaseButtonContainer"]
+layout_mode = 2
+
+[node name="RightColumn" type="VBoxContainer" parent="StatsIncreaseButtonContainer"]
+layout_mode = 2

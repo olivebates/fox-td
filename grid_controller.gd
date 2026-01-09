@@ -135,7 +135,8 @@ func _input(event: InputEvent) -> void:
 	
 
 func get_wall_cost():
-	return wall_cost + (walls_placed * cost_increment)
+	var cost = wall_cost + (walls_placed * cost_increment)
+	return max(1.0, cost * StatsManager.get_wall_cost_multiplier())
 
 
 func update_buildables():
@@ -258,7 +259,8 @@ func start_tower_drag(tower: Node, offset: Vector2) -> void:
 
 
 func _process(_delta: float) -> void:
-	
+	if dragged_tower == null:
+		InventoryManager.hide_sell_overlay()
 	if dragged_tower != null:
 		if !is_instance_valid(dragged_tower):
 			dragged_tower = null
@@ -279,6 +281,12 @@ func _process(_delta: float) -> void:
 		if pot_inv_slot:
 			pot_inv_slot.set_meta("hovered", true)
 			InventoryManager._update_hover(pot_inv_slot)
+		if InventoryManager.is_pos_over_inventory(mouse_pos):
+			var dragged_data = dragged_tower.get_meta("item_data", {})
+			var sell_value = InventoryManager.get_tower_sell_value(dragged_data)
+			InventoryManager.show_sell_overlay(sell_value)
+		else:
+			InventoryManager.hide_sell_overlay()
 		queue_redraw()
 		if !Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			_perform_tower_drop()
@@ -344,9 +352,22 @@ func _perform_tower_drop() -> void:
 		original_cell = Vector2i(-1, -1)
 		potential_cell = Vector2i(-1, -1)
 		return
+	var mouse_pos = get_global_mouse_position()
 	var dragged_data: Dictionary = {}
 	if dragged_tower != null and is_instance_valid(dragged_tower) and dragged_tower.has_meta("item_data"):
 		dragged_data = dragged_tower.get_meta("item_data")
+	if InventoryManager.is_pos_over_inventory(mouse_pos):
+		var sell_value = InventoryManager.get_tower_sell_value(dragged_data)
+		if sell_value > 0:
+			StatsManager.health = min(StatsManager.max_health, StatsManager.health + sell_value)
+			StatsManager.health_changed.emit(StatsManager.health, StatsManager.max_health)
+		dragged_tower.queue_free()
+		dragged_tower = null
+		original_cell = Vector2i(-1, -1)
+		potential_cell = Vector2i(-1, -1)
+		InventoryManager.refresh_all_highlights()
+		queue_redraw()
+		return
 	if potential_cell != Vector2i(-1, -1):
 		var place_cell = get_nearest_valid_cell(potential_cell)
 		if place_cell != Vector2i(-1, -1) && get_grid_item_at_cell(place_cell) == null && is_valid_placement(place_cell, dragged_data):
@@ -385,50 +406,71 @@ func _draw() -> void:
 		#draw_line(grid_offset + Vector2(x * CELL_SIZE, 0), grid_offset + Vector2(x * CELL_SIZE, HEIGHT * CELL_SIZE), line_color, 1.0)
 	#for y in HEIGHT + 1:
 		#draw_line(grid_offset + Vector2(0, y * CELL_SIZE), grid_offset + Vector2(WIDTH * CELL_SIZE, y * CELL_SIZE), line_color, 1.0)
-	#Wall placement
+	# Wall placement grid overlay
 	if highlight_mode:
-		var wall_cells := {}
+		var fill_color = Color(1, 1, 0, 0.12)
+		var outline_color = Color(1, 1, 0, 0.35)
+		var grid_rect = Rect2(grid_offset, Vector2(WIDTH * CELL_SIZE, HEIGHT * CELL_SIZE))
+		var wall_cells = {}
 		for wall in get_tree().get_nodes_in_group("walls"):
 			var wc = get_cell_from_pos(wall.global_position)
 			if wc != Vector2i(-1, -1):
 				wall_cells[wc] = true
+		for block in get_tree().get_nodes_in_group("path_object"):
+			if block == null:
+				continue
+			var size = 16.0
+			if block.has_method("get_cell_size"):
+				size = block.get_cell_size()
+			var cell = get_cell_from_pos(block.global_position)
+			if cell == Vector2i(-1, -1):
+				# Still draw any portion that overlaps the buildable grid.
+				pass
+			elif wall_cells.has(cell):
+				continue
+			var origin = block.global_position - Vector2(size / 2.0, size / 2.0)
+			if size > CELL_SIZE:
+				for y in range(2):
+					for x in range(2):
+						var pos = origin + Vector2(x * CELL_SIZE, y * CELL_SIZE)
+						var rect = Rect2(pos, Vector2(CELL_SIZE, CELL_SIZE))
+						if rect.intersects(grid_rect, true):
+							var clipped = rect.intersection(grid_rect)
+							if clipped.size.x > 0.0 and clipped.size.y > 0.0:
+								draw_rect(clipped, fill_color, true)
+								draw_rect(clipped, outline_color, false)
+			else:
+				var rect = Rect2(origin, Vector2(size, size))
+				if rect.intersects(grid_rect, true):
+					var clipped = rect.intersection(grid_rect)
+					if clipped.size.x > 0.0 and clipped.size.y > 0.0:
+						draw_rect(clipped, fill_color, true)
+						draw_rect(clipped, outline_color, false)
 
-		var offsets := [
-			Vector2i(0, 0),     # self
-			Vector2i(-1, 0),    # left
-			Vector2i(0, -1),    # up
-			Vector2i(-1, -1),   # up-left
-		]
 
-		for node in get_tree().get_nodes_in_group("grid_occupiers"):
-			if !node.is_in_group("walls"):
-				var base_cell = get_cell_from_pos(node.global_position)
-				if base_cell == Vector2i(-1, -1):
+	# Buildable tiles highlight when dragging towers
+	var dragging_from_inventory = inventory != null and !inventory.dragged_item.is_empty()
+	if dragged_tower != null or dragging_from_inventory:
+		var can_afford = true
+		if dragging_from_inventory and inventory.dragged_item.has("id"):
+			var item_def = inventory.items[inventory.dragged_item.id]
+			var tower_level = item_def.get("tower_level", 0)
+			var cost = inventory.get_placement_cost(inventory.dragged_item.id, tower_level, inventory.dragged_item.get("rank", 1))
+			can_afford = StatsManager.health >= cost
+		var fill_color = Color(1, 1, 0, 0.12) if can_afford else Color(1, 0, 0, 0.12)
+		var outline_color = Color(1, 1, 0, 0.35) if can_afford else Color(1, 0, 0, 0.35)
+		update_buildables()
+		for y in range(HEIGHT):
+			for x in range(WIDTH):
+				if !buildable_grid[y][x]:
 					continue
+				if grid[y][x] != null:
+					continue
+				var pos = grid_offset + Vector2(x * CELL_SIZE, y * CELL_SIZE)
+				var rect = Rect2(pos, Vector2(CELL_SIZE, CELL_SIZE))
+				draw_rect(rect, fill_color, true)
+				draw_rect(rect, outline_color, false)
 
-				for offset in offsets:
-					var cell = base_cell + offset
-
-					# bounds check
-					if cell.x < 0 or cell.x >= WIDTH or cell.y < 0 or cell.y >= HEIGHT:
-						continue
-
-					# skip if wall exists
-					if wall_cells.has(cell):
-						continue
-
-					var pos := grid_offset + Vector2(
-						cell.x * CELL_SIZE,
-						cell.y * CELL_SIZE
-					)
-
-					draw_rect(
-						Rect2(pos, Vector2(CELL_SIZE, CELL_SIZE)),
-						Color(1, 0.5, 0, 0.4),
-						true
-					)
-
-	
 	if dragged_tower != null and potential_cell != Vector2i(-1, -1):
 		var nearest_cell = get_nearest_valid_cell(potential_cell)
 		var cell_pos = grid_offset + Vector2(nearest_cell.x * CELL_SIZE, nearest_cell.y * CELL_SIZE)

@@ -24,9 +24,9 @@ func _update_grid(update_grid = true) -> void:
 	astar.update()
 
 	# --- STEP 1: collect allowed cells ---
-	var allowed_cells := {}
+	var allowed_cells = {}
 
-	var directions := [
+	var directions = [
 		Vector2i.ZERO,
 		Vector2i.LEFT,
 		Vector2i.UP,
@@ -36,11 +36,16 @@ func _update_grid(update_grid = true) -> void:
 	# Allow grid_occupiers (walkable areas)
 	for node in get_tree().get_nodes_in_group("grid_occupiers"):
 		var world_pos: Vector2 = node.global_position - offset
-		var base_cell := Vector2i(
+		var base_cell = Vector2i(
 			floor(world_pos.x / CELL_SIZE.x),
 			floor(world_pos.y / CELL_SIZE.y)
 		)
-		for dir in directions:
+		var dirs = directions
+		if node.is_in_group("path_object") and node.has_method("get_cell_size"):
+			var size = node.get_cell_size()
+			if size <= CELL_SIZE.x + 0.1:
+				dirs = [Vector2i.ZERO]
+		for dir in dirs:
 			var cell = base_cell + dir
 			if astar.is_in_boundsv(cell):
 				allowed_cells[cell] = true
@@ -48,7 +53,7 @@ func _update_grid(update_grid = true) -> void:
 	# Block walls (override any previous allowance)
 	for node in get_tree().get_nodes_in_group("walls"):
 		var world_pos: Vector2 = node.global_position - offset
-		var base_cell := Vector2i(
+		var base_cell = Vector2i(
 			floor(world_pos.x / CELL_SIZE.x),
 			floor(world_pos.y / CELL_SIZE.y)
 		)
@@ -59,8 +64,8 @@ func _update_grid(update_grid = true) -> void:
 	# --- STEP 2: mark everything else solid ---
 	for x in astar.region.size.x:
 		for y in astar.region.size.y:
-			var cell := Vector2i(x, y)
-			var is_valid := allowed_cells.has(cell)
+			var cell = Vector2i(x, y)
+			var is_valid = allowed_cells.has(cell)
 			astar.set_point_solid(cell, not is_valid)
 	
 	astar.update()
@@ -72,14 +77,14 @@ func _update_grid(update_grid = true) -> void:
 func update_grid_and_check_path(start_world: Vector2, end_world: Vector2) -> bool:
 	_update_grid()
 	
-	var start_local := start_world - astar.offset
-	var start_cell := Vector2i(
+	var start_local = start_world - astar.offset
+	var start_cell = Vector2i(
 		floor(start_local.x / astar.cell_size.x),
 		ceil(start_local.y / astar.cell_size.y)
 	)
 	
-	var end_local := end_world - astar.offset
-	var end_cell := Vector2i(
+	var end_local = end_world - astar.offset
+	var end_cell = Vector2i(
 		floor(end_local.x / astar.cell_size.x),
 		floor(end_local.y / astar.cell_size.y)
 	)

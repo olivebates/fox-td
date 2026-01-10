@@ -3,6 +3,10 @@ extends TabContainer
 
 func _ready() -> void:
 	StatsManager.reset_current_map()
+	WaveSpawner.activate_pending_bans()
+	InventoryManager.refresh_inventory_highlights()
+	get_tree().call_group("backpack_inventory", "refresh_all_highlights")
+	get_tree().call_group("squad_inventory", "refresh_all_highlights")
 	# Font styling
 	add_theme_font_size_override("font_size", 4)
 	add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.5))

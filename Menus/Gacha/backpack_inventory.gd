@@ -327,6 +327,13 @@ func _draw_slot(slot: Panel) -> void:
 	var tex = tower.type.texture
 	if tex:
 		slot.draw_texture(tex, Vector2(0, 0), modulate)
+	var spawner = get_tree().get_first_node_in_group("wave_spawner")
+	var is_banned = spawner and spawner.has_method("is_tower_banned") and bool(spawner.call("is_tower_banned", tower.id))
+	if is_banned:
+		slot.draw_rect(Rect2(1, 1, 6, 6), Color(0, 0, 0, 0.5), true)
+		var font = slot.get_theme_default_font()
+		if font:
+			slot.draw_string(font, Vector2(1.2, 6.8), "⛔", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, Color(1, 1, 1, 0.9))
 	var colors: Array = tower.get("colors", [])
 	if colors.size() > 0:
 		var dot_pos = Vector2(1.2, 1.2)

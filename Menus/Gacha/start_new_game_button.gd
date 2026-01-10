@@ -33,10 +33,12 @@ func _ready() -> void:
 	mouse_exited.connect(_on_mouse_exited)
 
 func _on_mouse_entered() -> void:
+	var banned_names = WaveSpawner.get_banned_tower_names()
+	var banned_text = "Banned towers: " + ("None" if banned_names.is_empty() else ", ".join(banned_names))
 	TooltipManager.show_tooltip(
 	"Start Level: " +str(WaveSpawner.current_level),
 	#"[color=gray]————————————————[/color]\n" +
-	"[font_size=2][color=dark_gray]Starts a new round!\nMake sure you bring some low-tier towers for the first few waves :)[/color][/font_size]"
+	"[font_size=2][color=dark_gray]Starts a new round!\nMake sure you bring some low-tier towers for the first few waves :)\n" + banned_text + "[/color][/font_size]"
 	)
 
 func _on_mouse_exited() -> void:
@@ -97,9 +99,9 @@ func _on_pressed() -> void:
 					InventoryManager._update_slot(slot)
 					break
 	
-	# Hide gacha menu
-	var gacha_menu = get_tree().get_first_node_in_group("menu")
-	gacha_menu.queue_free()
+	# Hide pull menu
+	var pull_menu = get_tree().get_first_node_in_group("menu")
+	pull_menu.queue_free()
 	
 	# Refresh visuals
 	InventoryManager.refresh_inventory_highlights()

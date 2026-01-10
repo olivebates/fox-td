@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://c6pj2nc73reyx" path="res://Menus/Gacha/backpack_inventory.tscn" id="2_pju2w"]
 [ext_resource type="Script" uid="uid://c06okvbis2lr4" path="res://Menus/Gacha/gacha_background.gd" id="2_xtqx2"]
 
-[node name="GachaMenu" type="Control" groups=["gacha_menu", "game_over_screen"]]
+[node name="GachaMenu" type="Control" groups=["pull_menu", "game_over_screen"]]
 z_index = 200
 layout_mode = 3
 anchors_preset = 0

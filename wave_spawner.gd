@@ -55,8 +55,9 @@ func get_wave_power_with_mult_and_player(level: int, wave: int, power_mult: floa
 	return base * level_scale * wave_scale * player_factor * power_mult / 5
 
 func get_effective_player_power() -> float:
-	var field_power = InventoryManager.get_total_field_dps()
-	var roster_power = InventoryManager.get_player_power_score()
+	var inventory = get_node("/root/InventoryManager")
+	var field_power = inventory.get_total_field_dps()
+	var roster_power = inventory.get_player_power_score()
 	return (field_power * 0.7) + (roster_power * 0.3)
 
 func set_power_mult():
@@ -113,15 +114,15 @@ var ENEMY_TYPES = {
 		"label": "Splitter",
 		"abilities": ["Splits into 2 swarmlings on death."]
 	},
-	"spirit_fox": {
+	"phase": {
 		"health": 0.8,
 		"speed": 12.0,
 		"damage": 10,
 		"base_reward": 0.9,
 		"count_mult": 0.95,
 		"min_wave": 4,
-		"label": "Spirit Fox",
-		"abilities": ["Phases out, becoming untargetable briefly."]
+		"label": "Phase",
+		"abilities": ["Phases out when near towers, becoming untargetable."]
 	},
 	"regenerator": {
 		"health": 1.0,
@@ -227,15 +228,15 @@ func set_enemy_config():
 			"label": "Splitter",
 			"abilities": ["Splits into 2 swarmlings on death."]
 		},
-		"spirit_fox": {
+		"phase": {
 			"health": 0.8,
 			"speed": 12.0,
 			"damage": 10,
 			"base_reward": 0.9,
 			"count_mult": 0.95,
 			"min_wave": 4,
-			"label": "Spirit Fox",
-			"abilities": ["Phases out, becoming untargetable briefly."]
+			"label": "Phase",
+			"abilities": ["Phases out when near towers, becoming untargetable."]
 		},
 		"regenerator": {
 			"health": 1.0,
@@ -378,6 +379,8 @@ func _get_enemy_pool_for_wave(wave: int) -> Array[String]:
 	for key in ENEMY_TYPES.keys():
 		if key == "boss":
 			continue
+		if banned_enemy_types.has(key):
+			continue
 		var min_wave = int(ENEMY_TYPES[key].get("min_wave", 1))
 		if wave >= min_wave:
 			keys.append(key)
@@ -417,6 +420,107 @@ func _build_wave_data(wave_seed: int, wave: int) -> Dictionary:
 
 func get_enemy_type_data(enemy_type: String) -> Dictionary:
 	return ENEMY_TYPES.get(enemy_type, {})
+
+func record_tower_damage(tower_id: String, amount: int, wave: int) -> void:
+	if tower_id == "" or amount <= 0 or wave <= 0:
+		return
+	if !wave_damage_by_tower.has(wave):
+		wave_damage_by_tower[wave] = {}
+	var wave_data: Dictionary = wave_damage_by_tower[wave]
+	wave_data[tower_id] = int(wave_data.get(tower_id, 0)) + amount
+	wave_damage_by_tower[wave] = wave_data
+
+func _on_wave_completed(wave: int) -> void:
+	if processed_wave_damage.has(wave):
+		return
+	processed_wave_damage[wave] = true
+	var wave_data: Dictionary = wave_damage_by_tower.get(wave, {})
+	recent_wave_damage.append(wave_data.duplicate(true))
+	if recent_wave_damage.size() > 2:
+		recent_wave_damage.pop_front()
+
+func _get_unlocked_tower_ids() -> Array[String]:
+	var unlocked_ids: Array[String] = []
+	var inventory = get_node("/root/InventoryManager")
+	for tower_id in inventory.items.keys():
+		if inventory.items[tower_id].get("unlocked", false):
+			unlocked_ids.append(tower_id)
+	unlocked_ids.sort()
+	return unlocked_ids
+
+func _compare_ban_entries(a: Dictionary, b: Dictionary) -> bool:
+	if a["percent"] == b["percent"]:
+		return str(a["id"]) < str(b["id"])
+	return a["percent"] > b["percent"]
+
+func _compute_pending_bans() -> void:
+	pending_banned_tower_types.clear()
+	var unlocked_ids = _get_unlocked_tower_ids()
+	if unlocked_ids.size() < 5:
+		return
+	var ban_count = int(floor(float(unlocked_ids.size()) * 0.25))
+	if ban_count < 1:
+		return
+	var total_damage := 0.0
+	var totals: Dictionary = {}
+	for wave_data in recent_wave_damage:
+		for tower_id in wave_data.keys():
+			var dmg = int(wave_data[tower_id])
+			totals[tower_id] = int(totals.get(tower_id, 0)) + dmg
+			total_damage += dmg
+	for tower_id in unlocked_ids:
+		if !totals.has(tower_id):
+			totals[tower_id] = 0
+	if total_damage <= 0.0:
+		return
+	var entries: Array = []
+	for tower_id in unlocked_ids:
+		var dmg = int(totals.get(tower_id, 0))
+		var percent = float(dmg) / total_damage
+		entries.append({"id": tower_id, "percent": percent})
+	entries.sort_custom(_compare_ban_entries)
+	for i in range(min(ban_count, entries.size())):
+		pending_banned_tower_types.append(entries[i]["id"])
+
+func _compute_banned_enemy_types(tower_ids: Array[String]) -> Array[String]:
+	var result: Array[String] = []
+	for tower_id in tower_ids:
+		var counters: Array = BANNED_ENEMY_BY_TOWER.get(tower_id, [])
+		for enemy_type in counters:
+			if !result.has(enemy_type):
+				result.append(enemy_type)
+	return result
+
+func activate_pending_bans() -> void:
+	banned_tower_types = pending_banned_tower_types.duplicate()
+	pending_banned_tower_types.clear()
+	banned_enemy_types = _compute_banned_enemy_types(banned_tower_types)
+
+func is_tower_banned(tower_id: String) -> bool:
+	return tower_id != "" and banned_tower_types.has(tower_id)
+
+func get_banned_tower_names() -> Array[String]:
+	var names: Array[String] = []
+	var inventory = get_node("/root/InventoryManager")
+	for tower_id in banned_tower_types:
+		var def = inventory.items.get(tower_id, {})
+		names.append(def.get("name", tower_id))
+	names.sort()
+	return names
+
+const BANNED_ENEMY_BY_TOWER := {
+	"Elephant": ["swarm", "swarmling", "splitter"],
+	"Duck": ["swarm", "swarmling", "splitter"],
+	"Snail": ["swarm", "swarmling", "splitter"],
+	"Hawk": ["stalker"]
+}
+
+var pending_banned_tower_types: Array[String] = []
+var banned_tower_types: Array[String] = []
+var banned_enemy_types: Array[String] = []
+var wave_damage_by_tower: Dictionary = {}
+var recent_wave_damage: Array[Dictionary] = []
+var processed_wave_damage: Dictionary = {}
 
 func get_next_wave_index() -> int:
 	if _is_spawning or active_waves.has(current_wave):
@@ -524,6 +628,7 @@ const _MAX_STRAIGHT_RUN = 4
 func _ready():
 	smoothed_power = get_effective_player_power()
 	add_to_group("wave_spawner")
+	wave_completed.connect(_on_wave_completed)
 	path_node = Path2D.new()
 	add_child(path_node)
 	path_tiles_container = Node2D.new()
@@ -563,11 +668,13 @@ func _process(delta: float) -> void:
 		_last_level_cached = current_level
 		set_power_mult()
 		set_enemy_config()
+		level_cleared = false
 	#var config = get_level_config(current_level)
 		
 	#max_waves = config.waves
 	if !level_cleared and current_wave > MAX_WAVES and !_is_spawning and get_tree().get_nodes_in_group("enemy").size() == 0:
 		level_cleared = true
+		_compute_pending_bans()
 		level_completed.emit(current_level)
 
 	#Upgrade Towers hint
@@ -694,6 +801,9 @@ func reset_wave_data() -> void:
 	saved_wave_data.clear()
 	current_wave = 1
 	active_waves.clear()
+	wave_damage_by_tower.clear()
+	recent_wave_damage.clear()
+	processed_wave_damage.clear()
 	cancel_current_waves()
 	
 	
@@ -1164,18 +1274,21 @@ func generate_path(force_all_pools = false):
 	for child in path_tiles_container.get_children():
 		child.queue_free()
 
-	grid_size = _pick_path_tile_size(current_level, force_all_pools)
+	var is_simple_level = current_level == 1 and !force_all_pools
+	grid_size = BASE_PATH_GRID_SIZE if is_simple_level else _pick_path_tile_size(current_level, force_all_pools)
 	var scale = int(round(float(BASE_PATH_GRID_SIZE) / float(grid_size)))
 
 	var curve = Curve2D.new()
 	var bounds = _pick_path_bounds_any(scale) if force_all_pools else _pick_path_bounds(current_level, scale)
+	if is_simple_level:
+		bounds = _build_bounds_for_size_mode("small", scale)
 	var entry_min_x = bounds["min_x"]
 	var entry_max_x = bounds["max_x"]
 	if bounds["size_mode"] == "mixed":
 		entry_min_x = bounds["small_min_x"]
 		entry_max_x = bounds["small_max_x"]
 	var entry_x: int = randi_range(entry_min_x, entry_max_x)
-	var exit_x: int = randi_range(bounds["min_x"], bounds["max_x"])
+	var exit_x: int = entry_x if is_simple_level else randi_range(bounds["min_x"], bounds["max_x"])
 	var entry_cell = Vector2i(entry_x, bounds["border_y_min"])
 	var exit_cell = Vector2i(exit_x, bounds["border_y_max"])
 	var internal_start = Vector2i(entry_x, bounds["min_y"])
@@ -1185,21 +1298,42 @@ func generate_path(force_all_pools = false):
 	var MAX_ATTEMPTS = 120
 	var attempts = 0
 
-	while not found and attempts < MAX_ATTEMPTS:
-		attempts += 1
-		var pattern = _pick_path_pattern_any() if force_all_pools else _pick_path_pattern(current_level)
-		if pattern == "zigzag":
-			internal_path_cells = _build_zigzag_path(internal_start, internal_end, bounds)
-		elif pattern == "detour":
-			internal_path_cells = _build_detour_path(internal_start, internal_end, bounds)
-		else:
-			internal_path_cells = _build_wander_path(internal_start, internal_end, bounds)
+	if is_simple_level:
+		var height = internal_end.y - internal_start.y
+		var y1 = clampi(internal_start.y + 1, bounds["min_y"], bounds["max_y"] - 3)
+		var y2 = clampi(internal_start.y + int(round(height * 0.45)), y1 + 1, bounds["max_y"] - 2)
+		var y3 = clampi(internal_start.y + int(round(height * 0.75)), y2 + 1, bounds["max_y"] - 1)
+		var x1 = _pick_x_away(bounds, y1, entry_x)
+		var x2 = _pick_x_away(bounds, y2, x1)
+		if x2 == entry_x:
+			x2 = _pick_x_away(bounds, y2, entry_x)
+		var x3 = entry_x
 
-		if internal_path_cells.is_empty():
-			continue
-		if _count_bends(internal_path_cells) < _MIN_BENDS:
-			continue
+		internal_path_cells = [internal_start]
+		_append_line(internal_path_cells, Vector2i(entry_x, y1))
+		_append_line(internal_path_cells, Vector2i(x1, y1))
+		_append_line(internal_path_cells, Vector2i(x1, y2))
+		_append_line(internal_path_cells, Vector2i(x2, y2))
+		_append_line(internal_path_cells, Vector2i(x2, y3))
+		_append_line(internal_path_cells, Vector2i(x3, y3))
+		_append_line(internal_path_cells, internal_end)
 		found = true
+	else:
+		while not found and attempts < MAX_ATTEMPTS:
+			attempts += 1
+			var pattern = _pick_path_pattern_any() if force_all_pools else _pick_path_pattern(current_level)
+			if pattern == "zigzag":
+				internal_path_cells = _build_zigzag_path(internal_start, internal_end, bounds)
+			elif pattern == "detour":
+				internal_path_cells = _build_detour_path(internal_start, internal_end, bounds)
+			else:
+				internal_path_cells = _build_wander_path(internal_start, internal_end, bounds)
+
+			if internal_path_cells.is_empty():
+				continue
+			if _count_bends(internal_path_cells) < _MIN_BENDS:
+				continue
+			found = true
 
 	if not found:
 		internal_path_cells = _build_zigzag_path(internal_start, internal_end, bounds, true)
@@ -1211,13 +1345,14 @@ func generate_path(force_all_pools = false):
 	full_path_cells.append(exit_cell)
 
 	var main_path_cells = full_path_cells.duplicate()
-	var branch_cells = _apply_branching(internal_path_cells, bounds, current_level, force_all_pools)
-	for cell in branch_cells:
-		if not full_path_cells.has(cell):
-			full_path_cells.append(cell)
+	if not is_simple_level:
+		var branch_cells = _apply_branching(internal_path_cells, bounds, current_level, force_all_pools)
+		for cell in branch_cells:
+			if not full_path_cells.has(cell):
+				full_path_cells.append(cell)
 
-	full_path_cells = _apply_path_width(full_path_cells, bounds, current_level)
-	full_path_cells = _prune_dead_ends(full_path_cells, main_path_cells)
+		full_path_cells = _apply_path_width(full_path_cells, bounds, current_level)
+		full_path_cells = _prune_dead_ends(full_path_cells, main_path_cells)
 	
 	var off_top = Vector2(entry_x * grid_size + grid_size / 2.0, -8.0)
 	curve.add_point(off_top)

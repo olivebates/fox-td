@@ -20,7 +20,7 @@ func _get_type_color(enemy_type: String) -> Color:
 			return Color(0.3, 0.7, 1.0)  # Bright blue
 		"splitter":
 			return Color(0.6, 0.4, 0.2)  # Brown
-		"spirit_fox":
+		"phase":
 			return Color(0.6, 0.8, 1.0)  # Pale blue
 		"regenerator":
 			return Color(0.3, 0.8, 0.4)  # Green

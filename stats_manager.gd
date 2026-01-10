@@ -13,7 +13,7 @@ var money:int = 0
 var level = 1
 var current_save_name := "Unnamed Save"
 
-var upgrade_base_cost = 40
+var upgrade_base_cost = 100
 var upgrade_increment_cost = 10
 
 # Health level
@@ -31,85 +31,92 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 	"kill_multiplier": {
 		"title": "Meat Kill Bonus",
 		"increment": 0.1,
-		"base_cost": 200,
+		"base_cost": 100,
 		"desc": "Increases meat from kills by x0.1",
 		"level": 0
 	},
 	"meat_production": {
 		"title": "Meat Production",
 		"increment": 0.1,
-		"base_cost": 200,
+		"base_cost": 100,
 		"desc": "Increases meat production speed by 0.1/s",
 		"level": 0
 	},
 	"meat_wave_clear": {
 		"title": "Meat on Wave Clear",
 		"increment": 10,
-		"base_cost": 500,
+		"base_cost": 100,
 		"desc": "Gain +10 meat when a wave ends",
 		"level": 0
 	},
 	"money_kill_bonus": {
 		"title": "Money Kill Bonus",
 		"increment": 0.1,
-		"base_cost": 500,
+		"base_cost": 100,
 		"desc": "Increases money from kills by +10%",
 		"level": 0
 	},
 	"gacha_cost_reduction": {
-		"title": "Gacha Cost Reduction",
+		"title": "Pull Cost Reduction",
 		"increment": 0.05,
-		"base_cost": 2000,
-		"desc": "Reduces gacha pull costs by 5%",
+		"base_cost": 100,
+		"desc": "Reduces critter pull costs by 5%",
 		"level": 0
 	},
 	"free_pulls_per_run": {
 		"title": "Free Pull Per Win",
 		"increment": 1,
-		"base_cost": 3000,
-		"desc": "Gain +1 free gacha pull each win",
+		"base_cost": 100,
+		"desc": "Gain +1 free critter pull each win",
 		"level": 0
 	},
 	"tower_placement_discount": {
 		"title": "Tower Placement Discount",
 		"increment": 0.05,
-		"base_cost": 1000,
+		"base_cost": 100,
 		"desc": "Reduces tower placement cost by 5%",
 		"level": 0
 	},
 	"wall_placement_discount": {
 		"title": "Wall Placement Discount",
 		"increment": 0.05,
-		"base_cost": 800,
+		"base_cost": 100,
 		"desc": "Reduces wall placement cost by 5%",
 		"level": 0
 	},
 	"tower_move_cooldown_reduction": {
 		"title": "Tower Move Cooldown",
 		"increment": 0.05,
-		"base_cost": 2000,
+		"base_cost": 100,
 		"desc": "Reduces tower move cooldown by 5%",
 		"level": 0
 	},
 	"global_tower_damage": {
 		"title": "Global Tower Damage",
 		"increment": 0.05,
-		"base_cost": 2000,
+		"base_cost": 100,
 		"desc": "Increases all tower damage by 5%",
 		"level": 0
 	},
 	"global_tower_attack_speed": {
 		"title": "Global Tower Attack Speed",
 		"increment": 0.05,
-		"base_cost": 2000,
+		"base_cost": 100,
 		"desc": "Increases all tower attack speed by 5%",
 		"level": 0
 	},
 	"global_tower_range": {
 		"title": "Global Tower Range",
 		"increment": 0.05,
-		"base_cost": 2000,
+		"base_cost": 100,
 		"desc": "Increases all tower range by 5%",
+		"level": 0
+	},
+	"meat_on_hit": {
+		"title": "Meat on Hit",
+		"increment": 0.005,
+		"base_cost": 100,
+		"desc": "Gain meat equal to 0.5% of tower damage per hit",
 		"level": 0
 	}
 }
@@ -126,6 +133,7 @@ var tower_move_cooldown_reduction: float = 0.0
 var global_tower_damage_bonus: float = 0.0
 var global_tower_attack_speed_bonus: float = 0.0
 var global_tower_range_bonus: float = 0.0
+var meat_on_hit_ratio: float = 0.0
 
 func _normalize_persistent_upgrades() -> void:
 	var defaults = DEFAULT_PERSISTENT_UPGRADE_DATA
@@ -151,10 +159,17 @@ func _normalize_persistent_upgrades() -> void:
 					persistent_upgrade_data[key]["title"] = default_title
 				if current_desc == "Gain +1 free gacha pull each run":
 					persistent_upgrade_data[key]["desc"] = default_desc
+				if current_desc == "Gain +1 free gacha pull each win":
+					persistent_upgrade_data[key]["desc"] = default_desc
 			if key == "tower_move_cooldown_reduction":
 				if float(persistent_upgrade_data[key].get("increment", 0.0)) != float(default_entry.get("increment", 0.0)):
 					persistent_upgrade_data[key]["increment"] = default_entry.get("increment", 0.0)
 				if current_desc == "Reduces tower move cooldown by 10%":
+					persistent_upgrade_data[key]["desc"] = default_desc
+			if key == "gacha_cost_reduction":
+				if current_title == "Gacha Cost Reduction":
+					persistent_upgrade_data[key]["title"] = default_title
+				if current_desc == "Reduces gacha pull costs by 5%":
 					persistent_upgrade_data[key]["desc"] = default_desc
 			if key in ["global_tower_damage", "global_tower_attack_speed", "global_tower_range"]:
 				if int(persistent_upgrade_data[key].get("base_cost", 0)) != int(default_entry.get("base_cost", 0)):
@@ -177,7 +192,7 @@ func update_persistant_upgrades():
 	kill_multiplier = (bonuses["multiplier"]*(level-1)) + base_kill_multiplier + persistent_upgrade_data["kill_multiplier"].level*persistent_upgrade_data["kill_multiplier"].increment
 	meat_on_wave_clear_bonus = persistent_upgrade_data["meat_wave_clear"].level * persistent_upgrade_data["meat_wave_clear"].increment
 	money_kill_multiplier = 1.0 + (persistent_upgrade_data["money_kill_bonus"].level * persistent_upgrade_data["money_kill_bonus"].increment)
-	gacha_cost_reduction = min(0.9, persistent_upgrade_data["gacha_cost_reduction"].level * persistent_upgrade_data["gacha_cost_reduction"].increment)
+	gacha_cost_reduction = min(0.5, persistent_upgrade_data["gacha_cost_reduction"].level * persistent_upgrade_data["gacha_cost_reduction"].increment)
 	free_pulls_per_run = int(persistent_upgrade_data["free_pulls_per_run"].level * persistent_upgrade_data["free_pulls_per_run"].increment)
 	tower_placement_discount = min(0.5, persistent_upgrade_data["tower_placement_discount"].level * persistent_upgrade_data["tower_placement_discount"].increment)
 	wall_placement_discount = min(0.5, persistent_upgrade_data["wall_placement_discount"].level * persistent_upgrade_data["wall_placement_discount"].increment)
@@ -185,6 +200,7 @@ func update_persistant_upgrades():
 	global_tower_damage_bonus = persistent_upgrade_data["global_tower_damage"].level * persistent_upgrade_data["global_tower_damage"].increment
 	global_tower_attack_speed_bonus = persistent_upgrade_data["global_tower_attack_speed"].level * persistent_upgrade_data["global_tower_attack_speed"].increment
 	global_tower_range_bonus = persistent_upgrade_data["global_tower_range"].level * persistent_upgrade_data["global_tower_range"].increment
+	meat_on_hit_ratio = persistent_upgrade_data["meat_on_hit"].level * persistent_upgrade_data["meat_on_hit"].increment
 
 func get_current_value(stat: String) -> float:
 	match stat:
@@ -201,9 +217,11 @@ func get_current_value(stat: String) -> float:
 		"global_tower_damage": return global_tower_damage_bonus
 		"global_tower_attack_speed": return global_tower_attack_speed_bonus
 		"global_tower_range": return global_tower_range_bonus
+		"meat_on_hit": return meat_on_hit_ratio
 	return -1.0
 
 func set_upgrade_text(stat):
+	var meat_on_hit_percent = float(int(round(meat_on_hit_ratio * 1000.0))) / 10.0
 	match stat:
 		"start_meat": return get_upgrade_display_title(stat) + ": " + str(starting_health).trim_suffix(".0")
 		"meat_production": return get_upgrade_display_title(stat) + ": " + str(production_speed).trim_suffix(".0") + "/s"
@@ -218,6 +236,7 @@ func set_upgrade_text(stat):
 		"global_tower_damage": return get_upgrade_display_title(stat) + ": " + str(int(round(global_tower_damage_bonus * 100.0))) + "%"
 		"global_tower_attack_speed": return get_upgrade_display_title(stat) + ": " + str(int(round(global_tower_attack_speed_bonus * 100.0))) + "%"
 		"global_tower_range": return get_upgrade_display_title(stat) + ": " + str(int(round(global_tower_range_bonus * 100.0))) + "%"
+		"meat_on_hit": return get_upgrade_display_title(stat) + ": " + str(meat_on_hit_percent).trim_suffix(".0") + "%"
 	return "-1"
 
 func get_upgrade_display_title(stat: String) -> String:
@@ -243,6 +262,7 @@ func get_upgrade_emoji(stat: String) -> String:
 		"global_tower_damage": return String.chr(0x1F525)
 		"global_tower_attack_speed": return String.chr(0x26A1)
 		"global_tower_range": return String.chr(0x1F3AF)
+		"meat_on_hit": return String.chr(0x1F969)
 	return ""
 
 func get_coin_symbol() -> String:
@@ -449,6 +469,19 @@ func get_global_range_multiplier() -> float:
 
 func get_money_kill_multiplier() -> float:
 	return money_kill_multiplier
+
+func get_meat_on_hit_ratio() -> float:
+	return meat_on_hit_ratio
+
+func gain_meat_on_hit(damage_amount: int) -> void:
+	if meat_on_hit_ratio <= 0.0:
+		return
+	var reward = float(damage_amount) * meat_on_hit_ratio
+	if reward <= 0.0:
+		return
+	reward = DifficultyManager.apply_meat_gain(reward)
+	health = min(health + reward, max_health)
+	health_changed.emit(health, max_health)
 
 func get_gacha_pull_cost(raw_cost: int) -> int:
 	var mult = max(0.1, 1.0 - gacha_cost_reduction)

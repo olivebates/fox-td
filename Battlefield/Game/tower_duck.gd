@@ -10,9 +10,10 @@ func fire(target: Node2D) -> void:
 	var damage = stats.damage
 	
 	var enemies = get_tree().get_nodes_in_group("enemies")
+	var tower_id := str(get_meta("item_data").get("id", ""))
 	for enemy in enemies:
 		if global_position.distance_to(enemy.global_position) <= aoe_radius:
-			enemy.take_damage(damage)
+			enemy.take_damage(damage, tower_id)
 	
 	# Visual recoil
 	var tween = create_tween()

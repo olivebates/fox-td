@@ -27,6 +27,7 @@ var type_split_health_ratio: float = 0.0
 var type_phase_cycle: float = 0.0
 var type_phase_duration: float = 0.0
 var type_phase_timer: float = 0.0
+var type_phase_range: float = 0.0
 var type_revive_ratio: float = 0.0
 var type_scale: float = 1.0
 var is_phased: bool = false
@@ -45,9 +46,8 @@ const TYPE_CONFIGS := {
 		"split_count": 2,
 		"split_health_ratio": 0.35
 	},
-	"spirit_fox": {
-		"phase_cycle": 2.2,
-		"phase_duration": 2.0,
+	"phase": {
+		"phase_range_tiles": 1.5,
 		"base_alpha": 0.75
 	},
 	"regenerator": {
@@ -63,8 +63,7 @@ const TYPE_CONFIGS := {
 		"damage_mult": 0.7
 	},
 	"stalker": {
-		"phase_cycle": 3.5,
-		"phase_duration": 2.0,
+		"phase_range_tiles": 1.5,
 		"base_alpha": 0.85
 	}
 }
@@ -197,7 +196,7 @@ func update_healthbar():
 	health_fg.global_position = pos - Vector2(0, 3)
 	health_fg.size.x = 4.0 * (float(current_health) / health)
 
-func take_damage(amount: int):
+func take_damage(amount: int, source_tower_id: String = ""):
 	if is_phased:
 		return
 	if DifficultyManager.should_enemy_dodge():
@@ -206,8 +205,11 @@ func take_damage(amount: int):
 	amount = int(max(1, ceil(float(amount) * type_damage_mult)))
 	if amount <= 0:
 		return
+	var applied_damage = min(amount, current_health)
 	current_health -= amount
 	update_healthbar()
+	StatsManager.gain_meat_on_hit(applied_damage)
+	WaveSpawner.record_tower_damage(source_tower_id, applied_damage, spawn_wave)
 	
 	var tw = create_tween()
 	tw.tween_property(sprite, "modulate", Color.RED, 0.1)
@@ -290,6 +292,7 @@ func _apply_type_modifiers() -> void:
 	type_split_health_ratio = 0.0
 	type_phase_cycle = 0.0
 	type_phase_duration = 0.0
+	type_phase_range = 0.0
 	type_revive_ratio = 0.0
 	type_scale = 1.0
 	is_phased = false
@@ -308,6 +311,8 @@ func _apply_type_modifiers() -> void:
 		type_phase_cycle = float(config.phase_cycle)
 	if config.has("phase_duration"):
 		type_phase_duration = float(config.phase_duration)
+	if config.has("phase_range_tiles"):
+		type_phase_range = float(config.phase_range_tiles) * GridController.CELL_SIZE
 	if type_phase_cycle > 0.0:
 		type_phase_timer = randf_range(0.0, type_phase_cycle)
 	if config.has("revive_ratio"):
@@ -331,6 +336,18 @@ func _apply_wave_color() -> void:
 		$Visuals/Sprite2D2.modulate = base_tint.darkened(0.2)
 
 func _update_phasing(delta: float) -> void:
+	if type_phase_range > 0.0:
+		var range_sq = type_phase_range * type_phase_range
+		var should_phase = false
+		for tower in get_tree().get_nodes_in_group("tower"):
+			if not is_instance_valid(tower):
+				continue
+			if global_position.distance_squared_to(tower.global_position) <= range_sq:
+				should_phase = true
+				break
+		if should_phase != is_phased:
+			_set_phased(should_phase)
+		return
 	if type_phase_cycle <= 0.0:
 		return
 	type_phase_timer += delta

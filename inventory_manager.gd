@@ -281,6 +281,8 @@ func show_tower_tooltip(item: Dictionary, cost: float) -> void:
 	if colors.size() > 0:
 		bonus_target = colors_text + " waves"
 	tooltip_text += "[font_size=2][color=dark_gray]Color Bonus: x2 damage vs " + bonus_target + "[/color][/font_size]\n"
+	if _is_tower_banned(item.id):
+		tooltip_text += "[color=salmon]Banned this level.[/color]\n"
 	tooltip_text += "[color=gray]————————————————[/color]\n"
 	tooltip_text += "[font_size=2][color=dark_gray]" + def.get("description", "") + "[/color][/font_size]"
 	
@@ -492,8 +494,8 @@ func get_player_power_score() -> float:
 
 
 func give_starter_towers():
-	slots[0].set_meta("item", {"id": "Fox", "rank": 1, "colors": roll_tower_colors(), "merge_children": []})
-	slots[1].set_meta("item", {"id": "Fox", "rank": 1, "colors": roll_tower_colors(), "merge_children": []})
+	slots[0].set_meta("item", {"id": "Fox", "rank": 1, "colors": ["green"], "merge_children": []})
+	slots[1].set_meta("item", {"id": "Fox", "rank": 1, "colors": ["blue"], "merge_children": []})
 	#slots[2].set_meta("item", {"id": "Elephant", "rank": 1})
 	WaveSpawner.current_wave = 1
 	TimelineManager.save_timeline(0)
@@ -536,6 +538,11 @@ func roll_tower_colors() -> Array[String]:
 func get_color_value(color_name: String) -> Color:
 	return ELEMENT_COLORS.get(color_name, Color.WHITE)
 
+func _is_tower_banned(tower_id: String) -> bool:
+	var spawner = get_tree().get_first_node_in_group("wave_spawner")
+	if spawner and spawner.has_method("is_tower_banned"):
+		return bool(spawner.call("is_tower_banned", tower_id))
+	return false
 
 func _draw() -> void:
 	if dragged_item.is_empty():
@@ -579,6 +586,11 @@ func _draw_slot(slot: Panel) -> void:
 	var tex = items.get(item.get("id", ""), {}).get("texture", null)
 	if tex:
 		slot.draw_texture(tex, Vector2(0, 0), Color(brighten, brighten, brighten))
+	if _is_tower_banned(item.get("id", "")):
+		slot.draw_rect(Rect2(1, 1, 6, 6), Color(0, 0, 0, 0.5), true)
+		var font = slot.get_theme_default_font()
+		if font:
+			slot.draw_string(font, Vector2(1.2, 6.8), "⛔", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, Color(1, 1, 1, 0.9))
 	var colors: Array = item.get("colors", [])
 	if colors.size() > 0:
 		var dot_pos = Vector2(1.2, 1.2)

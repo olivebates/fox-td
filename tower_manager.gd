@@ -9,6 +9,7 @@ var BACKPACK_SIZE: int = 12*5
 var pull_cost_base = 10
 var pull_cost = pull_cost_base
 var cost_increase = 10
+@onready var inventory = get_node("/root/InventoryManager")
 func _ready() -> void:
 	tower_inventory.clear()
 	tower_inventory.resize(BACKPACK_SIZE)
@@ -34,7 +35,7 @@ func _ready() -> void:
 
 func add_all_towers_to_backpack() -> void:
 	var index = 1
-	for id in InventoryManager.items.keys():
+	for id in inventory.items.keys():
 		var tower1 = _create_tower(id, 1)
 		var tower2 = _create_tower(id, 2)
 		var tower3 = _create_tower(id, 3)
@@ -56,11 +57,11 @@ func add_all_towers_to_backpack() -> void:
 			index += 1
 
 func _create_tower(id: String, rank: int, path_levels: Array = [0, 0, 0]) -> Dictionary:
-	var type_data = InventoryManager.items.get(id, {})
+	var type_data = inventory.items.get(id, {})
 	if type_data.is_empty():
 		return {}
 	
-	var stats = InventoryManager.get_tower_stats(id, rank, path_levels)
+	var stats = inventory.get_tower_stats(id, rank, path_levels)
 	var damage = stats.creature_damage if type_data.get("is_guard", false) else stats.damage
 	var attack_speed = stats.creature_attack_speed if type_data.get("is_guard", false) else stats.attack_speed
 	var dps = damage * attack_speed
@@ -71,7 +72,7 @@ func _create_tower(id: String, rank: int, path_levels: Array = [0, 0, 0]) -> Dic
 		"path": path_levels.duplicate(),
 		"power_level": dps,
 		"id": id,
-		"colors": InventoryManager.roll_tower_colors(),
+		"colors": inventory.roll_tower_colors(),
 		"merge_children": []
 	}
 

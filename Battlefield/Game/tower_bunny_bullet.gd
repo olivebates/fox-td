@@ -181,7 +181,10 @@ func _physics_process(delta: float) -> void:
 				if attack_timer >= float(1.0/attack_speed):
 					attack_timer = 0.0
 					if is_instance_valid(current_enemy):
-						current_enemy.take_damage(damage_per_attack)
+						var tower_id := ""
+						if tower and tower.has_meta("item_data"):
+							tower_id = str(tower.get_meta("item_data").get("id", ""))
+						current_enemy.take_damage(damage_per_attack, tower_id)
 
 	# Movement
 	global_position += velocity * delta

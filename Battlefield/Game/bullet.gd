@@ -72,7 +72,11 @@ func _on_body_entered(body: Node2D) -> void:
 func apply_damage(enemy: Node2D) -> void:
 	var mult = _get_color_match_multiplier(enemy)
 	var final_damage = int(max(1.0, round(float(damage) * mult)))
-	enemy.take_damage(final_damage)
+	var tower_id := ""
+	if source_tower != null and is_instance_valid(source_tower) and source_tower.has_meta("item_data"):
+		var data = source_tower.get_meta("item_data")
+		tower_id = str(data.get("id", ""))
+	enemy.take_damage(final_damage, tower_id)
 
 func _get_color_match_multiplier(enemy: Node2D) -> float:
 	if source_tower == null or !is_instance_valid(source_tower):

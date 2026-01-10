@@ -26,6 +26,7 @@ const CATEGORY_LAYOUT := [
 			"global_tower_damage",
 			"global_tower_attack_speed",
 			"global_tower_range",
+			"meat_on_hit",
 		]
 	},
 ]

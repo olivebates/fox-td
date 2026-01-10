@@ -16,7 +16,7 @@ var potential_cell: Vector2i = Vector2i(-1, -1)
 var highlight_mode := false
 
 var wall_cost: float = 5.0
-var cost_increment: float = 2.0
+var cost_increment: float = 1.0
 var walls_placed: int = 0
 const WALL_PREFAB_UID := "uid://823ref1rao2h"
 @onready var wall_prefab: PackedScene = ResourceLoader.load(WALL_PREFAB_UID)
@@ -169,6 +169,11 @@ func is_valid_placement(cell: Vector2i, dragged_data: Dictionary = {}) -> bool:
 	update_buildables()
 	if cell.x < 0 or cell.x >= WIDTH or cell.y < 0 or cell.y >= HEIGHT:
 		return false
+	if dragged_data.has("id"):
+		var spawner = get_tree().get_first_node_in_group("wave_spawner")
+		var is_banned = spawner and spawner.has_method("is_tower_banned") and bool(spawner.call("is_tower_banned", str(dragged_data.id)))
+		if is_banned:
+			return false
 	return grid[cell.y][cell.x] == null && buildable_grid[cell.y][cell.x]
 
 func get_grid_item_at_cell(cell: Vector2i):
@@ -189,11 +194,16 @@ func refresh_grid_highlights() -> void:
 
 
 func place_item(item: Dictionary, cell: Vector2i) -> bool:
-	if item.is_empty() or !item.has("id") or !InventoryManager.items.has(item.id):
+	if item.is_empty() or !item.has("id") or !inventory.items.has(item.id):
 		Utilities.spawn_floating_text("Invalid tower data...", get_global_mouse_position(), null, false)
 		return false
+	var spawner = get_tree().get_first_node_in_group("wave_spawner")
+	var is_banned = spawner and spawner.has_method("is_tower_banned") and bool(spawner.call("is_tower_banned", str(item.id)))
+	if is_banned:
+		Utilities.spawn_floating_text("Tower is banned this level...", get_global_mouse_position(), null, false)
+		return false
 	if not item.has("colors"):
-		item["colors"] = InventoryManager.roll_tower_colors()
+		item["colors"] = inventory.roll_tower_colors()
 	if not item.has("merge_children"):
 		item["merge_children"] = []
 	if !is_valid_placement(cell):
@@ -201,13 +211,13 @@ func place_item(item: Dictionary, cell: Vector2i) -> bool:
 	var existing = get_grid_item_at_cell(cell)
 	if existing:
 		return false
-	var item_def = InventoryManager.items[item.id]
+	var item_def = inventory.items[item.id]
 	if item_def.get("prefab", null) == null:
 		Utilities.spawn_floating_text("Missing tower prefab...", get_global_mouse_position(), null, false)
 		return false
 	var tower_level = item_def.get("tower_level", 0)
 	var rank = item.get("rank", 1)
-	var cost = InventoryManager.get_placement_cost(item.id, tower_level, rank)
+	var cost = inventory.get_placement_cost(item.id, tower_level, rank)
 	if !StatsManager.spend_health(cost):
 		Utilities.spawn_floating_text("Not enough meat...", Vector2.ZERO, null)
 		return false
@@ -260,7 +270,7 @@ func start_tower_drag(tower: Node, offset: Vector2) -> void:
 
 func _process(_delta: float) -> void:
 	if dragged_tower == null:
-		InventoryManager.hide_sell_overlay()
+		inventory.hide_sell_overlay()
 	if dragged_tower != null:
 		if !is_instance_valid(dragged_tower):
 			dragged_tower = null
@@ -273,20 +283,20 @@ func _process(_delta: float) -> void:
 		var raw_cell = get_cell_from_pos(mouse_pos)
 		potential_cell = get_nearest_valid_cell(raw_cell) if raw_cell != Vector2i(-1, -1) else Vector2i(-1, -1)
 		HealthBarGUI.show_cost_preview(0.0)
-		for slot in InventoryManager.slots:
+		for slot in inventory.slots:
 			if slot.get_meta("hovered", false):
 				slot.set_meta("hovered", false)
-				InventoryManager._update_hover(slot)
-		var pot_inv_slot = InventoryManager.get_closest_slot(mouse_pos, 8.0)
+				inventory._update_hover(slot)
+		var pot_inv_slot = inventory.get_closest_slot(mouse_pos, 8.0)
 		if pot_inv_slot:
 			pot_inv_slot.set_meta("hovered", true)
-			InventoryManager._update_hover(pot_inv_slot)
-		if InventoryManager.is_pos_over_inventory(mouse_pos):
+			inventory._update_hover(pot_inv_slot)
+		if inventory.is_pos_over_inventory(mouse_pos):
 			var dragged_data = dragged_tower.get_meta("item_data", {})
-			var sell_value = InventoryManager.get_tower_sell_value(dragged_data)
-			InventoryManager.show_sell_overlay(sell_value)
+			var sell_value = inventory.get_tower_sell_value(dragged_data)
+			inventory.show_sell_overlay(sell_value)
 		else:
-			InventoryManager.hide_sell_overlay()
+			inventory.hide_sell_overlay()
 		queue_redraw()
 		if !Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			_perform_tower_drop()
@@ -356,8 +366,8 @@ func _perform_tower_drop() -> void:
 	var dragged_data: Dictionary = {}
 	if dragged_tower != null and is_instance_valid(dragged_tower) and dragged_tower.has_meta("item_data"):
 		dragged_data = dragged_tower.get_meta("item_data")
-	if InventoryManager.is_pos_over_inventory(mouse_pos):
-		var sell_value = InventoryManager.get_tower_sell_value(dragged_data)
+	if inventory.is_pos_over_inventory(mouse_pos):
+		var sell_value = inventory.get_tower_sell_value(dragged_data)
 		if sell_value > 0:
 			StatsManager.health = min(StatsManager.max_health, StatsManager.health + sell_value)
 			StatsManager.health_changed.emit(StatsManager.health, StatsManager.max_health)
@@ -365,7 +375,7 @@ func _perform_tower_drop() -> void:
 		dragged_tower = null
 		original_cell = Vector2i(-1, -1)
 		potential_cell = Vector2i(-1, -1)
-		InventoryManager.refresh_all_highlights()
+		inventory.refresh_all_highlights()
 		queue_redraw()
 		return
 	if potential_cell != Vector2i(-1, -1):
@@ -383,7 +393,7 @@ func _perform_tower_drop() -> void:
 	dragged_tower = null
 	original_cell = Vector2i(-1, -1)
 	potential_cell = Vector2i(-1, -1)
-	InventoryManager.refresh_all_highlights()
+	inventory.refresh_all_highlights()
 	queue_redraw()
 	
 	#if not success:
@@ -426,13 +436,14 @@ func _draw() -> void:
 			if cell == Vector2i(-1, -1):
 				# Still draw any portion that overlaps the buildable grid.
 				pass
-			elif wall_cells.has(cell):
-				continue
 			var origin = block.global_position - Vector2(size / 2.0, size / 2.0)
 			if size > CELL_SIZE:
 				for y in range(2):
 					for x in range(2):
 						var pos = origin + Vector2(x * CELL_SIZE, y * CELL_SIZE)
+						var sub_cell = get_cell_from_pos(pos + Vector2(CELL_SIZE / 2.0, CELL_SIZE / 2.0))
+						if sub_cell != Vector2i(-1, -1) and wall_cells.has(sub_cell):
+							continue
 						var rect = Rect2(pos, Vector2(CELL_SIZE, CELL_SIZE))
 						if rect.intersects(grid_rect, true):
 							var clipped = rect.intersection(grid_rect)
@@ -440,6 +451,8 @@ func _draw() -> void:
 								draw_rect(clipped, fill_color, true)
 								draw_rect(clipped, outline_color, false)
 			else:
+				if cell != Vector2i(-1, -1) and wall_cells.has(cell):
+					continue
 				var rect = Rect2(origin, Vector2(size, size))
 				if rect.intersects(grid_rect, true):
 					var clipped = rect.intersection(grid_rect)

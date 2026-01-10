@@ -6,6 +6,7 @@ var _save_cancelled = false
 var timeline_saves = []
 var current_wave_index: int = 0
 var wave_replay_counts: Dictionary = {}
+@onready var inventory = get_node("/root/InventoryManager")
 func _ready() -> void:
 	await get_tree().process_frame
 	save_timeline(0)
@@ -69,7 +70,7 @@ func save_timeline(slot: int = 0):
 	
 	#Inventory
 	var inventory_data: Array = []
-	for i in InventoryManager.slots:
+	for i in inventory.slots:
 		var item = i.get_meta("item", {})
 		inventory_data.append(item.duplicate() if !item.is_empty() else {})
 	save_dict["inventory"] = inventory_data
@@ -262,13 +263,13 @@ func load_timeline(slot: int = 0):
 	#Inventory
 	if save_dict.has("inventory"):
 		var inventory_data: Array = save_dict["inventory"]
-		InventoryManager.clear_inventory()
-		for i in min(inventory_data.size(), InventoryManager.slots.size()):
+		inventory.clear_inventory()
+		for i in min(inventory_data.size(), inventory.slots.size()):
 			var item = inventory_data[i]
 			if !item.is_empty():
-				InventoryManager.slots[i].set_meta("item", item.duplicate())
-				InventoryManager._update_slot(InventoryManager.slots[i])
-		InventoryManager.refresh_inventory_highlights()
+				inventory.slots[i].set_meta("item", item.duplicate())
+				inventory._update_slot(inventory.slots[i])
+		inventory.refresh_inventory_highlights()
 	
 	# Clear old persistent bullets
 	var old_bullets = get_tree().get_nodes_in_group("persistant_bullet")
@@ -280,7 +281,7 @@ func load_timeline(slot: int = 0):
 	if save_dict.has("persistant_bullets"):
 		var bullets_data: Array = save_dict["persistant_bullets"]
 		for data in bullets_data:
-			var item_def = InventoryManager.items[data.id]
+			var item_def = inventory.items[data.id]
 			var bullet = item_def.prefab.instantiate()
 			bullet.set_meta("item_data", data.duplicate())
 			var cell = Vector2i(data.cell_x, data.cell_y)
@@ -310,7 +311,7 @@ func load_timeline(slot: int = 0):
 	if save_dict.has("towers"):
 		var towers_data: Array = save_dict["towers"]	
 		for data in towers_data:
-			var item_def = InventoryManager.items[data.id]
+			var item_def = inventory.items[data.id]
 			var tower = item_def.prefab.instantiate()
 			tower.set_meta("item_data", data.duplicate())
 			var cell = Vector2i(data.cell_x, data.cell_y)
@@ -326,6 +327,7 @@ func load_timeline(slot: int = 0):
 	for w in old_walls:
 		if is_instance_valid(w) and w.is_placed:
 			w.queue_free()
+	await get_tree().process_frame
 
 	if save_dict.has("walls"):
 		var walls_data: Array = save_dict["walls"]
@@ -340,6 +342,8 @@ func load_timeline(slot: int = 0):
 				wall.is_placed = true
 				add_child(wall)
 				wall.add_to_group("walls")
+
+	AStarManager._update_grid()
 	
 
 func delete_all_timeline_saves() -> void:

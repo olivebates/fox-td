@@ -2,8 +2,8 @@ extends Button
 
 var fast_mode: bool = false
 @export var x10: bool = false
-const GACHA_POLL_INTERVAL := 0.25
-var _gacha_poll_timer: float = 0.0
+const PULL_MENU_POLL_INTERVAL := 0.25
+var _pull_menu_poll_timer: float = 0.0
 
 func _ready() -> void:
 	focus_mode = Control.FOCUS_NONE
@@ -62,11 +62,11 @@ func _on_mouse_entered() -> void:
 func _process(delta: float) -> void:
 	if not fast_mode:
 		return
-	_gacha_poll_timer += delta
-	if _gacha_poll_timer < GACHA_POLL_INTERVAL:
+	_pull_menu_poll_timer += delta
+	if _pull_menu_poll_timer < PULL_MENU_POLL_INTERVAL:
 		return
-	_gacha_poll_timer = 0.0
-	if get_tree().get_nodes_in_group("gacha_menu").size() != 0:
+	_pull_menu_poll_timer = 0.0
+	if get_tree().get_nodes_in_group("pull_menu").size() != 0:
 		_on_toggled(false)
 
 func _on_mouse_exited() -> void:

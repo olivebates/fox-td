@@ -1,8 +1,7 @@
-[gd_scene load_steps=10 format=3 uid="uid://ctnmhorqxut1t"]
+[gd_scene load_steps=9 format=3 uid="uid://ctnmhorqxut1t"]
 
 [ext_resource type="Script" uid="uid://c58ore2lex6h5" path="res://main_scene.gd" id="1_7fr83"]
 [ext_resource type="Shader" uid="uid://dncm5bmmcgldt" path="res://Vignette.gdshader" id="2_5yw3w"]
-[ext_resource type="PackedScene" uid="uid://ukdwdkntq1tg" path="res://Menus/LoadDialogue/load_menu.tscn" id="2_lhke2"]
 [ext_resource type="Script" uid="uid://dtxradeejcej0" path="res://path_manager.gd" id="3_tkmsp"]
 [ext_resource type="PackedScene" uid="uid://baklm1pqc3pmt" path="res://Battlefield/GUI/GUI.tscn" id="4_5yw3w"]
 [ext_resource type="Script" uid="uid://hflmog8s660p" path="res://color_tinter.gd" id="6_654x7"]
@@ -18,8 +17,6 @@ shader_parameter/outer_radius = 1.0
 
 [node name="Node2D" type="Node2D"]
 script = ExtResource("1_7fr83")
-
-[node name="LoadMenu" parent="." instance=ExtResource("2_lhke2")]
 
 [node name="Camera2D" type="Camera2D" parent="."]
 anchor_mode = 0

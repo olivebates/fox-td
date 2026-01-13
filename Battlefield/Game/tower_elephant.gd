@@ -3,7 +3,7 @@ extends tower_base
 
 # Elephant.gd - Updated fire()
 func fire(target: Node2D) -> void:
-	var stats = InventoryManager.get_tower_stats(tower_type, get_meta("item_data").rank, path)
+	var stats = get_effective_stats()
 	var dir = (target.global_position - global_position).normalized()
 	sprite.flip_h = dir.x > 0
 	

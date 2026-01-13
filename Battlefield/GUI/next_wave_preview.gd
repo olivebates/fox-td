@@ -68,7 +68,7 @@ func _on_mouse_entered() -> void:
 	var final_health = DifficultyManager.get_enemy_spawn_health(int(preview.health))
 	var abilities: Array = type_data.get("abilities", [])
 	var wave_color = preview.get("color", WaveSpawner.get_wave_color(display_wave))
-	var title_prefix = "Final Wave " if WaveSpawner.current_wave > WaveSpawner.MAX_WAVES else "Wave "
+	var title_prefix = "Wave "
 	var title = title_prefix + str(int(display_wave)) + " - " + str(label)
 	var info_line = "[font_size=3][color=cornflower_blue]Count: " + str(int(preview.count)) \
 		+ " | HP: " + str(int(final_health)) + " | Speed: " + str(int(round(final_speed))) + "[/color][/font_size]"
@@ -81,6 +81,4 @@ func _on_mouse_exited() -> void:
 	TooltipManager.hide_tooltip()
 
 func _get_display_wave_index(wave_index: int) -> int:
-	if wave_index > WaveSpawner.MAX_WAVES:
-		return WaveSpawner.MAX_WAVES
 	return max(1, wave_index)

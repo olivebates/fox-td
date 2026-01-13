@@ -39,6 +39,7 @@ var max_cooldown: float = BASE_MOVE_COOLDOWN
 const TARGET_UPDATE_INTERVAL := 0.1
 var _target_update_accum: float = 0.0
 var _cached_stats: Dictionary = {}
+var _effective_stats: Dictionary = {}
 var _last_rank: int = -1
 var _last_path: Array = []
 var _last_tower_type = null
@@ -138,7 +139,8 @@ func _draw() -> void:
 	if not has_meta("item_data"): return
 	var data = get_meta("item_data")
 	var rank = int(data.get("rank", 0))
-	var border_color = InventoryManager.RANK_COLORS.get(rank, Color(0.192, 1.0, 1.0, 1.0))
+	var rarity = invManager.items.get(data.id, {}).get("rarity", 0)
+	var border_color = InventoryManager.RANK_COLORS.get(rarity, Color(0.192, 1.0, 1.0, 1.0))
 	var base_color = border_color * 0.3
 	base_color.a = 1.0
 	var brighten = 1.5 if hovered else 1.0
@@ -148,8 +150,8 @@ func _draw() -> void:
 	if color_dots != null and colors != _last_colors:
 		color_dots.set_colors(colors)
 		_last_colors = colors.duplicate()
-	var rarity = invManager.items[data.id].rarity
-	for i in range(rarity):
+	var triangle_count = min(rank, InventoryManager.MAX_MERGE_RANK)
+	for i in range(triangle_count):
 		var offset = Vector2(-2.8 + i * 1.5, 3.8)
 		draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -2.0), offset + Vector2(1.4, 0.2), offset + Vector2(-0.9, 0.2)]), Color(0, 0, 0, 1))
 		draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -1.5), offset + Vector2(1, 0), offset + Vector2(-0.5, 0)]), Color(0.98, 0.98, 0, 1))
@@ -169,17 +171,75 @@ func update_target() -> void:
 			min_dist = dist
 			current_target = enemy
 
-func _process(delta: float) -> void:
-	if not has_meta("item_data"): return
+func _apply_adjacent_buffs(stats: Dictionary) -> Dictionary:
+	if stats.is_empty():
+		return stats
+	var grid_controller = get_node_or_null("/root/GridController")
+	if grid_controller == null:
+		return stats
+	var own_cell: Vector2i = grid_controller.get_cell_from_pos(global_position)
+	if own_cell == Vector2i(-1, -1):
+		return stats
+	var offsets = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	var damage_mult = 1.0
+	var speed_mult = 1.0
+	var range_bonus = 0.0
+	var starfish_def: Dictionary = {}
+	var inv = get_node_or_null("/root/InventoryManager")
+	if inv:
+		var items = inv.get("items")
+		if typeof(items) == TYPE_DICTIONARY:
+			starfish_def = items.get(InventoryManager.ADJACENT_BUFF_TOWER_ID, {})
+	var base_speed_bonus = float(starfish_def.get("adjacent_speed_bonus", InventoryManager.STARFISH_BASE_SPEED_BONUS))
+	var base_damage_bonus = float(starfish_def.get("adjacent_damage_bonus", 0.0))
+	var base_range_bonus = float(starfish_def.get("adjacent_range_bonus", 0.0))
+	for off in offsets:
+		var cell = own_cell + off
+		if cell.x < 0 or cell.x >= GridController.WIDTH or cell.y < 0 or cell.y >= GridController.HEIGHT:
+			continue
+		var neighbor = grid_controller.get_grid_item_at_cell(cell)
+		if neighbor == null or !neighbor.has_meta("item_data"):
+			continue
+		var neighbor_data = neighbor.get_meta("item_data")
+		if str(neighbor_data.get("id", "")) != InventoryManager.ADJACENT_BUFF_TOWER_ID:
+			continue
+		var path_levels = neighbor_data.get("path", [0, 0, 0])
+		damage_mult *= 1.0 + base_damage_bonus + (InventoryManager.STARFISH_DAMAGE_PER_LEVEL * float(path_levels[1]))
+		var speed_bonus = base_speed_bonus + (InventoryManager.STARFISH_SPEED_PER_LEVEL * float(path_levels[0]))
+		speed_mult *= 1.0 + speed_bonus
+		range_bonus += (base_range_bonus + float(path_levels[2])) * 8.0
+	if damage_mult != 1.0:
+		if stats.has("damage") and stats.damage != -1:
+			stats.damage *= damage_mult
+		if stats.has("creature_damage") and stats.creature_damage != -1:
+			stats.creature_damage *= damage_mult
+	if speed_mult != 1.0:
+		if stats.has("attack_speed") and stats.attack_speed != -1:
+			stats.attack_speed *= speed_mult
+		if stats.has("creature_attack_speed") and stats.creature_attack_speed != -1:
+			stats.creature_attack_speed *= speed_mult
+	if range_bonus != 0.0 and stats.has("range") and stats.range != -1:
+		stats.range += range_bonus
+	return stats
+
+func get_effective_stats() -> Dictionary:
+	if !has_meta("item_data"):
+		return {}
 	var data = get_meta("item_data")
 	if data.rank != _last_rank or path != _last_path or tower_type != _last_tower_type:
 		_cached_stats = InventoryManager.get_tower_stats(tower_type, data.rank, path)
 		_last_rank = data.rank
 		_last_path = path.duplicate()
 		_last_tower_type = tower_type
-	bullets_shot = _cached_stats.bullets
-	fire_rate = _cached_stats.attack_speed
-	attack_radius = _cached_stats.range
+	_effective_stats = _apply_adjacent_buffs(_cached_stats.duplicate())
+	return _effective_stats
+
+func _process(delta: float) -> void:
+	if not has_meta("item_data"): return
+	var stats = get_effective_stats()
+	bullets_shot = stats.bullets
+	fire_rate = stats.attack_speed
+	attack_radius = stats.range
 	if holding:
 		hold_timer += delta
 		
@@ -208,7 +268,7 @@ func _process(delta: float) -> void:
 func fire(target: Node2D) -> void:
 	var dir = (target.global_position - global_position).normalized()
 	sprite.flip_h = dir.x > 0
-	var stats = InventoryManager.get_tower_stats(tower_type, get_meta("item_data").rank, path)
+	var stats = get_effective_stats()
 	var damage = stats.damage
 	for i in bullets_shot:
 		var bullet = bullet_scene.instantiate()

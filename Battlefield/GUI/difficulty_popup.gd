@@ -193,8 +193,8 @@ func _update_money_text() -> void:
 	money_label.text = _get_money_text()
 
 func _get_money_text() -> String:
-	var mult = DifficultyManager.get_money_multiplier()
-	return "  Current Money Gain: 🪙x" + ("%.1f" % mult)
+	#var mult = DifficultyManager.get_money_multiplier()
+	return "Difficulty"
 
 func _get_trait_percent(trait_name: String) -> float:
 	var level := DifficultyManager.get_trait(trait_name)

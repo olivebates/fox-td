@@ -9,8 +9,26 @@ var wave_replay_counts: Dictionary = {}
 @onready var inventory = get_node("/root/InventoryManager")
 func _ready() -> void:
 	await get_tree().process_frame
-	save_timeline(0)
-	current_wave_index = 0
+	save_timeline(WaveSpawner.current_wave)
+	current_wave_index = WaveSpawner.current_wave
+
+func _get_slot_from_path(path: String) -> int:
+	var filename = path.get_file()
+	if not filename.begins_with("wave_save"):
+		return -1
+	var suffix = filename.substr("wave_save".length(), filename.length() - "wave_save".length())
+	if suffix.is_empty() or not suffix.is_valid_int():
+		return -1
+	return int(suffix)
+
+func get_saved_slots() -> Array[int]:
+	var slots: Array[int] = []
+	for path in timeline_saves:
+		var slot = _get_slot_from_path(path)
+		if slot >= 1:
+			slots.append(slot)
+	slots.sort()
+	return slots
 
 func _get_save_path(slot: int) -> String:
 	
@@ -22,8 +40,10 @@ func _get_save_path(slot: int) -> String:
 
 func delete_all_timeline_saves_after(index: int) -> void:
 	var paths_to_delete: Array = []
-	for i in range(index, timeline_saves.size()):
-		paths_to_delete.append(timeline_saves[i])
+	for path in timeline_saves:
+		var slot = _get_slot_from_path(path)
+		if slot > index:
+			paths_to_delete.append(path)
 	
 	for path in paths_to_delete:
 		if OS.get_name() == "Web":
@@ -63,6 +83,14 @@ func save_timeline(slot: int = 0):
 		"max_health": StatsManager.max_health,
 		"base_max_health": StatsManager.base_max_health,
 		"level": StatsManager.level,
+		"wave_locked": WaveSpawner.wave_locked,
+		"committed_wave_power": WaveSpawner.committed_wave_power,
+		"locked_base_wave_mult": WaveSpawner.locked_base_wave_mult,
+		"locked_wave_accel": WaveSpawner.locked_wave_accel,
+		"banned_tower_types": WaveSpawner.banned_tower_types.duplicate(),
+		"banned_enemy_types": WaveSpawner.banned_enemy_types.duplicate(),
+		"wave_seeds": WaveSpawner.wave_seeds.duplicate(),
+		"saved_wave_data": WaveSpawner.saved_wave_data.duplicate(true)
 	}
 	
 	save_dict["wave_replay_count"] = wave_replay_counts.get(slot, 0)
@@ -105,6 +133,8 @@ func save_timeline(slot: int = 0):
 	for tower in towers:
 		if tower.has_meta("item_data"):
 			var data = tower.get_meta("item_data").duplicate()
+			if !data.has("colors"):
+				data["colors"] = []
 			if tower.has_method("get_path") or "path" in tower:
 				data["path"] = tower.path.duplicate()
 			var cell = get_cell_from_pos(tower.global_position)
@@ -226,8 +256,37 @@ func load_timeline(slot: int = 0):
 	var save_dict = json.data
 	
 	#Basic vars
-	#if save_dict.has("current_wave"):
-		#WaveSpawner.current_wave = save_dict["current_wave"]
+	if save_dict.has("current_wave"):
+		WaveSpawner.current_wave = int(save_dict["current_wave"])
+	if save_dict.has("wave_locked"):
+		WaveSpawner.wave_locked = bool(save_dict["wave_locked"])
+	if save_dict.has("committed_wave_power"):
+		WaveSpawner.committed_wave_power = float(save_dict["committed_wave_power"])		
+	if save_dict.has("locked_base_wave_mult"):
+		WaveSpawner.locked_base_wave_mult = float(save_dict["locked_base_wave_mult"])
+	if save_dict.has("locked_wave_accel"):
+		WaveSpawner.locked_wave_accel = float(save_dict["locked_wave_accel"])
+	if save_dict.has("banned_tower_types"):
+		var banned_towers: Array[String] = []
+		for tower_id in save_dict["banned_tower_types"]:
+			banned_towers.append(String(tower_id))
+		WaveSpawner.banned_tower_types = banned_towers
+	if save_dict.has("banned_enemy_types"):
+		var banned_enemies: Array[String] = []
+		for enemy_id in save_dict["banned_enemy_types"]:
+			banned_enemies.append(String(enemy_id))
+		WaveSpawner.banned_enemy_types = banned_enemies
+	if save_dict.has("wave_seeds"):
+		var seeds: Array[int] = []
+		for seed_value in save_dict["wave_seeds"]:
+			seeds.append(int(seed_value))
+		WaveSpawner.wave_seeds = seeds
+	if save_dict.has("saved_wave_data"):
+		var saved: Array[Dictionary] = []
+		for entry in save_dict["saved_wave_data"]:
+			if entry is Dictionary:
+				saved.append(entry.duplicate(true))
+		WaveSpawner.saved_wave_data = saved
 	current_wave_index = slot
 	saves_changed.emit()
 	
@@ -256,6 +315,12 @@ func load_timeline(slot: int = 0):
 	
 	# Enemies
 	WaveSpawner._is_spawning = false
+	WaveSpawner._remaining_enemies = 0
+	WaveSpawner.active_waves.clear()
+	WaveSpawner.wave_damage_by_tower.clear()
+	WaveSpawner.recent_wave_damage.clear()
+	WaveSpawner.processed_wave_damage.clear()
+	WaveSpawner._wave_stall_timer = 0.0
 	var enemies = get_tree().get_nodes_in_group("enemy")
 	for i in enemies:
 		i.queue_free()

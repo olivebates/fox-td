@@ -10,7 +10,32 @@ const STAT_KEYS := [
 	"creature_damage",
 	"creature_attack_speed",
 	"creatures_hp",
-	"creature_respawn_time",
+]
+
+const GUARD_STAT_KEYS := [
+	"creatures",
+	"creature_damage",
+	"creature_attack_speed",
+	"creatures_hp",
+]
+
+const TURTLE_STAT_KEYS := [
+	"attack_speed",
+	"radius",
+	"slow",
+	"max_targets",
+]
+
+const STARFISH_STAT_KEYS := [
+	"adjacent_speed_bonus",
+	"adjacent_damage_bonus",
+	"adjacent_range_bonus",
+]
+
+const SNAIL_STAT_KEYS := [
+	"damage",
+	"attack_speed",
+	"radius",
 ]
 
 const STAT_LABELS := {
@@ -23,11 +48,20 @@ const STAT_LABELS := {
 	"creature_damage": "Damage",
 	"creature_attack_speed": "Attack Speed",
 	"creatures_hp": "Health",
-	"creature_respawn_time": "Respawn Time",
+	"slow": "Slow",
+	"max_targets": "Max Targets",
+	"adjacent_speed_bonus": "Adj Speed",
+	"adjacent_damage_bonus": "Adj Damage",
+	"adjacent_range_bonus": "Adj Range",
 }
 
 const STAT_INCREMENTS := {
 	"radius": 8.0,
+	"slow": 0.05,
+	"max_targets": 1.0,
+	"adjacent_speed_bonus": 0.05,
+	"adjacent_damage_bonus": 0.05,
+	"adjacent_range_bonus": 0.5,
 }
 
 const STAT_MIN := {}
@@ -142,9 +176,8 @@ func _refresh_stats() -> void:
 func _build_stat_rows(def: Dictionary) -> void:
 	_clear_stat_rows()
 	var upgrade_levels: Dictionary = _get_upgrade_levels(def)
-	for stat_key in STAT_KEYS:
-		if def.get("is_guard", false) and stat_key in ["radius", "creature_respawn_time"]:
-			continue
+	var stat_keys = _get_stat_keys_for_tower(def, selected_tower_id)
+	for stat_key in stat_keys:
 		if !def.has(stat_key):
 			continue
 		var row := HBoxContainer.new()
@@ -224,15 +257,41 @@ func _get_upgrade_cost(level: int) -> int:
 func _get_stat_increment(stat_key: String) -> float:
 	return float(STAT_INCREMENTS.get(stat_key, 1.0))
 
+func _get_stat_keys_for_tower(def: Dictionary, tower_id: String) -> Array:
+	if tower_id == "Starfish":
+		return STARFISH_STAT_KEYS
+	if tower_id == "Turtle":
+		return TURTLE_STAT_KEYS
+	if tower_id == "Snail":
+		return SNAIL_STAT_KEYS
+	if def.get("is_guard", false):
+		return GUARD_STAT_KEYS
+	return STAT_KEYS
+
+func _get_stat_label(stat_key: String, tower_id: String) -> String:
+	if tower_id == "Snake" and stat_key == "damage":
+		return "Poison DPS"
+	if tower_id == "Turtle" and stat_key == "attack_speed":
+		return "Pulse Speed"
+	return STAT_LABELS.get(stat_key, stat_key.capitalize())
+
+func _format_stat_value(stat_key: String, value: float) -> String:
+	match stat_key:
+		"radius":
+			var tiles = floor(value / 8.0)
+			return _format_value(tiles) + " tiles"
+		"adjacent_range_bonus":
+			return _format_value(value) + " tiles"
+		"attack_speed", "creature_attack_speed":
+			return _format_value(value) + "/s"
+		"slow", "adjacent_speed_bonus", "adjacent_damage_bonus":
+			return str(int(round(value * 100.0))) + "%"
+		_:
+			return _format_value(value)
+
 func _format_stat_text(stat_key: String, value: float, _level: int) -> String:
-	var label = STAT_LABELS.get(stat_key, stat_key.capitalize())
-	if stat_key == "radius":
-		value = floor(value / 8.0)
-	var text_value := _format_value(value)
-	if stat_key == "attack_speed" or stat_key == "creature_attack_speed":
-		text_value += "/s"
-	elif stat_key == "radius":
-		text_value += " tiles"
+	var label = _get_stat_label(stat_key, selected_tower_id)
+	var text_value := _format_stat_value(stat_key, value)
 	return "%s: %s" % [label, text_value]
 
 func _on_stat_hover(stat_key: String) -> void:
@@ -249,15 +308,10 @@ func _get_stat_tooltip_text(stat_key: String) -> String:
 	var upgrade_levels: Dictionary = _get_upgrade_levels(def)
 	var level := int(upgrade_levels.get(stat_key, 0))
 	var delta := _get_stat_increment(stat_key)
-	var sign := "+" if delta >= 0 else "-"
-	var label = STAT_LABELS.get(stat_key, stat_key.capitalize())
-	var amount := _format_value(abs(delta))
-	var desc = "Upgrade increases " + label + " by " + sign + amount + "."
-	if stat_key == "radius":
-		var tiles = abs(delta) / 8.0
-		var tile_amount := _format_value(tiles)
-		var tile_label := "tile" if is_equal_approx(tiles, 1.0) else "tiles"
-		desc = "Upgrade increases " + label + " by " + sign + tile_amount + " " + tile_label + "."
+	var verb := "increases" if delta >= 0 else "decreases"
+	var label = _get_stat_label(stat_key, selected_tower_id)
+	var amount := _format_stat_value(stat_key, abs(delta))
+	var desc = "Upgrade " + verb + " " + label + " by " + amount + "."
 	return "\n".join([
 		desc,
 		"Current level: " + str(level),

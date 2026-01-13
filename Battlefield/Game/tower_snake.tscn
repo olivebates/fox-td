@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Battlefield/Game/tower_snake.gd" id="1_snake"]
+[ext_resource type="Texture2D" uid="uid://dyrti7a36085e" path="res://Battlefield/Sprites/Towers/snake.png" id="2_snake"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_snake"]
+size = Vector2(8, 8)
+
+[node name="SnakeTower" type="CharacterBody2D" groups=["tower"]]
+z_index = -20
+script = ExtResource("1_snake")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_snake")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_snake")

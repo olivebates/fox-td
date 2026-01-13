@@ -2,11 +2,14 @@
 extends TabContainer
 
 func _ready() -> void:
+	WaveSpawner.reset_wave_data()
 	StatsManager.reset_current_map()
-	WaveSpawner.activate_pending_bans()
 	InventoryManager.refresh_inventory_highlights()
 	get_tree().call_group("backpack_inventory", "refresh_all_highlights")
 	get_tree().call_group("squad_inventory", "refresh_all_highlights")
+	tab_changed.connect(_on_tab_changed)
+	if has_signal("tab_clicked"):
+		tab_clicked.connect(_on_tab_clicked)
 	# Font styling
 	add_theme_font_size_override("font_size", 4)
 	add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.5))
@@ -67,3 +70,19 @@ func _ready() -> void:
 	
 	# Tab separation
 	add_theme_constant_override("h_separation", 4)
+
+func _on_tab_changed(tab: int) -> void:
+	_refresh_upgrade_tab(tab)
+
+func _on_tab_clicked(tab: int) -> void:
+	_refresh_upgrade_tab(tab)
+
+func _refresh_upgrade_tab(tab: int) -> void:
+	if tab < 0 or tab >= get_child_count():
+		return
+	var tab_control = get_child(tab)
+	if tab_control == null or tab_control.name != "Upgrade":
+		return
+	var upgrade_menu = tab_control.get_node_or_null("UpgradeMenu")
+	if upgrade_menu and upgrade_menu.has_method("refresh_unlocked_towers"):
+		upgrade_menu.refresh_unlocked_towers()

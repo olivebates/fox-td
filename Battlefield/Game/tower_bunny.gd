@@ -19,8 +19,7 @@ func _ready() -> void:
 
 # Modify spawn_minions()
 func spawn_minions() -> void:
-	var data = get_meta("item_data")
-	var stats = InventoryManager.get_tower_stats(tower_type, data.rank, path)
+	var stats = get_effective_stats()
 	desired_minion_count = stats.creature_count
 	for i in desired_minion_count:
 		_spawn_single_minion(stats.creature_health, stats.creature_damage, stats.creature_attack_speed)
@@ -69,8 +68,7 @@ func _input(event: InputEvent) -> void:
 		InventoryManager.show_tower_tooltip(data, 0.0)  # cost 0 for placed tower
 
 func _process(delta: float) -> void:
-	var data = get_meta("item_data")
-	var stats = InventoryManager.get_tower_stats(tower_type, data.rank, path)
+	var stats = get_effective_stats()
 	current_respawn_time = stats.creature_respawn_time
 	desired_minion_count = stats.creature_count
 	

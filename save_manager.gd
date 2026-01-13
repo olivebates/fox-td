@@ -20,8 +20,10 @@ const BASE_SAVE_KEY := "save_"
 
 # Encryption key (should be kept secret in a real application)
 const ENCRYPTION_KEY = "xai_savegame_key_2025"
+const OFFLINE_MONEY_CAP_SECONDS = 8 * 3600
 
 var just_loaded = 10 #Hotfix for transcend button
+var last_loaded_time = 0
 
 # Add a saving state variable to prevent concurrent saves
 var _is_saving = false
@@ -41,7 +43,7 @@ func _ready():
 		_visibility_callback = JavaScriptBridge.create_callback(Callable(self, "_on_visibility_change"))
 		JavaScriptBridge.get_interface("document").addEventListener("visibilitychange", _visibility_callback)
 	
-	#load_game(9)
+	load_game(9)
 	
 func start_periodic_backup():
 	if OS.get_name() != "Web":
@@ -383,7 +385,10 @@ func save_game(slot: int = 0, custom_path: String = ""):
 		else:
 			serialized_backpack.append({
 				"id": tower.id,
-				"rank": tower.get("rank", 1)
+				"rank": tower.get("rank", 1),
+				"colors": tower.get("colors", []),
+				"path": tower.get("path", [0, 0, 0]),
+				"merge_children": tower.get("merge_children", [])
 			})
 	
 	var serialized_squad = []
@@ -393,7 +398,10 @@ func save_game(slot: int = 0, custom_path: String = ""):
 		else:
 			serialized_squad.append({
 				"id": tower.id,
-				"rank": tower.get("rank", 1)
+				"rank": tower.get("rank", 1),
+				"colors": tower.get("colors", []),
+				"path": tower.get("path", [0, 0, 0]),
+				"merge_children": tower.get("merge_children", [])
 			})
 	
 	# Build save dictionary with money
@@ -404,8 +412,10 @@ func save_game(slot: int = 0, custom_path: String = ""):
 		"save_name": StatsManager.current_save_name,
 		"money": StatsManager.money,
 		"current_level": WaveSpawner.current_level,
+		"difficulty_traits": DifficultyManager.traits,
 		"backpack_inventory": serialized_backpack,
 		"squad_inventory": serialized_squad,
+		"squad_unlocked_slots": TowerManager.get_unlocked_squad_size(),
 		"pull_cost": TowerManager.pull_cost,
 		"persistent_upgrades": StatsManager.persistent_upgrade_data
 	}
@@ -528,6 +538,7 @@ func load_game(slot: int = 0, custom_path: String = "", direct_string: String = 
 		return
 	
 	var save_dict = json.data
+	last_loaded_time = int(Time.get_unix_time_from_system())
 	
 	# Load money
 	if save_dict.has("money"):
@@ -538,9 +549,19 @@ func load_game(slot: int = 0, custom_path: String = "", direct_string: String = 
 
 	if save_dict.has("pull_cost"):
 		TowerManager.pull_cost = int(save_dict["pull_cost"])
+
+	if save_dict.has("squad_unlocked_slots"):
+		TowerManager.squad_unlocked_slots = int(save_dict["squad_unlocked_slots"])
 	
 	if save_dict.has("persistent_upgrades"):
 		StatsManager.persistent_upgrade_data =  save_dict["persistent_upgrades"]
+		StatsManager.update_persistant_upgrades()
+	
+	if save_dict.has("difficulty_traits"):
+		var loaded_traits = save_dict["difficulty_traits"]
+		for trait_name in DifficultyManager.traits.keys():
+			DifficultyManager.traits[trait_name] = int(loaded_traits.get(trait_name, 0))
+			DifficultyManager.trait_changed.emit(trait_name, DifficultyManager.traits[trait_name])
 	
 	# Load backpack inventory
 	if save_dict.has("backpack_inventory"):
@@ -553,8 +574,13 @@ func load_game(slot: int = 0, custom_path: String = "", direct_string: String = 
 			else:
 				TowerManager.tower_inventory[i] = TowerManager._create_tower(
 					tower_data["id"],
-					tower_data.get("rank", 1)
+					tower_data.get("rank", 1),
+					tower_data.get("path", [0, 0, 0])
 				)
+				if tower_data.has("colors"):
+					TowerManager.tower_inventory[i]["colors"] = tower_data["colors"]
+				if tower_data.has("merge_children"):
+					TowerManager.tower_inventory[i]["merge_children"] = tower_data["merge_children"]
 	
 	# Load squad inventory
 	if save_dict.has("squad_inventory"):
@@ -567,8 +593,18 @@ func load_game(slot: int = 0, custom_path: String = "", direct_string: String = 
 			else:
 				TowerManager.squad_slots[i] = TowerManager._create_tower(
 					tower_data["id"],
-					tower_data.get("rank", 1)
+					tower_data.get("rank", 1),
+					tower_data.get("path", [0, 0, 0])
 				)
+				if tower_data.has("colors"):
+					TowerManager.squad_slots[i]["colors"] = tower_data["colors"]
+				if tower_data.has("merge_children"):
+					TowerManager.squad_slots[i]["merge_children"] = tower_data["merge_children"]
+		TowerManager.ensure_squad_unlocks_for_existing_towers()
+	
+	var saved_timestamp = int(save_dict.get("timestamp", 0))
+	if saved_timestamp > 0:
+		_apply_offline_money(saved_timestamp)
 	
 	# Refresh UI
 	get_tree().call_group("backpack_inventory", "_rebuild_slots")
@@ -577,6 +613,8 @@ func load_game(slot: int = 0, custom_path: String = "", direct_string: String = 
 	var i = load("uid://cda7be4lkl7n8").instantiate()
 	get_tree().root.add_child(i)
 	
+	if Dev and Dev.refresh_wave_data_on_load:
+		WaveSpawner.reset_wave_data()
 	StatsManager.new_map()
 
 func _on_popup_close_pressed(popup: Window):
@@ -584,6 +622,16 @@ func _on_popup_close_pressed(popup: Window):
 
 func _on_popup_closed(popup: Window):
 	popup.queue_free()
+
+func _apply_offline_money(saved_timestamp: int) -> int:
+	var elapsed_seconds = max(0, last_loaded_time - saved_timestamp)
+	var capped_seconds = min(elapsed_seconds, OFFLINE_MONEY_CAP_SECONDS)
+	var rate_per_hour = StatsManager.get_backpack_money_per_hour()
+	var added = int(floor(float(rate_per_hour) * (float(capped_seconds) / 3600.0)))
+	if added > 0:
+		StatsManager.money += added
+	return added
+
 
 func read_text_from(path: String) -> String:
 	var file: FileAccess = FileAccess.open(path, FileAccess.READ)

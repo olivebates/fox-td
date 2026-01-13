@@ -6,7 +6,7 @@ var aoe_damage: float = 10.0
 
 # In tower_aoe.gd (replace the existing fire() and _draw())
 func fire(target: Node2D) -> void:
-	var stats = InventoryManager.get_tower_stats(tower_type, get_meta("item_data").rank, path)
+	var stats = get_effective_stats()
 	var damage = stats.damage
 	
 	var enemies = get_tree().get_nodes_in_group("enemies")

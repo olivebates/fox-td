@@ -53,16 +53,59 @@ func _update_display() -> void:
 	cost_text.text = "[font_size=7.5][color=cornflower_blue]Cost: " + str(int(cost)) + "[/color][/font_size]"
 
 	var path_enum = item_def.paths[path_id]
+	var is_turtle = tower_id == "Turtle"
+	var is_starfish = tower_id == "Starfish"
+	var is_snake = tower_id == "Snake"
+	var is_snail = tower_id == "Snail"
 
 	match path_enum:
 		InventoryManager.PATH_ID.bullets:
-			cost_text.append_text("\n[font_size=4][color=light_gray]Bullets: " + str(int(current_stats.bullets)) + " -> [/color][color=lime]" + str(int(next_stats.bullets)) + "[/color][/font_size]")
+			if is_turtle:
+				var current_targets = InventoryManager.TURTLE_BASE_TARGETS + (InventoryManager.TURTLE_TARGETS_PER_LEVEL * int(current_path_levels[path_id]))
+				var next_targets = InventoryManager.TURTLE_BASE_TARGETS + (InventoryManager.TURTLE_TARGETS_PER_LEVEL * int(next_path_levels[path_id]))
+				cost_text.append_text("\n[font_size=4][color=light_gray]Targets: " + str(current_targets) + " -> [/color][color=lime]" + str(next_targets) + "[/color][/font_size]")
+			elif is_snake:
+				var current_duration = 4.0 + (float(current_path_levels[path_id]) * 4.0)
+				var next_duration = 4.0 + (float(next_path_levels[path_id]) * 4.0)
+				cost_text.append_text("\n[font_size=4][color=light_gray]Poison Duration: " + str(int(current_duration)) + "s -> [/color][color=lime]" + str(int(next_duration)) + "s[/color][/font_size]")
+			elif is_snail:
+				var current_volleys = 1 + int(current_path_levels[path_id])
+				var next_volleys = 1 + int(next_path_levels[path_id])
+				cost_text.append_text("\n[font_size=4][color=light_gray]Volleys: " + str(current_volleys) + " -> [/color][color=lime]" + str(next_volleys) + "[/color][/font_size]")
+			else:
+				cost_text.append_text("\n[font_size=4][color=light_gray]Bullets: " + str(int(current_stats.bullets)) + " -> [/color][color=lime]" + str(int(next_stats.bullets)) + "[/color][/font_size]")
 		InventoryManager.PATH_ID.attack_speed:
-			cost_text.append_text("\n[font_size=4][color=light_gray]Attack Speed: " + str(int(snapped(current_stats.attack_speed, 0.01))) + "/s -> [/color][color=lime]" + str(int(snapped(next_stats.attack_speed, 0.01))) + "/s[/color][/font_size]")
+			if is_starfish:
+				var current_bonus = 30 + (int(current_path_levels[path_id]) * 30)
+				var next_bonus = 30 + (int(next_path_levels[path_id]) * 30)
+				cost_text.append_text("\n[font_size=4][color=light_gray]Adj Speed: +" + str(current_bonus) + "% -> [/color][color=lime]+" + str(next_bonus) + "%[/color][/font_size]")
+			else:
+				cost_text.append_text("\n[font_size=4][color=light_gray]Attack Speed: " + str(int(snapped(current_stats.attack_speed, 0.01))) + "/s -> [/color][color=lime]" + str(int(snapped(next_stats.attack_speed, 0.01))) + "/s[/color][/font_size]")
 		InventoryManager.PATH_ID.range:
-			cost_text.append_text("\n[font_size=4][color=light_gray]Range: " + str(int(current_stats.range / 8)) + " -> [/color][color=lime]" + str(int(next_stats.range / 8)) + " tiles[/color][/font_size]")
+			if is_starfish:
+				var current_tiles = int(current_path_levels[path_id])
+				var next_tiles = int(next_path_levels[path_id])
+				cost_text.append_text("\n[font_size=4][color=light_gray]Adj Range: " + str(current_tiles) + " -> [/color][color=lime]" + str(next_tiles) + " tiles[/color][/font_size]")
+			else:
+				cost_text.append_text("\n[font_size=4][color=light_gray]Range: " + str(int(current_stats.range / 8)) + " -> [/color][color=lime]" + str(int(next_stats.range / 8)) + " tiles[/color][/font_size]")
 		InventoryManager.PATH_ID.damage:
-			cost_text.append_text("\n[font_size=4][color=light_gray]Damage: " + str(int(current_stats.damage)) + " -> [/color][color=lime]" + str(int(next_stats.damage)) + "[/color][/font_size]")
+			if is_turtle:
+				var current_slow = clamp(InventoryManager.TURTLE_BASE_SLOW + (InventoryManager.TURTLE_SLOW_PER_LEVEL * float(current_path_levels[path_id])), 0.0, 0.9)
+				var next_slow = clamp(InventoryManager.TURTLE_BASE_SLOW + (InventoryManager.TURTLE_SLOW_PER_LEVEL * float(next_path_levels[path_id])), 0.0, 0.9)
+				var current_percent = int(round(current_slow * 100.0))
+				var next_percent = int(round(next_slow * 100.0))
+				cost_text.append_text("\n[font_size=4][color=light_gray]Slow: " + str(current_percent) + "% -> [/color][color=lime]" + str(next_percent) + "%[/color][/font_size]")
+			elif is_snake:
+				var base_poison = StatsManager.get_global_damage_multiplier()
+				var current_dps = base_poison + current_stats.damage
+				var next_dps = base_poison + next_stats.damage
+				cost_text.append_text("\n[font_size=4][color=light_gray]Poison: " + str(int(current_dps)) + " damage/s -> [/color][color=lime]" + str(int(next_dps)) + " damage/s[/color][/font_size]")
+			elif is_starfish:
+				var current_bonus = int(current_path_levels[path_id]) * 30
+				var next_bonus = int(next_path_levels[path_id]) * 30
+				cost_text.append_text("\n[font_size=4][color=light_gray]Adj Damage: +" + str(current_bonus) + "% -> [/color][color=lime]+" + str(next_bonus) + "%[/color][/font_size]")
+			else:
+				cost_text.append_text("\n[font_size=4][color=light_gray]Damage: " + str(int(current_stats.damage)) + " -> [/color][color=lime]" + str(int(next_stats.damage)) + "[/color][/font_size]")
 		InventoryManager.PATH_ID.explosion_radius:
 			cost_text.append_text("\n[font_size=4][color=light_gray]Explosion Radius: " + str(int(current_stats.explosion_radius / 8)) + " -> [/color][color=lime]" + str(int(next_stats.explosion_radius / 8)) + " tiles[/color][/font_size]")
 		InventoryManager.PATH_ID.creature_amount:

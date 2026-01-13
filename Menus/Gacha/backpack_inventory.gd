@@ -7,6 +7,7 @@ var original_slot: Panel = null
 var current_dragged_tower: Dictionary = {}
 var _merge_blink_timer: float = 0.0
 var _merge_blink_state: bool = false
+const LOCK_ICON = "🔒"
 
 @onready var drag_preview: Control = get_parent().get_parent().get_node("Preview")
 @onready var inventory_manager = $/root/InventoryManager
@@ -47,6 +48,15 @@ func _rebuild_slots() -> void:
 		_update_slot(slot)
 	refresh_all_highlights()
 
+func _is_slot_locked(slot: Panel) -> bool:
+	var real_index = int(slot.get_meta("real_index", -1))
+	if real_index < 1000:
+		return false
+	var local_index = int(slot.get_meta("local_index", -1))
+	if local_index == -1:
+		return false
+	return !TowerManager.is_squad_slot_unlocked(local_index)
+
 func _setup_slot_style(slot: Panel) -> void:
 	var style = StyleBoxFlat.new()
 	var base = GridController.random_tint
@@ -63,6 +73,7 @@ func _update_slot(slot: Panel) -> void:
 		return
 	var tower = TowerManager.get_tower_at(real_index)
 	var style: StyleBoxFlat = slot.get_meta("style")
+	var locked = _is_slot_locked(slot)
 	if tower.is_empty():
 		style.bg_color = Color(0.1, 0.1, 0.1)
 	else:
@@ -70,14 +81,19 @@ func _update_slot(slot: Panel) -> void:
 			tower["colors"] = InventoryManager.roll_tower_colors()
 			tower["merge_children"] = tower.get("merge_children", [])
 			TowerManager.set_tower_at(real_index, tower)
-		var rank = tower.get("rank", 1)
-		var rank_color = InventoryManager.RANK_COLORS.get(rank, Color(1, 1, 1))
-		style.bg_color = rank_color * 0.3
+		var rarity = tower.type.get("rarity", 0)
+		var rarity_color = InventoryManager.RANK_COLORS.get(rarity, Color(1, 1, 1))
+		style.bg_color = rarity_color * 0.3
+		style.bg_color.a = 1.0
+	if locked:
+		style.bg_color = style.bg_color * 0.45
 		style.bg_color.a = 1.0
 	slot.queue_redraw()
 
 func _on_slot_input(event: InputEvent, slot: Panel) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if _is_slot_locked(slot):
+			return
 		var real_index: int = slot.get_meta("real_index", -1)
 		if real_index == -1:
 			return
@@ -117,6 +133,8 @@ func _perform_unmerge(real_index: int, tower: Dictionary, slot: Panel) -> void:
 	var offset = 1000 if is_squad_inventory else 0
 	var placed = false
 	for i in inv_size:
+		if is_squad_inventory and !TowerManager.is_squad_slot_unlocked(i):
+			continue
 		var idx = i + offset
 		if TowerManager.get_tower_at(idx).is_empty():
 			TowerManager.set_tower_at(idx, lower_b)
@@ -135,11 +153,15 @@ func _on_slot_hover(slot: Panel, entered: bool) -> void:
 		TooltipManager.hide_tooltip()
 
 func show_tooltip(slot: Panel) -> void:
+	if _is_slot_locked(slot):
+		return
 	var real_index: int = slot.get_meta("real_index", -1)
 	if real_index == -1:
 		return
 	var tower = TowerManager.get_tower_at(real_index)
 	if tower.is_empty():
+		if _is_slot_locked(slot):
+			_draw_lock(slot)
 		return
 	var item = {
 		"id": tower.id,
@@ -156,13 +178,23 @@ func _update_hover(slot: Panel) -> void:
 	if real_index == -1:
 		return
 	var tower = TowerManager.get_tower_at(real_index)
+	if _is_slot_locked(slot):
+		if tower.is_empty():
+			style.bg_color = Color(0.07, 0.07, 0.07)
+		else:
+			var rarity = tower.type.get("rarity", 0)
+			var rarity_color = InventoryManager.RANK_COLORS.get(rarity, Color(1, 1, 1))
+			style.bg_color = rarity_color * 0.15
+			style.bg_color.a = 1.0
+		return
 	var hovered = slot.get_meta("hovered", false)
-	var base_color = Color(0.1, 0.1, 0.1) if tower.is_empty() else InventoryManager.RANK_COLORS.get(tower.get("rank", 1), Color(1,1,1)) * 0.3
+	var base_color = Color(0.1, 0.1, 0.1) if tower.is_empty() else InventoryManager.RANK_COLORS.get(tower.type.get("rarity", 0), Color(1,1,1)) * 0.3
 	base_color.a = 1.0
 	var is_merge_target = !current_dragged_tower.is_empty() && \
 		!tower.is_empty() && \
 		tower.id == current_dragged_tower.id && \
-		tower.get("rank", 1) == current_dragged_tower.get("rank", 1)
+		tower.get("rank", 1) == current_dragged_tower.get("rank", 1) && \
+		tower.get("rank", 1) < InventoryManager.MAX_MERGE_RANK
 	if is_merge_target and !unmerge_button.unmerge_mode:
 		style.bg_color = Color(0.1, 0.4, 0.1)
 	elif hovered and !unmerge_button.unmerge_mode:
@@ -226,6 +258,8 @@ func _process(_delta: float) -> void:
 func _perform_drop() -> void:
 	var mouse_pos = get_global_mouse_position()
 	var target_slot: Panel = _get_slot_at_position(mouse_pos)
+	if target_slot and _is_slot_locked(target_slot):
+		target_slot = null
 	var return_to_original = true
 	if target_slot:
 		var target_real: int = target_slot.get_meta("real_index")
@@ -235,7 +269,7 @@ func _perform_drop() -> void:
 			TowerManager.set_tower_at(target_real, dragged_tower)
 			target_inv._update_slot(target_slot)
 			return_to_original = false
-		elif target_tower.id == dragged_tower.id && target_tower.get("rank", 1) == dragged_tower.get("rank", 1):
+		elif target_tower.id == dragged_tower.id && target_tower.get("rank", 1) == dragged_tower.get("rank", 1) && target_tower.get("rank", 1) < InventoryManager.MAX_MERGE_RANK:
 			var updated = target_tower.duplicate(true)
 			updated.rank += 1
 			updated.colors = target_tower.get("colors", [])
@@ -280,8 +314,8 @@ func refresh_all_highlights() -> void:
 func _draw_preview() -> void:
 	if dragged_tower.is_empty():
 		return
-	var rank = dragged_tower.get("rank", 1)
-	var border_color = InventoryManager.RANK_COLORS.get(rank, Color(1, 1, 1))
+	var rarity = dragged_tower.type.get("rarity", 0)
+	var border_color = InventoryManager.RANK_COLORS.get(rarity, Color(1, 1, 1))
 	drag_preview.draw_rect(Rect2(0.5, 0.5, 7, 7), border_color, false, 1.0)
 	var tex = dragged_tower.type.texture
 	if tex:
@@ -294,6 +328,8 @@ func _draw_slot(slot: Panel) -> void:
 		return
 	var tower = TowerManager.get_tower_at(real_index)
 	if tower.is_empty():
+		if _is_slot_locked(slot):
+			_draw_lock(slot)
 		return
 		
 	if tower.is_empty():
@@ -304,11 +340,12 @@ func _draw_slot(slot: Panel) -> void:
 		slot.draw_line(Vector2(1, 8.5), Vector2(9, 8.5), light_color, 1.0)
 		
 	var rank = tower.get("rank", 1)
-	var border_color = InventoryManager.RANK_COLORS.get(rank, Color(1, 1, 1))
+	var rarity = tower.type.get("rarity", 0)
+	var border_color = InventoryManager.RANK_COLORS.get(rarity, Color(1, 1, 1))
 	var base_color = border_color * 0.3
 	base_color.a = 1.0
 	var hovered = slot.get_meta("hovered", false)
-	var is_merge_target = !current_dragged_tower.is_empty() && tower.id == current_dragged_tower.id && rank == current_dragged_tower.get("rank", 1)
+	var is_merge_target = !current_dragged_tower.is_empty() && tower.id == current_dragged_tower.id && rank == current_dragged_tower.get("rank", 1) && rank < InventoryManager.MAX_MERGE_RANK
 	var brighten = 1.0
 	if is_merge_target:
 		brighten = 1.5 if _merge_blink_state else 1.2
@@ -341,12 +378,19 @@ func _draw_slot(slot: Panel) -> void:
 			var dot_color = InventoryManager.get_color_value(color_name)
 			slot.draw_circle(dot_pos, 0.7, dot_color)
 			dot_pos.x += 1.7
+	if _is_slot_locked(slot):
+		_draw_lock(slot)
 		
 
 	
-	var rarity = tower.type.get("rarity", 0)
-	for i in range(rarity):
+	var triangle_count = min(int(rank), InventoryManager.MAX_MERGE_RANK)
+	for i in range(triangle_count):
 		var offset = Vector2(0.8 + i * 1.5, 8.2)
 		slot.draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -2.0), offset + Vector2(1.4, 0.2), offset + Vector2(-0.9, 0.2)]), Color(0.0, 0.0, 0.0, 1.0))
 		slot.draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -1.5), offset + Vector2(1, 0), offset + Vector2(-0.5, 0)]), Color(0.98, 0.98, 0.0, 1.0))
+
+func _draw_lock(slot: Panel) -> void:
+	var font = slot.get_theme_default_font()
+	if font:
+		slot.draw_string(font, Vector2(1.2, 6.8), LOCK_ICON, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, Color(1, 1, 1, 0.9))
 		

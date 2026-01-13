@@ -40,6 +40,16 @@ var current_damage = 1
 var cycles = 1
 var wobble_offset = Vector2.ZERO
 var base_tint: Color = Color.WHITE
+var base_speed: float = 0.0
+var slow_amount: float = 0.0
+var slow_timer: float = 0.0
+var poison_dps: float = 0.0
+var poison_timer: float = 0.0
+var poison_tick_accum: float = 0.0
+
+const SLOW_TINT_COLOR = Color(0.5, 0.7, 1.0)
+const POISON_TINT_COLOR = Color(0.2, 1.0, 0.2)
+const STATUS_TINT_STRENGTH = 0.25
 
 const TYPE_CONFIGS := {
 	"splitter": {
@@ -47,14 +57,11 @@ const TYPE_CONFIGS := {
 		"split_health_ratio": 0.35
 	},
 	"phase": {
-		"phase_range_tiles": 1.5,
+		"phase_range_tiles": 1.7,
 		"base_alpha": 0.75
 	},
 	"regenerator": {
 		"regen_ratio": 0.06
-	},
-	"revenant": {
-		"revive_ratio": 0.5
 	},
 	"swarmling": {
 		"scale": 0.7
@@ -63,8 +70,12 @@ const TYPE_CONFIGS := {
 		"damage_mult": 0.7
 	},
 	"stalker": {
-		"phase_range_tiles": 1.5,
+		"phase_cycle": 1.8,
+		"phase_duration": 0.9,
 		"base_alpha": 0.85
+	},
+	"revenant": {
+		"revive_ratio": 0.5
 	}
 }
 
@@ -92,6 +103,7 @@ func _ready() -> void:
 	_apply_wave_color()
 
 	start_position = position
+	base_speed = speed
 	add_to_group("enemies")
 
 	sprite = $Visuals/Sprite2D
@@ -136,6 +148,7 @@ func request_path() -> void:
 	path_index = 0
 
 func _process(delta: float) -> void:
+	_update_status_effects(delta)
 	if path.is_empty() or path_index >= path.size():
 		request_path()
 	
@@ -146,7 +159,6 @@ func _process(delta: float) -> void:
 	if global_position.distance_to(target_position) < 8.0:
 		current_damage = WaveSpawner.calculate_enemy_damage(current_health, cycles)
 		var damage = current_damage
-		Utilities.spawn_floating_text("-"+str(int(damage))+" Meat", position-Vector2(0,4)+Vector2(randf_range(-4, 4), randf_range(-4, 4)), get_tree().current_scene)
 		position = start_position
 		StatsManager.take_damage(damage)
 		cycles += 1
@@ -213,7 +225,7 @@ func take_damage(amount: int, source_tower_id: String = ""):
 	
 	var tw = create_tween()
 	tw.tween_property(sprite, "modulate", Color.RED, 0.1)
-	tw.tween_property(sprite, "modulate", base_tint, 0.3)
+	tw.tween_property(sprite, "modulate", _get_status_tint_color(), 0.3)
 	
 	var health_ratio = float(current_health) / health
 	var green_blue = 0.2 + (0.8 - 0.2) * (1.0 - health_ratio)
@@ -234,17 +246,19 @@ func die():
 	if _try_revive():
 		return
 	var penalty = TimelineManager.wave_replay_counts.get(TimelineManager.current_wave_index, 0)
-	var money_gain = max(1, WaveSpawner.get_enemy_death_money() - penalty)
+	var money_gain = max(0.0, float(WaveSpawner.get_enemy_death_money() - penalty))
 	var money_mult := DifficultyManager.get_money_multiplier()
-	money_gain = max(1, int(round(money_gain * money_mult * StatsManager.get_money_kill_multiplier())))
-	StatsManager.money += money_gain
-	Utilities.spawn_floating_text("🪙"+str(int(money_gain)), global_position + Vector2(0, 8), get_tree().current_scene, false, Color.YELLOW)
+	money_gain *= money_mult * StatsManager.get_money_kill_multiplier()
+	var payout := 0
+	if money_gain >= 1.0:
+		payout = int(round(money_gain))
+	elif randf() < money_gain:
+		payout = 1
+	if payout > 0:
+		StatsManager.money += payout
+		Utilities.spawn_floating_text(StatsManager.get_coin_symbol()+str(int(payout)), global_position + Vector2(0, 8), get_tree().current_scene, false, Color.YELLOW)
 	_grant_meat_reward()
 	_spawn_split_enemies()
-	if get_tree().get_nodes_in_group("enemy").size() == 1 and !WaveSpawner._is_spawning:
-		TimelineManager.save_timeline(WaveSpawner.current_wave)
-		WaveSpawner.current_wave += 1
-		WaveSpawner.wave_locked = false
 	queue_free()
 
 func _grant_meat_reward() -> void:
@@ -270,6 +284,8 @@ func _try_revive() -> bool:
 	if revive_used:
 		return false
 	if enemy_type == "revenant":
+		if type_revive_ratio <= 0.0:
+			return false
 		_grant_meat_reward()
 		no_meat_reward = true
 		revive_used = true
@@ -330,10 +346,7 @@ func _apply_type_modifiers() -> void:
 
 func _apply_wave_color() -> void:
 	base_tint = InventoryManager.get_color_value(_wave_color)
-	if $Visuals/Sprite2D:
-		$Visuals/Sprite2D.modulate = base_tint
-	if $Visuals/Sprite2D2:
-		$Visuals/Sprite2D2.modulate = base_tint.darkened(0.2)
+	_refresh_status_tint()
 
 func _update_phasing(delta: float) -> void:
 	if type_phase_range > 0.0:
@@ -375,6 +388,62 @@ func _set_phased(value: bool) -> void:
 			if config.has("base_alpha"):
 				alpha = float(config.base_alpha)
 			$Visuals.modulate = Color(1.0, 1.0, 1.0, alpha)
+
+func apply_slow(amount: float, duration: float) -> void:
+	slow_amount = clamp(max(slow_amount, amount), 0.0, 0.9)
+	slow_timer = max(slow_timer, duration)
+	_refresh_status_tint()
+
+func is_slowed() -> bool:
+	return slow_timer > 0.0
+
+func apply_poison(dps: float, duration: float) -> void:
+	poison_dps = max(poison_dps, dps)
+	poison_timer = max(poison_timer, duration)
+	_refresh_status_tint()
+
+func is_poisoned() -> bool:
+	return poison_timer > 0.0
+
+func _update_status_effects(delta: float) -> void:
+	var was_slowed = slow_timer > 0.0
+	var was_poisoned = poison_timer > 0.0
+	if slow_timer > 0.0:
+		slow_timer -= delta
+		if slow_timer <= 0.0:
+			slow_timer = 0.0
+			slow_amount = 0.0
+	speed = base_speed * (1.0 - slow_amount)
+
+	if poison_timer > 0.0:
+		poison_timer -= delta
+		poison_tick_accum += delta
+		while poison_tick_accum >= 1.0:
+			poison_tick_accum -= 1.0
+			take_damage(int(max(1.0, poison_dps)), "poison")
+		if poison_timer <= 0.0:
+			poison_timer = 0.0
+			poison_dps = 0.0
+			poison_tick_accum = 0.0
+	if was_slowed != (slow_timer > 0.0) or was_poisoned != (poison_timer > 0.0):
+		_refresh_status_tint()
+
+func _get_status_tint_color() -> Color:
+	var tint = base_tint
+	if slow_timer > 0.0:
+		tint = tint.lerp(SLOW_TINT_COLOR, STATUS_TINT_STRENGTH)
+	if poison_timer > 0.0:
+		tint = tint.lerp(POISON_TINT_COLOR, STATUS_TINT_STRENGTH)
+	return tint
+
+func _refresh_status_tint() -> void:
+	if not $Visuals:
+		return
+	var tint = _get_status_tint_color()
+	if $Visuals/Sprite2D:
+		$Visuals/Sprite2D.modulate = tint
+	if $Visuals/Sprite2D2:
+		$Visuals/Sprite2D2.modulate = tint.darkened(0.2)
 
 func _spawn_type_splits(split_type: String, split_count: int, split_health_ratio: float) -> void:
 	if split_count <= 0 or split_health_ratio <= 0.0:

@@ -1,7 +1,8 @@
 extends Node
 
-var dev = true
-var unlock_all_towers_and_fill_inventory = true
+var dev = false
+var unlock_all_towers_and_fill_inventory = false
+var refresh_wave_data_on_load = false
 
 var _unlock_all_applied = false
 

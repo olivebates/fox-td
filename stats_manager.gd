@@ -12,6 +12,8 @@ var kill_multiplier: float = base_kill_multiplier
 var money:int = 0
 var level = 1
 var current_save_name := "Unnamed Save"
+const BACKPACK_MONEY_PER_POINT = 10
+var backpack_money_accumulator = 0.0
 
 var upgrade_base_cost = 100
 var upgrade_increment_cost = 10
@@ -25,6 +27,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Starting Meat",
 		"increment": 10,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Increases starting meat by 10",
 		"level": 0
 	},
@@ -32,6 +35,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Meat Kill Bonus",
 		"increment": 0.1,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Increases meat from kills by x0.1",
 		"level": 0
 	},
@@ -39,6 +43,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Meat Production",
 		"increment": 0.1,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Increases meat production speed by 0.1/s",
 		"level": 0
 	},
@@ -46,6 +51,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Meat on Wave Clear",
 		"increment": 10,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Gain +10 meat when a wave ends",
 		"level": 0
 	},
@@ -53,6 +59,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Money Kill Bonus",
 		"increment": 0.1,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Increases money from kills by +10%",
 		"level": 0
 	},
@@ -60,6 +67,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Pull Cost Reduction",
 		"increment": 0.05,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Reduces critter pull costs by 5%",
 		"level": 0
 	},
@@ -67,6 +75,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Free Pull Per Win",
 		"increment": 1,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Gain +1 free critter pull each win",
 		"level": 0
 	},
@@ -74,6 +83,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Tower Placement Discount",
 		"increment": 0.05,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Reduces tower placement cost by 5%",
 		"level": 0
 	},
@@ -81,6 +91,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Wall Placement Discount",
 		"increment": 0.05,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Reduces wall placement cost by 5%",
 		"level": 0
 	},
@@ -88,6 +99,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Tower Move Cooldown",
 		"increment": 0.05,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Reduces tower move cooldown by 5%",
 		"level": 0
 	},
@@ -95,6 +107,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Global Tower Damage",
 		"increment": 0.05,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Increases all tower damage by 5%",
 		"level": 0
 	},
@@ -102,6 +115,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Global Tower Attack Speed",
 		"increment": 0.05,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Increases all tower attack speed by 5%",
 		"level": 0
 	},
@@ -109,6 +123,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Global Tower Range",
 		"increment": 0.05,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Increases all tower range by 5%",
 		"level": 0
 	},
@@ -116,6 +131,7 @@ const DEFAULT_PERSISTENT_UPGRADE_DATA = {
 		"title": "Meat on Hit",
 		"increment": 0.005,
 		"base_cost": 100,
+		"cost": 100,
 		"desc": "Gain meat equal to 0.5% of tower damage per hit",
 		"level": 0
 	}
@@ -177,6 +193,10 @@ func _normalize_persistent_upgrades() -> void:
 	for key in persistent_upgrade_data.keys():
 		if !persistent_upgrade_data[key].has("base_cost"):
 			persistent_upgrade_data[key]["base_cost"] = upgrade_base_cost
+		if !persistent_upgrade_data[key].has("cost"):
+			var base_cost = int(persistent_upgrade_data[key].get("base_cost", upgrade_base_cost))
+			var level = int(persistent_upgrade_data[key].get("level", 0))
+			persistent_upgrade_data[key]["cost"] = base_cost * (level + 1)
 		if !persistent_upgrade_data[key].has("increment"):
 			persistent_upgrade_data[key]["increment"] = 1
 		if !persistent_upgrade_data[key].has("level"):
@@ -282,17 +302,44 @@ func _ready():
 		WaveSpawner.level_completed.connect(_on_level_completed)
 var is_paused: bool = false
 
+func get_backpack_money_per_hour() -> int:
+	var total = 0
+	for tower in TowerManager.tower_inventory:
+		if tower.is_empty():
+			continue
+		var rank = int(tower.get("rank", 1))
+		var type_data = tower.get("type", {})
+		var rarity = int(type_data.get("rarity", 0))
+		total += (rank + rarity) * BACKPACK_MONEY_PER_POINT
+	return total
+
+func _update_backpack_money(delta: float) -> void:
+	var rate_per_hour = get_backpack_money_per_hour()
+	if rate_per_hour <= 0:
+		return
+	backpack_money_accumulator += (float(rate_per_hour) / 3600.0) * delta
+	var add_amount = int(floor(backpack_money_accumulator))
+	if add_amount > 0:
+		money += add_amount
+		backpack_money_accumulator -= add_amount
+
 func get_upgrade_cost(stat: String) -> int:
 	var data = persistent_upgrade_data.get(stat, {})
 	var base_cost = int(data.get("base_cost", upgrade_base_cost))
-	var level = int(data.get("level", 0))
-	return int(base_cost * pow(2, level))
+	var cost = int(data.get("cost", base_cost))
+	if cost <= 0:
+		var level = int(data.get("level", 0))
+		cost = base_cost * (level + 1)
+	return cost
 
 func upgrade_stat(stat: String) -> bool:
 	var cost = get_upgrade_cost(stat)
 	if money < cost: return false
 	money -= cost
 	persistent_upgrade_data[stat].level += 1
+	var base_cost = int(persistent_upgrade_data[stat].get("base_cost", upgrade_base_cost))
+	var next_cost = int(persistent_upgrade_data[stat].get("cost", base_cost)) + base_cost
+	persistent_upgrade_data[stat]["cost"] = next_cost
 	update_persistant_upgrades()
 	#health_changed.emit(health, max_health)
 	return true
@@ -305,6 +352,7 @@ func _process(delta: float) -> void:
 		show_tutorial_end()
 	
 	update_persistant_upgrades()
+	_update_backpack_money(delta)
 	
 	if is_paused:
 		return

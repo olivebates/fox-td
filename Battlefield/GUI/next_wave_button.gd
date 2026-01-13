@@ -90,4 +90,4 @@ func _on_pressed() -> void:
 	if !disabled:
 		_on_mouse_entered()
 		WaveSpawner.start_next_wave()
-		TimelineManager.delete_all_timeline_saves_after(TimelineManager.current_wave_index + 1)
+		TimelineManager.delete_all_timeline_saves_after(TimelineManager.current_wave_index)

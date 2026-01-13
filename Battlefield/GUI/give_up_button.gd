@@ -90,13 +90,18 @@ func _on_mouse_exited() -> void:
 signal return_to_camp_pressed
 func _on_pressed() -> void:
 	return_to_camp_pressed.emit()
-	if (WaveSpawner.current_wave > WaveSpawner.MAX_WAVES):
+	if WaveSpawner.level_cleared:
+		WaveSpawner.activate_pending_bans()
+	TowerManager.reset_all_tower_paths()
+	InventoryManager.reset_all_inventory_paths()
+	if WaveSpawner.level_cleared or WaveSpawner.current_wave > WaveSpawner.MAX_WAVES:
 		WaveSpawner.current_level += 1
 		WaveSpawner.current_wave = 1
 		GridController.change_level_color()
 		WaveSpawner.reset_wave_data()
 		StatsManager.new_map()
 	else:
+		WaveSpawner.reset_wave_data()
 		StatsManager.reset_current_map()
 	var inst = RETURN_TO_CAMP_SCENE.instantiate()
 	get_tree().current_scene.add_child(inst)

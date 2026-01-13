@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Battlefield/Game/tower_starfish.gd" id="1_starfish"]
+[ext_resource type="Texture2D" uid="uid://cs2ic8oeq6fc0" path="res://Battlefield/Sprites/Towers/Tower1.png" id="2_starfish"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_starfish"]
+size = Vector2(8, 8)
+
+[node name="StarfishTower" type="CharacterBody2D" groups=["tower"]]
+z_index = -20
+script = ExtResource("1_starfish")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_starfish")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_starfish")

@@ -68,7 +68,16 @@ func _on_pressed() -> void:
 	TowerManager.pull_cost += TowerManager.cost_increase
 	_update_button_text()
 
-	var rarity: int = 1 if randf() < 0.6 else 2
+	var roll = randf()
+	var rarity = 1
+	if roll < 0.4:
+		rarity = 1
+	elif roll < 0.7:
+		rarity = 2
+	elif roll < 0.9:
+		rarity = 3
+	else:
+		rarity = 4
 	var possible: Array[String] = []
 	for id in InventoryManager.items.keys():
 		if InventoryManager.items[id].rarity == rarity:

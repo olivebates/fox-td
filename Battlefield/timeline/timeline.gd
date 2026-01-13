@@ -16,16 +16,18 @@ func _rebuild_buttons() -> void:
 	for child in hbox.get_children():
 		child.queue_free()
 	
-	var count = TimelineManager.timeline_saves.size()
-	if count == 0:
+	var slots = TimelineManager.get_saved_slots()
+	if slots.is_empty():
 		return
 	
-	var btn_width = hbox_width.x / count
+	var btn_count = slots.size()
+	var btn_width = hbox_width.x / btn_count
 	var current_index = TimelineManager.current_wave_index  # Assumed property
 	
-	for i in count:
+	for slot in slots:
 		var btn := Button.new()
-		btn.text = " Wave %d" % (i + 1)
+		var display_wave = slot
+		btn.text = " Wave %d" % display_wave
 		btn.add_theme_font_size_override("font_size", 2)
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.add_theme_constant_override("v_separation", 0)
@@ -37,20 +39,19 @@ func _rebuild_buttons() -> void:
 		btn.add_theme_color_override("font_focus_color", Color.BLACK)
 		
 		btn.pressed.connect(func():
-			TimelineManager.load_timeline(i)
-			WaveSpawner.current_wave = i+1
+			TimelineManager.load_timeline(slot)
 			var lose_screen = get_tree().get_first_node_in_group("lose_screen")
 			if lose_screen:
 				lose_screen.queue_free()
 		)
 		
 		btn.mouse_entered.connect(func():
-			var times = TimelineManager.wave_replay_counts.get(i, 0)
+			var times = TimelineManager.wave_replay_counts.get(slot, 0)
 			var penalty_text = ""
 			if times > 0:
 				penalty_text = "\n[color=red]-" + str(times) + " money per enemy[/color]"
 			TooltipManager.show_tooltip(
-				"Return to Wave " + str(i + 1),
+				"Return to Wave " + str(display_wave),
 				"Winds back time to a previously completed wave."
 			)
 		)
@@ -64,7 +65,7 @@ func _rebuild_buttons() -> void:
 		var padding = btn.get_theme_constant("h_separation", "Button") * 2
 		var available = btn_width - padding - 2
 		if text_width > available:
-			btn.text = "%d" % (i + 1)
+			btn.text = "%d" % display_wave
 			btn.clip_text = false
 		
 		var tint = GridController.random_tint
@@ -82,9 +83,9 @@ func _rebuild_buttons() -> void:
 		var pressed_tint = tint.darkened(darkening + 0.1)
 		
 		var lose_screen = get_tree().get_first_node_in_group("lose_screen")
-		if i == current_index and lose_screen == null:
+		if slot == current_index and lose_screen == null:
 			# Subtle hue shift highlight
-			if i == current_index:
+			if slot == current_index:
 				darkening -= 0.3
 				sat_boost += 0.1
 			else:

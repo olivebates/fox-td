@@ -44,8 +44,7 @@ func fire(target: Node2D) -> void:
 	if target == null:
 		return
 	
-	var data = get_meta("item_data")
-	var stats = InventoryManager.get_tower_stats(tower_type, data.rank, path)
+	var stats = get_effective_stats()
 	
 	burst_target = target
 	bullets_left = stats.bullets
@@ -59,8 +58,7 @@ func _fire_single(t: Node2D) -> void:
 	if not is_instance_valid(t):
 		return
 	
-	var data = get_meta("item_data")
-	var stats = InventoryManager.get_tower_stats(tower_type, data.rank, path)
+	var stats = get_effective_stats()
 	
 	var dir = (t.global_position - global_position).normalized()
 	

@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Battlefield/Game/chain_bullet.gd" id="1_chain"]
+[ext_resource type="Texture2D" uid="uid://0dkfej5pde8u" path="res://Battlefield/Sprites/Towers/tower1_bullet.png" id="2_chain"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_chain"]
+size = Vector2(2, 2)
+
+[node name="ChainBullet" type="Area2D" groups=["bullet"]]
+script = ExtResource("1_chain")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_chain")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_chain")

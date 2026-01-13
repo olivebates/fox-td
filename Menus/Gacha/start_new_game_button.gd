@@ -58,7 +58,7 @@ func _process(delta: float) -> void:
 	text = "Start Level "+str(WaveSpawner.current_level)
 
 func _on_pressed() -> void:
-	const SQUAD_SIZE = 18
+	var squad_size = TowerManager.SQUAD_SIZE
 	
 	
 	var guards = get_tree().get_nodes_in_group("guard")
@@ -71,7 +71,7 @@ func _on_pressed() -> void:
 	get_tree().get_first_node_in_group("game_area").visible = true
 	InventoryManager.clear_inventory()
 	
-	for i in SQUAD_SIZE:
+	for i in squad_size:
 		var squad_tower = TowerManager.get_tower_at(1000 + i)
 		if !squad_tower.is_empty():
 			var type_data = squad_tower.type  # Full item definition
@@ -87,7 +87,7 @@ func _on_pressed() -> void:
 			var item = {
 				"id": tower_id,
 				"rank": rank,
-				"path": squad_tower.get("path", [0, 0, 0]),
+				"path": [0, 0, 0],
 				"colors": squad_tower.get("colors", InventoryManager.roll_tower_colors()),
 				"merge_children": squad_tower.get("merge_children", [])
 			}
@@ -107,6 +107,7 @@ func _on_pressed() -> void:
 	InventoryManager.refresh_inventory_highlights()
 	get_tree().call_group("backpack_inventory", "refresh_all_highlights")
 	get_tree().call_group("squad_inventory", "refresh_all_highlights")
+	WaveSpawner.reset_wave_data()
 	WaveSpawner.current_wave = 1
-	TimelineManager.save_timeline(0)
+	TimelineManager.save_timeline(1)
 	

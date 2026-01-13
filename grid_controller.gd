@@ -493,4 +493,29 @@ func _draw() -> void:
 		var valid = nearest_cell != Vector2i(-1, -1) && get_grid_item_at_cell(nearest_cell) == null && is_valid_placement(nearest_cell, dragged_data)
 		var fill_color = Color(0, 1, 0, 0.3) if valid else Color(1, 0, 0, 0.3)
 		draw_rect(Rect2(cell_pos, Vector2(CELL_SIZE, CELL_SIZE)), fill_color, true)
+
+	var buff_highlight_cell = Vector2i(-1, -1)
+	var is_buff_drag = false
+	if dragged_tower != null and is_instance_valid(dragged_tower) and dragged_tower.has_meta("item_data"):
+		var dragged_data = dragged_tower.get_meta("item_data")
+		is_buff_drag = str(dragged_data.get("id", "")) == InventoryManager.ADJACENT_BUFF_TOWER_ID
+		if is_buff_drag and potential_cell != Vector2i(-1, -1):
+			buff_highlight_cell = get_nearest_valid_cell(potential_cell)
+	elif dragging_from_inventory and inventory.dragged_item.has("id"):
+		is_buff_drag = str(inventory.dragged_item.id) == InventoryManager.ADJACENT_BUFF_TOWER_ID
+		if is_buff_drag:
+			buff_highlight_cell = inventory.potential_cell
+
+	if is_buff_drag and buff_highlight_cell != Vector2i(-1, -1):
+		var offsets = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+		var fill_color = Color(0, 1, 0, 0.2)
+		var outline_color = Color(0, 1, 0, 0.4)
+		for off in offsets:
+			var cell = buff_highlight_cell + off
+			if cell.x < 0 or cell.x >= WIDTH or cell.y < 0 or cell.y >= HEIGHT:
+				continue
+			var pos = grid_offset + Vector2(cell.x * CELL_SIZE, cell.y * CELL_SIZE)
+			var rect = Rect2(pos, Vector2(CELL_SIZE, CELL_SIZE))
+			draw_rect(rect, fill_color, true)
+			draw_rect(rect, outline_color, false)
 	

@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Battlefield/Game/tower_jellyfish.gd" id="1_jelly"]
+[ext_resource type="Texture2D" uid="uid://2rkjntobfqcm" path="res://Battlefield/Sprites/Towers/jellyfish.png" id="2_jelly"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jelly"]
+size = Vector2(8, 8)
+
+[node name="JellyfishTower" type="CharacterBody2D" groups=["tower"]]
+z_index = -20
+script = ExtResource("1_jelly")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_jelly")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_jelly")

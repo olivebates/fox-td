@@ -20,7 +20,10 @@ const ELEMENT_COLORS := {
 	"green": Color(0.2, 0.9, 0.3),
 	"blue": Color(0.2, 0.6, 1.0)
 }
-const ELEMENT_COLOR_KEYS := ["red", "green", "blue"]
+const ELEMENT_COLOR_KEYS: Array[String] = ["red", "green", "blue"]
+const ADJACENT_BUFF_TOWER_ID = "Starfish"
+const MAX_MERGE_RANK = 5
+const IN_GAME_INVENTORY_SIZE = 18
 var base_spawn_cost = 40.0
 @onready var HealthBarGUI = get_tree().get_first_node_in_group("HealthBarContainer")
 @onready var grid_controller: Node2D = get_node("/root/GridController")
@@ -51,6 +54,21 @@ const PATH_SYMBOLS = {
 	PATH_ID.creature_attack_speed: "»",
 	PATH_ID.creature_health: "♥"
 }
+
+const TURTLE_BASE_PULSE_INTERVAL = 4.0
+const TURTLE_BASE_SLOW = 0.3
+const TURTLE_SLOW_PER_LEVEL = 0.2
+const TURTLE_BASE_SLOW_DURATION = 2.0
+const TURTLE_BASE_TARGETS = 3
+const TURTLE_TARGETS_PER_LEVEL = 3
+const TURTLE_BASE_DPS = 12.0
+const SNAIL_VOLLEY_GAP = 0.2
+const SNAKE_BASE_DPS = 12.0
+const STARFISH_BASE_DPS = 30.0
+const STARFISH_BASE_SPEED_BONUS = 0.3
+const STARFISH_SPEED_PER_LEVEL = 0.3
+const STARFISH_DAMAGE_PER_LEVEL = 0.3
+const STARFISH_RANGE_SCALE = 0.1
 
 var items: Dictionary = {
 	"Fox": {
@@ -143,13 +161,13 @@ var items: Dictionary = {
 		"prefab": preload("uid://bb3wn8l2vwp2f"),
 		"bullet": preload("uid://bgmdgfd4avpi0"),
 		"paths": [PATH_ID.bullets, PATH_ID.damage, PATH_ID.attack_speed],
-		"paths_increment": [1, 1, 1],
+		"paths_increment": [0, 1, 1],
 		"unlocked": false,
 		"attack_speed": 1,
 		"damage": 1,
 		"radius": 16+4,
-		"bullets": 1,
-		"rarity": 2,
+		"bullets": 8,
+		"rarity": 3,
 		"dps_multiplier": 3,
 		"description": "Shoots in all directions!"
 	},
@@ -184,6 +202,75 @@ var items: Dictionary = {
 		"bullets": 2,
 		"dps_multiplier": 1.0,
 		"description": "Spikes with multiple bullets!",
+	},
+	"Starfish": {
+		"name": "Starfish",
+		"texture": preload("uid://b4qi3hqh8oi05"),
+		"prefab": preload("res://Battlefield/Game/tower_starfish.tscn"),
+		"bullet": preload("uid://ciuly8asijcg5"),
+		"paths": [PATH_ID.attack_speed, PATH_ID.damage, PATH_ID.range],
+		"paths_increment": [1, 1, 1],
+		"unlocked": false,
+		"attack_speed": 1,
+		"damage": 0,
+		"radius": 0,
+		"bullets": 0,
+		"adjacent_speed_bonus": STARFISH_BASE_SPEED_BONUS,
+		"adjacent_damage_bonus": 0.0,
+		"adjacent_range_bonus": 0.0,
+		"rarity": 2,
+		"dps_multiplier": 0.5,
+		"description": "Boosts adjacent towers with attack speed, damage, and range.",
+	},
+	"Turtle": {
+		"name": "Turtle",
+		"texture": preload("uid://cqxc1fxgts76"),
+		"prefab": preload("res://Battlefield/Game/tower_turtle.tscn"),
+		"bullet": preload("uid://ciuly8asijcg5"),
+		"paths": [PATH_ID.damage, PATH_ID.bullets, PATH_ID.range],
+		"paths_increment": [1, 3, 1],
+		"unlocked": false,
+		"attack_speed": 1.0,
+		"damage": 0,
+		"radius": 8,
+		"bullets": 0,
+		"slow": TURTLE_BASE_SLOW,
+		"max_targets": TURTLE_BASE_TARGETS,
+		"rarity": 3,
+		"dps_multiplier": 1.0,
+		"description": "Pulses to slow nearby enemies.",
+	},
+	"Jellyfish": {
+		"name": "Jellyfish",
+		"texture": preload("uid://2rkjntobfqcm"),
+		"prefab": preload("res://Battlefield/Game/tower_jellyfish.tscn"),
+		"bullet": preload("res://Battlefield/Game/chain_bullet.tscn"),
+		"paths": [PATH_ID.bullets, PATH_ID.damage, PATH_ID.attack_speed],
+		"paths_increment": [1, 1, 1],
+		"unlocked": false,
+		"attack_speed": 1,
+		"damage": 1,
+		"radius": 16,
+		"bullets": 1,
+		"rarity": 3,
+		"dps_multiplier": 1.0,
+		"description": "Bullets chain through multiple targets.",
+	},
+	"Snake": {
+		"name": "Snake",
+		"texture": preload("uid://dyrti7a36085e"),
+		"prefab": preload("res://Battlefield/Game/tower_snake.tscn"),
+		"bullet": preload("res://Battlefield/Game/poison_bullet.tscn"),
+		"paths": [PATH_ID.damage, PATH_ID.bullets, PATH_ID.range],
+		"paths_increment": [1, 0, 1],
+		"unlocked": false,
+		"attack_speed": 1,
+		"damage": 0,
+		"radius": 8,
+		"bullets": 1,
+		"rarity": 4,
+		"dps_multiplier": 1.0,
+		"description": "Poisons enemies with stacking venom.",
 	},
 }
 
@@ -221,7 +308,11 @@ func get_tower_stats(id: String, rank: int, path_levels: Array) -> Dictionary:
 		match p:
 			PATH_ID.attack_speed: stats.attack_speed += bonus
 			PATH_ID.bullets: stats.bullets += bonus
-			PATH_ID.damage: stats.damage += bonus * upgrade_rank_mult
+			PATH_ID.damage:
+				if id == "Snake":
+					stats.damage += bonus
+				else:
+					stats.damage += bonus * upgrade_rank_mult
 			PATH_ID.range: stats.range += bonus * 8
 			PATH_ID.explosion_radius: stats.explosion_radius += bonus*8
 			PATH_ID.creature_amount: stats.creature_count += bonus
@@ -251,11 +342,40 @@ func show_tower_tooltip(item: Dictionary, cost: float) -> void:
 	var def = items[item.id]
 	var path_levels = item.get("path", [0, 0, 0])
 	var stats = get_tower_stats(item.id, item.rank, path_levels)
+	var tower_id = str(item.id)
 	
 	var tooltip_text = "[color=pink]🥩 " + str(int(cost)) + "[/color]\n"
 	tooltip_text += "[color=gray]————————————————[/color]\n"
 	
-	if def.get("is_guard", false):
+	if tower_id == "Turtle":
+		var pulse_interval = TURTLE_BASE_PULSE_INTERVAL / max(stats.attack_speed, 0.001)
+		var base_slow = float(def.get("slow", TURTLE_BASE_SLOW))
+		var base_targets = int(def.get("max_targets", TURTLE_BASE_TARGETS))
+		var slow_amount = clamp(base_slow + (TURTLE_SLOW_PER_LEVEL * float(path_levels[0])), 0.0, 0.9)
+		var slow_percent = int(round(slow_amount * 100.0))
+		var max_targets = base_targets + (TURTLE_TARGETS_PER_LEVEL * int(path_levels[1]))
+		tooltip_text += "Pulse Every: [color=cornflower_blue]" + str(snapped(pulse_interval, 0.1)) + "s[/color]\n"
+		tooltip_text += "Slow: [color=cornflower_blue]" + str(slow_percent) + "%[/color]\n"
+		tooltip_text += "Slow Duration: [color=cornflower_blue]" + str(int(TURTLE_BASE_SLOW_DURATION)) + "s[/color]\n"
+		tooltip_text += "Max Targets: [color=cornflower_blue]" + str(max_targets) + "[/color]\n"
+		tooltip_text += "Range: [color=cornflower_blue]" + str(int(stats.range / 8)) + " tiles[/color]\n"
+		tooltip_text += "[font_size=2][color=dark_gray]Prioritizes un-slowed enemies.[/color][/font_size]\n"
+	elif tower_id == "Starfish":
+		var base_speed_bonus = float(def.get("adjacent_speed_bonus", STARFISH_BASE_SPEED_BONUS))
+		var base_damage_bonus = float(def.get("adjacent_damage_bonus", 0.0))
+		var base_range_bonus = float(def.get("adjacent_range_bonus", 0.0))
+		var bonus_damage_pct = int(round((base_damage_bonus + (STARFISH_DAMAGE_PER_LEVEL * float(path_levels[1]))) * 100.0))
+		var bonus_speed_pct = int(round((base_speed_bonus + (STARFISH_SPEED_PER_LEVEL * float(path_levels[0]))) * 100.0))
+		var bonus_range_tiles = snapped(base_range_bonus + float(path_levels[2]), 0.1)
+		var buff_parts: Array[String] = []
+		buff_parts.append("+" + str(bonus_speed_pct) + "% AS")
+		if bonus_damage_pct > 0:
+			buff_parts.append("+" + str(bonus_damage_pct) + "% dmg")
+		if bonus_range_tiles > 0:
+			buff_parts.append("+" + str(bonus_range_tiles) + " tile range")
+		tooltip_text += "Adj Buff: [color=cornflower_blue]" + ", ".join(buff_parts) + "[/color]\n"
+		tooltip_text += "Affects: [color=cornflower_blue]4 adjacent tiles[/color]\n"
+	elif def.get("is_guard", false):
 		tooltip_text += "Creatures:  [color=cornflower_blue]" + str(int(stats.creature_count)) + "\n[/color]"
 		tooltip_text += "Damage:  [color=cornflower_blue]" + str(int(stats.creature_damage)) + "\n[/color]"
 		tooltip_text += "Attack Speed: [color=cornflower_blue]: " + str(int(stats.creature_attack_speed)) + "/s[/color]\n"
@@ -269,6 +389,14 @@ func show_tower_tooltip(item: Dictionary, cost: float) -> void:
 		if stats.explosion_radius != -1:
 			tooltip_text += "Explosion Size: [color=cornflower_blue]" + str(int(stats.explosion_radius/8)) + " tiles[/color]\n"
 			tooltip_text += "Max enemies hit: [color=cornflower_blue]" + str(int(stats.enemies_hit)) + "[/color]\n"
+		if tower_id == "Jellyfish":
+			tooltip_text += "Chain Hits: [color=cornflower_blue]3[/color]\n"
+		if tower_id == "Snake":
+			var base_poison = max(1.0, StatsManager.get_global_damage_multiplier())
+			var poison_dps = base_poison + stats.damage
+			var poison_duration = 4.0 + (float(path_levels[1]) * 4.0)
+			tooltip_text += "Poison: [color=cornflower_blue]" + str(int(poison_dps)) + " damage/s for " + str(int(poison_duration)) + "s[/color]\n"
+			tooltip_text += "[font_size=2][color=dark_gray]Prioritizes un-poisoned enemies.[/color][/font_size]\n"
 	
 	var colors: Array = item.get("colors", [])
 	var color_names: Array[String] = []
@@ -288,6 +416,42 @@ func show_tower_tooltip(item: Dictionary, cost: float) -> void:
 	
 	TooltipManager.show_tooltip(def.get("name", item.id.capitalize()), tooltip_text)
 
+func _get_turtle_effective_dps(stats: Dictionary, path_levels: Array) -> float:
+	var def = items.get("Turtle", {})
+	var base_slow = float(def.get("slow", TURTLE_BASE_SLOW))
+	var base_targets = int(def.get("max_targets", TURTLE_BASE_TARGETS))
+	var slow_amount = clamp(base_slow + (TURTLE_SLOW_PER_LEVEL * float(path_levels[0])), 0.0, 0.9)
+	var max_targets = base_targets + (TURTLE_TARGETS_PER_LEVEL * int(path_levels[1]))
+	var slow_scale = slow_amount / TURTLE_BASE_SLOW
+	var target_scale = float(max_targets) / float(TURTLE_BASE_TARGETS)
+	var speed_scale = max(stats.attack_speed, 0.001)
+	return TURTLE_BASE_DPS * speed_scale * slow_scale * target_scale
+
+func _get_snail_effective_dps(stats: Dictionary, path_levels: Array) -> float:
+	var bullet_count = 8
+	var volley_count = max(1, 1 + int(path_levels[0]))
+	var volley_time = float(max(0, volley_count - 1)) * SNAIL_VOLLEY_GAP
+	var base_interval = 1.0 / max(stats.attack_speed, 0.001)
+	var interval = max(base_interval, volley_time)
+	return stats.damage * float(bullet_count * volley_count) / max(interval, 0.001)
+
+func _get_snake_effective_dps(stats: Dictionary, path_levels: Array) -> float:
+	var base_poison = max(1.0, StatsManager.get_global_damage_multiplier())
+	var poison_dps = base_poison + max(stats.damage, 0.0)
+	var poison_duration = 4.0 + (float(path_levels[1]) * 4.0)
+	var uptime = clamp(stats.attack_speed * poison_duration, 0.25, 1.0)
+	return (SNAKE_BASE_DPS + poison_dps) * uptime
+
+func _get_starfish_effective_dps(path_levels: Array) -> float:
+	var def = items.get(ADJACENT_BUFF_TOWER_ID, {})
+	var base_speed_bonus = float(def.get("adjacent_speed_bonus", STARFISH_BASE_SPEED_BONUS))
+	var base_damage_bonus = float(def.get("adjacent_damage_bonus", 0.0))
+	var base_range_bonus = float(def.get("adjacent_range_bonus", 0.0))
+	var speed_bonus = base_speed_bonus + (STARFISH_SPEED_PER_LEVEL * float(path_levels[0]))
+	var damage_bonus = base_damage_bonus + (STARFISH_DAMAGE_PER_LEVEL * float(path_levels[1]))
+	var range_bonus = STARFISH_RANGE_SCALE * (base_range_bonus + float(path_levels[2]))
+	return STARFISH_BASE_DPS * (1.0 + speed_bonus) * (1.0 + damage_bonus) * (1.0 + range_bonus)
+
 func calculate_max_dps(id: String, rank: int) -> float:
 	var def = items[id]
 	var max_upgrades = rank - 1
@@ -295,7 +459,15 @@ func calculate_max_dps(id: String, rank: int) -> float:
 	var stats = get_tower_stats(id, rank, path_levels)
 	
 	var dps: float
-	if def.get("is_guard", false):
+	if id == "Turtle":
+		dps = _get_turtle_effective_dps(stats, path_levels)
+	elif id == "Snail":
+		dps = _get_snail_effective_dps(stats, path_levels)
+	elif id == "Snake":
+		dps = _get_snake_effective_dps(stats, path_levels)
+	elif id == "Starfish":
+		dps = _get_starfish_effective_dps(path_levels)
+	elif def.get("is_guard", false):
 		dps = (stats.creature_damage * stats.creature_attack_speed) * max(1, stats.creature_count * 0.85)  # Increased from 0.75
 	else:
 		dps = stats.damage * stats.attack_speed * stats.bullets
@@ -380,7 +552,7 @@ func register_inventory(grid: GridContainer, spawner_grid: GridContainer, previe
 		sell_label.add_theme_color_override("font_outline_color", Color.BLACK)
 		sell_label.add_theme_constant_override("outline_size", 1)
 	slots.clear()
-	for i in 21:
+	for i in IN_GAME_INVENTORY_SIZE:
 		var slot = Panel.new()
 		slot.custom_minimum_size = Vector2(8, 8)
 		#slot.clip_contents = true
@@ -448,7 +620,15 @@ func get_total_field_dps() -> float:
 
 		var def = items[item.id]
 		var dps := 0.0
-		if def.get("is_guard", false):
+		if item.id == "Turtle":
+			dps = _get_turtle_effective_dps(stats, path)
+		elif item.id == "Snail":
+			dps = _get_snail_effective_dps(stats, path)
+		elif item.id == "Snake":
+			dps = _get_snake_effective_dps(stats, path)
+		elif item.id == "Starfish":
+			dps = _get_starfish_effective_dps(path)
+		elif def.get("is_guard", false):
 			dps = stats.creature_damage * stats.creature_attack_speed * max(1, stats.creature_count)
 		else:
 			dps = stats.damage * stats.attack_speed * stats.bullets
@@ -498,7 +678,7 @@ func give_starter_towers():
 	slots[1].set_meta("item", {"id": "Fox", "rank": 1, "colors": ["blue"], "merge_children": []})
 	#slots[2].set_meta("item", {"id": "Elephant", "rank": 1})
 	WaveSpawner.current_wave = 1
-	TimelineManager.save_timeline(0)
+	TimelineManager.save_timeline(1)
 	#slots[2].set_meta("item", {"id": "Fox", "rank": 1})
 	#slots[3].set_meta("item", {"id": "Fox", "rank": 1})
 	#slots[4].set_meta("item", {"id": "Fox", "rank": 1})
@@ -526,17 +706,28 @@ func roll_tower_colors() -> Array[String]:
 	var roll = randf()
 	var colors: Array[String] = []
 	if roll < 0.01:
-		colors = ELEMENT_COLOR_KEYS.duplicate()
+		colors.append_array(ELEMENT_COLOR_KEYS)
 	elif roll < 0.11:
-		var pool = ELEMENT_COLOR_KEYS.duplicate()
+		var pool: Array[String] = []
+		pool.append_array(ELEMENT_COLOR_KEYS)
 		pool.shuffle()
-		colors = [pool[0], pool[1]]
+		colors.append(pool[0])
+		colors.append(pool[1])
 	else:
-		colors = [ELEMENT_COLOR_KEYS[randi() % ELEMENT_COLOR_KEYS.size()]]
+		colors.append(ELEMENT_COLOR_KEYS[randi() % ELEMENT_COLOR_KEYS.size()])
 	return colors
 
 func get_color_value(color_name: String) -> Color:
 	return ELEMENT_COLORS.get(color_name, Color.WHITE)
+
+func reset_all_inventory_paths() -> void:
+	for slot in slots:
+		var item = slot.get_meta("item", {})
+		if item.is_empty():
+			continue
+		item["path"] = [0, 0, 0]
+		slot.set_meta("item", item)
+		_update_slot(slot)
 
 func _is_tower_banned(tower_id: String) -> bool:
 	var spawner = get_tree().get_first_node_in_group("wave_spawner")
@@ -557,7 +748,8 @@ func _draw() -> void:
 			var fill_color = Color(0, 1, 0, 0.3) if valid else Color(1, 0, 0, 0.3)
 			draw_rect(Rect2(cell_pos, Vector2(GridController.CELL_SIZE, GridController.CELL_SIZE)), fill_color, true)
 	var rank = dragged_item.get("rank", 0)
-	var border_color = RANK_COLORS.get(rank, Color(1, 1, 1))
+	var rarity = items.get(dragged_item.id, {}).get("rarity", 0)
+	var border_color = RANK_COLORS.get(rarity, Color(1, 1, 1))
 	draw_rect(Rect2(draw_pos + Vector2(1.5, 1.5), Vector2(7, 7)), border_color, false, 1.0)
 	var tex = items[dragged_item.id].texture
 	if tex:
@@ -572,7 +764,8 @@ func _draw_slot(slot: Panel) -> void:
 	if item.is_empty():
 		return
 	var rank = item.get("rank", 1)
-	var border_color = RANK_COLORS.get(rank, Color(1, 1, 1))
+	var rarity = items.get(item.get("id", ""), {}).get("rarity", 0)
+	var border_color = RANK_COLORS.get(rarity, Color(1, 1, 1))
 	var base_color = border_color * 0.3
 	base_color.a = 1.0
 	var hovered = slot.get_meta("hovered", false)
@@ -599,8 +792,8 @@ func _draw_slot(slot: Panel) -> void:
 			slot.draw_circle(dot_pos, 0.7, dot_color)
 			dot_pos.x += 1.7
 	
-	var rarity = items.get(item.get("id", ""), {}).get("rarity", 0)
-	for i in range(rarity):
+	var triangle_count = min(int(rank), MAX_MERGE_RANK)
+	for i in range(triangle_count):
 		var offset = Vector2(0.8 + i * 1.5, 8.2)
 		slot.draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -2.0), offset + Vector2(1.4, 0.2), offset + Vector2(-0.9, 0.2)]), Color(0.0, 0.0, 0.0, 1.0))
 		slot.draw_colored_polygon(PackedVector2Array([offset + Vector2(0, -1.5), offset + Vector2(1, 0), offset + Vector2(-0.5, 0)]), Color(0.98, 0.98, 0.0, 1.0))
@@ -625,9 +818,9 @@ func _update_slot(slot: Panel) -> void:
 			item["colors"] = roll_tower_colors()
 			item["merge_children"] = item.get("merge_children", [])
 			slot.set_meta("item", item)
-		var rank = item.get("rank", 1)
-		var rank_color = RANK_COLORS.get(rank, Color(1, 1, 1))
-		slot.get_meta("style").bg_color = rank_color * 0.3
+		var rarity = items.get(item.get("id", ""), {}).get("rarity", 0)
+		var rarity_color = RANK_COLORS.get(rarity, Color(1, 1, 1))
+		slot.get_meta("style").bg_color = rarity_color * 0.3
 		slot.get_meta("style").bg_color.a = 1.0
 	slot.queue_redraw()
 
@@ -677,6 +870,11 @@ func _update_hover(slot: Panel) -> void:
 	var merge = Color(0.1, 0.4, 0.1)
 	var item = slot.get_meta("item", {})
 	var hovered = slot.get_meta("hovered", false)
+	if item.is_empty():
+		style.bg_color = hover if hovered else base
+		return
+	var rarity = items.get(item.get("id", ""), {}).get("rarity", 0)
+	var rarity_color = RANK_COLORS.get(rarity, Color(1, 1, 1))
 	
 	var is_potential_merge = !item.is_empty() and (
 		(original_slot != null and !dragged_item.is_empty() and item.id == dragged_item.id and item.rank == dragged_item.rank) or
@@ -684,13 +882,14 @@ func _update_hover(slot: Panel) -> void:
 		 item.id == grid_controller.dragged_tower.get_meta("item_data").id and 
 		 item.rank == grid_controller.dragged_tower.get_meta("item_data").rank)
 	)
+	is_potential_merge = is_potential_merge and item.rank < MAX_MERGE_RANK
 	
 	if hovered and is_potential_merge:
 		style.bg_color = merge
 	elif hovered:
-		style.bg_color = hover
+		style.bg_color = rarity_color * 0.3 * 1.3
 	else:
-		style.bg_color = base
+		style.bg_color = rarity_color * 0.3
 
 func _process(_delta: float) -> void:
 	var preview_cost: float = 0.0

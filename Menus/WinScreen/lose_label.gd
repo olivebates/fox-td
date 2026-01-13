@@ -56,6 +56,9 @@ func _on_color_rect_gui_input(event: InputEvent) -> void:
 				return
 
 func _on_return_to_camp_pressed() -> void:
+	TowerManager.reset_all_tower_paths()
+	InventoryManager.reset_all_inventory_paths()
+	WaveSpawner.reset_wave_data()
 	if WaveSpawner.current_wave > WaveSpawner.MAX_WAVES:
 		WaveSpawner.current_level += 1
 		WaveSpawner.current_wave = 1

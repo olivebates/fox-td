@@ -24,6 +24,7 @@ const OFFLINE_MONEY_CAP_SECONDS = 8 * 3600
 
 var just_loaded = 10 #Hotfix for transcend button
 var last_loaded_time = 0
+var current_slot = -1
 
 # Add a saving state variable to prevent concurrent saves
 var _is_saving = false
@@ -42,8 +43,6 @@ func _ready():
 	if OS.get_name() == "Web":
 		_visibility_callback = JavaScriptBridge.create_callback(Callable(self, "_on_visibility_change"))
 		JavaScriptBridge.get_interface("document").addEventListener("visibilitychange", _visibility_callback)
-	
-	load_game(9)
 	
 func start_periodic_backup():
 	if OS.get_name() != "Web":
@@ -75,7 +74,10 @@ func _exit_tree():
 
 func _on_periodic_backup_timeout():
 	print("Periodic backup triggered")
-	var save_path = SAVE_PATHS[9]
+	if current_slot < 0 or current_slot >= SAVE_PATHS.size() - 1:
+		print("No active save slot for backup")
+		return
+	var save_path = SAVE_PATHS[current_slot]
 	var save_key = save_path.replace("user://", "save_")
 	var get_js = """
 		console.log('Fetching current save: """ + save_key + """');
@@ -138,8 +140,10 @@ func _on_autosave_timeout():
 	# Don't block if already saving
 	if _is_saving:
 		return
+	if current_slot < 0 or current_slot >= SAVE_PATHS.size() - 1:
+		return
 	# Don't await here to prevent blocking the timer
-	save_game(9)  # This will run asynchronously
+	save_game(current_slot)  # This will run asynchronously
 
 func _input(event):
 	if OS.get_name() != "Web":
@@ -370,6 +374,8 @@ func save_game(slot: int = 0, custom_path: String = ""):
 	var save_path = _get_save_path(slot, custom_path)
 	if save_path.is_empty() or _is_dialogue_active():
 		return
+	if custom_path.is_empty() and slot >= 0:
+		current_slot = slot
 	if _is_saving:
 		print("Save already in progress")
 		return
@@ -492,6 +498,8 @@ func force_save_completion(slot: int = 0, custom_path: String = ""):
 
 func load_game(slot: int = 0, custom_path: String = "", direct_string: String = "", should_backup = false):
 	_cancel_save_and_cleanup()
+	if custom_path.is_empty() and slot >= 0:
+		current_slot = slot
 	
 	var old_nodes = get_tree().get_nodes_in_group("persistent_real")
 	for node in old_nodes:
@@ -539,6 +547,11 @@ func load_game(slot: int = 0, custom_path: String = "", direct_string: String = 
 	
 	var save_dict = json.data
 	last_loaded_time = int(Time.get_unix_time_from_system())
+	var loaded_name = String(save_dict.get("save_name", ""))
+	if loaded_name.is_empty() and slot >= 0:
+		loaded_name = "Save %d" % (slot + 1)
+	if !loaded_name.is_empty():
+		StatsManager.current_save_name = loaded_name
 	
 	# Load money
 	if save_dict.has("money"):

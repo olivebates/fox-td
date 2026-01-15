@@ -1,0 +1,47 @@
+[gd_scene load_steps=3 format=3 uid="uid://c0x5p2c0p3w41"]
+
+[ext_resource type="Script" uid="uid://c4x3n2bnj1guv" path="res://Menus/SaveSelect/save_slot_card.gd" id="1_4a5jm"]
+[ext_resource type="Script" uid="uid://b5j6m2l3n4u7k" path="res://Menus/SaveSelect/save_select_button.gd" id="2_yf4hc"]
+
+[node name="SaveSlotCard" type="Button"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 34)
+script = ExtResource("1_4a5jm")
+
+[node name="Content" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+
+[node name="TitleLabel" type="Label" parent="Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Save"
+
+[node name="InfoLabel" type="Label" parent="Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Info"
+
+[node name="ActionRow" type="HBoxContainer" parent="Content"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+alignment = 1
+
+[node name="StartButton" type="Button" parent="Content/ActionRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Start"
+script = ExtResource("2_yf4hc")
+
+[node name="DeleteButton" type="Button" parent="Content/ActionRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Delete"
+script = ExtResource("2_yf4hc")

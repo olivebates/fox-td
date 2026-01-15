@@ -1,0 +1,53 @@
+[gd_scene load_steps=2 format=3 uid="uid://d0h7qj6h1m8a3"]
+
+[ext_resource type="Script" uid="uid://b8jcl7x6ysxw4" path="res://Menus/SaveSelect/save_select.gd" id="1_2j8n3"]
+
+[node name="SaveSelect" type="Control"]
+z_index = 3000
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+script = ExtResource("1_2j8n3")
+
+[node name="Dimmer" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 306.0
+offset_bottom = 170.0
+mouse_filter = 2
+color = Color(0.22, 0.18, 0.12, 1)
+
+[node name="Panel" type="Panel" parent="."]
+self_modulate = Color(0.28, 0.22, 0.14, 1)
+layout_mode = 0
+offset_left = 10.0
+offset_top = 8.0
+offset_right = 230.0
+offset_bottom = 125.0
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+
+[node name="Layout" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Panel/Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Select Save"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel/Margin/Layout"]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SaveList" type="GridContainer" parent="Panel/Margin/Layout/ScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 2

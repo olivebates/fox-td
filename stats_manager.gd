@@ -368,7 +368,7 @@ func _process(delta: float) -> void:
 		health_changed.emit(health, max_health)
 
 func spend_health(amount: float) -> bool:
-	if health > amount+1:
+	if health >= amount:
 		health -= amount
 		health_changed.emit(health, max_health)
 		if health <= 0:
@@ -477,7 +477,7 @@ func show_tutorial_end():
 func take_damage(amount: float) -> void:
 	health -= amount
 	health_changed.emit(health, max_health)
-	if health <= 0:
+	if health <= -1:
 		var i = load("uid://cw0bhvjm3ukdv").instantiate()
 		get_tree().root.add_child(i)
 		

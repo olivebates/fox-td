@@ -149,6 +149,7 @@ Defined in `project.godot`:
 - `menu_tab_selector.gd` customizes tab styles and resets the map on menu open.
 - Difficulty menu uses the difficulty popup for trait adjustments and only shows the money gain label on the tab.
 - Next wave indicator shows the current wave's enemy type, tints to the wave color, and only advances after the wave completes (`Battlefield/GUI/next_wave_preview.gd`).
+- Startup save selection uses `Menus/SaveSelect/save_select.tscn` (instanced in `Main_Scene.tscn`) with two-column slot cards; selecting a slot loads it and shows `GameArea`, and creating a new slot saves it without entering the menu.
 - Tower bans: after each level, the top 25% of tower types by damage share across the last 2 waves are banned for the next level (only once at >=5 unlocked). Bans activate only when returning to camp after clearing a level, block placement, show a black overlay + emoji in inventory, and add "Banned this level." to tooltips. Banned towers also remove certain enemy types from the pool (swarm/swarmling/splitter if Elephant/Duck/Snail are banned; stalker if Hawk is banned).
 
 ### Saving and timeline
@@ -185,6 +186,7 @@ Defined in `project.godot`:
 - Monetization scope (if any): cosmetic only or power progression.
 
 ## Recent changes (notes for new agents)
+  - Added a startup save select UI (`Menus/SaveSelect/`) with per-slot Start/Delete actions and emoji save info; autosave/backup now target the active slot via `SaveManager.current_slot`, and `Main_Scene.tscn` hides `GameArea` until a slot is chosen.
   - Gacha backpack sort/fill now orders by rarity, rank, then DPS (lower first); auto-fill limits Turtle/Snake to one each unless extra squad slots remain.
   - Backpack money production added: passive +🪙/hour label beside Fill/Sort with tooltip; offline earnings applied on load and capped at 8 hours.
   - Turtle base targets reduced to 3.

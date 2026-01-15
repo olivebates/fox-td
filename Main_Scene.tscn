@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://ctnmhorqxut1t"]
+[gd_scene load_steps=10 format=3 uid="uid://ctnmhorqxut1t"]
 
 [ext_resource type="Script" uid="uid://c58ore2lex6h5" path="res://main_scene.gd" id="1_7fr83"]
 [ext_resource type="Shader" uid="uid://dncm5bmmcgldt" path="res://Vignette.gdshader" id="2_5yw3w"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://baklm1pqc3pmt" path="res://Battlefield/GUI/GUI.tscn" id="4_5yw3w"]
 [ext_resource type="Script" uid="uid://hflmog8s660p" path="res://color_tinter.gd" id="6_654x7"]
 [ext_resource type="PackedScene" uid="uid://0cs684mgxowq" path="res://Battlefield/timeline/timeline.tscn" id="7_lhke2"]
+[ext_resource type="PackedScene" uid="uid://d0h7qj6h1m8a3" path="res://Menus/SaveSelect/save_select.tscn" id="8_t5x8g"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_qtktj"]
 shader = ExtResource("2_5yw3w")
@@ -130,3 +131,5 @@ offset_left = 9.0
 offset_top = 130.0
 offset_right = 9.0
 offset_bottom = 130.0
+
+[node name="SaveSelect" parent="." instance=ExtResource("8_t5x8g")]

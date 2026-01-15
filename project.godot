@@ -62,7 +62,7 @@ occupier_highlight_button=""
 walls=""
 backpack_inventory=""
 squad_inventory=""
-pull_menu=""
+gacha_menu=""
 unmerge_towers=""
 game_area=""
 next_wave_button=""
@@ -76,6 +76,7 @@ upgrade_scene=""
 persistant_bullet=""
 fill_button=""
 leave_button=""
+pull_menu=""
 
 [gui]
 
